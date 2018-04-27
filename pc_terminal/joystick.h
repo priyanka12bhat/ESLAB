@@ -110,6 +110,9 @@ struct js_corr {
 #define JS_GET_ALL		7
 #define JS_SET_ALL		8
 
+#define NAME_LENGTH 128
+#define JS_DEV	"/dev/input/js0"
+
 struct JS_DATA_TYPE {
 	int buttons;
 	int x;
@@ -124,5 +127,8 @@ struct JS_DATA_SAVE_TYPE {
 	struct JS_DATA_TYPE JS_SAVE;
 	struct JS_DATA_TYPE JS_CORR;
 };
+
+void read_js(int* fd)
+void js_init(int* fd)
 
 #endif /* _LINUX_JOYSTICK_H */
