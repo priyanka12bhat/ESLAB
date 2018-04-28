@@ -1,6 +1,10 @@
-#include joystick.h
+#include "joystick.h"
 #include "../packet.h"
 
+/*
+Description:
+	Joystick initialization
+*/
 void js_init(int* fd)
 {
 	unsigned char axes = 2;
@@ -30,9 +34,9 @@ void js_init(int* fd)
 
 /*
 Description:
-If we get some inputs from the joystick, read the command.
+	If we get some inputs from the joystick, read the command.
 */
-void read_js(int* fd)
+void read_js(int* fd, int* axis, int* button)
 {
 	struct js_event js;
 
@@ -81,6 +85,6 @@ void read_js(int* fd)
 		mode = M_WIRELESS;
 
 	// Actions
-
+	//if (axis)
 
 }

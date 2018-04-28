@@ -1,17 +1,21 @@
-/*------------------------------------------------------------
- * Simple pc terminal in C
- *
- * Arjan J.C. van Gemund (+ mods by Ioannis Protonotarios)
- *
- * read more: http://mirror.datenwolf.net/serial/
- *------------------------------------------------------------
- */
+/*
+Steps:
+	1. Initialize joystick and communication
+	2. Read inputs from joystick and keyboard
+	3. Create packet (todo)
+	4. Send packet (todo)
+*/
 
 #include <stdio.h>
 #include <termios.h>
 #include <unistd.h>
 #include <string.h>
 #include <inttypes.h>
+
+#include "../protocol/packet.h"
+#include "keyboard.h"
+#include "joystick.h"
+#include "Variable.h"
 
 /*------------------------------------------------------------
  * console I/O
@@ -173,12 +177,62 @@ int 	rs232_putchar(char c)
 }
 
 
+void kb_input_handler(char pressed_key)
+{
+	switch (pressed_key)
+	{
+	case ESC:
+		mode = M_PANIC;
+		break;
+
+	case ZERO:
+		mode = M_SAFE;
+		term_puts("changed mode to safe mode\n");
+		break;
+
+	case ONE:
+		mode = M_PANIC;
+		break;
+
+	case TWO:
+		mode = M_MANUAL;
+		break;
+
+	case THREE:
+		mode = M_CALIBRATION;
+		break;
+
+	case FOUR:
+		mode = M_YAWCONTROL;
+		break;
+
+	case FIVE:
+		mode = M_FULLCONTROL;
+		break;
+
+	case SIX:
+		mode = M_RAWMODE;
+		break;
+
+	case SEVEN:
+		mode = M_HEIGHTCONTROL;
+		break;
+
+	case EIGHT:
+		mode = M_WIRELESS;
+		break;
+	}
+}
+
+
 /*----------------------------------------------------------------
  * main -- execute terminal
  *----------------------------------------------------------------
  */
 int main(int argc, char **argv)
 {
+	/* communication initialization
+	*/
 	char	c;
 
 	term_puts("\nTerminal program - Embedded Real-Time Systems\n");
@@ -189,19 +243,29 @@ int main(int argc, char **argv)
 	term_puts("Type ^C to exit\n");
 
 	/* discard any incoming text
-	 */
+	*/
 	while ((c = rs232_getchar_nb()) != -1)
-		fputc(c,stderr);
+		fputc(c, stderr);
+
+	/* joystick initialization
+	*/
+	js_init(&fd);
 
 	/* send & receive
 	 */
 	for (;;)
 	{
-		if ((c = term_getchar_nb()) != -1)
-			rs232_putchar(c);
+		/* read joystick
+		*/
+		read_js(&fd, &axis, &button);
 
-		if ((c = rs232_getchar_nb()) != -1)
-			term_putchar(c);
+		/* read keyboard
+		*/
+		if ((c = term_getchar_nb()) != -1)
+			kb_input_handler(c);
+
+		/* create packet and send packet to the board
+		*/
 
 	}
 
