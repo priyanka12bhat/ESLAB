@@ -1,10 +1,14 @@
 #ifndef _packet
 #define _packet
 
+#define START_BYTE 255
+
+//Tag Names
 #define T_MODE 1
 #define T_CONTROL 2
 #define T_DATA 3
 
+//Mode Types
 #define M_SAFE 1
 #define M_PANIC 2
 #define M_MANUAL 3
@@ -15,6 +19,7 @@
 #define M_HEIGHTCONTROL 8
 #define M_WIRELESS 9
 
+//Control Types
 #define C_LIFTUP 10
 #define C_LIFTDOWN 11
 #define C_ROLLUP 12
@@ -32,13 +37,13 @@
 
 #define CRC_BIT_SIZE 16
 
-typdef struct packet
+typedef struct packet
 {
 	char startByte;
-	char dataLength =0;
-	char type = 0;
-	char *value =NULL;
-	char valueLength=0;
+	char dataLength;
+	char type;
+	char *value;
+	char valueLength;
 	char *CRC;
 }Packet;
 

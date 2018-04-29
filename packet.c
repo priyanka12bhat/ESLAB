@@ -1,3 +1,5 @@
+#include <stdlib.h>
+
 #include "packet.h"	
 #include "crc16.h"
 
@@ -10,7 +12,7 @@ Packet *Create_Packet(char type,char length, char *value)
 	pkt->value = value;
 	pkt->valueLength = length;
 	pkt->dataLength=Get_DataLength(length);
-	pkt->CRC=Get_CRCValue(*pkt);
+	pkt->CRC=Get_CRCValue(pkt);
 
 	return pkt;
 }
@@ -23,11 +25,12 @@ char *Get_CRCValue(Packet *pkt)
 {
 	char *DataCRC = (char *)malloc(sizeof(char)*(pkt->dataLength));
 	DataCRC[0]=pkt->type;
-	for(char i =0;i<valueLength;i++)
+	for(char i =0;i<pkt->valueLength;i++)
 	{
 		DataCRC[i+1]=pkt->value[i];
 	}
-	uint16_t CRC = crc16_compute(DataCRC, uint32_t dataLength, NULL);
+
+	uint16_t CRC = crc16_compute(DataCRC, pkt->dataLength, NULL);
 	char* CRCARRAY = (char *)malloc(sizeof(char)*(CRC_BIT_SIZE/8));
 	CRCARRAY[1]=(char)CRC & 0x00FF;
 	CRCARRAY[0]=(char)((CRC & 0xFF00)>>8);
