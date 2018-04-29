@@ -39,12 +39,13 @@ typdef struct packet
 	char type = 0;
 	char *value =NULL;
 	char valueLength=0;
-	char CRC;
+	char *CRC;
 }Packet;
 
 char Get_DataLength(char length);
-char Get_CRCValue(Packet *pkt);
-char *Get_Byte_Stream(Packet p);
-Packet Create_Packet(char type,char length, char *value);
+char *Get_CRCValue(Packet *pkt);
+char *Get_Byte_Stream(Packet *pkt);
+Packet *Create_Packet(char type,char length, char *value);
+void Destroy_Packet(Packet *pkt);
 
 #endif
