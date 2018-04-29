@@ -3,6 +3,10 @@
 #include <unistd.h>
 #include <string.h>
 #include <inttypes.h>
+#include <stdlib.h>
+
+#include "packet.h"
+#include "keyboard.h"
 
 struct termios 	savetty;
 
@@ -59,41 +63,84 @@ int main(void)
 
 	term_initio();
 	printf("Start\n");
-int c  = 0;
+	int c  = 0;
+	char* value_tag =NULL; 
+	char type_tag = 0;;
+	char invalid_input=0;
 	while(run)
 	{
 	//printf("Loop\n");
 		if((c=term_getchar_nb())!=-1)
 		{
+
 			switch(c)
 			{
-				case 0:
-					//set mode to 0
-				break;
-				case 1:
 
-				break;
-				case 2:
+				case ZERO:
+					value_tag = (char *)malloc(sizeof(char)*1);
+					*value_tag = M_SAFE;
+					type_tag = T_MODE;
+					Packet *pkt = Create_Packet(type_tag,1,value_tag);
 
-				break;
-				case 3:
+					term_puts("changed mode to safe mode\n");
+					break;
 
-				break;
-				case 4:
+				case ONE:
+					value_tag = (char *)malloc(sizeof(char)*1);
+					*value_tag = M_PANIC;
+					type_tag = T_MODE;
+					Packet *pkt = Create_Packet(type_tag,1,value_tag);
+					break;
 
-				break;
-				case 5:
+				case TWO:
+					value_tag = (char *)malloc(sizeof(char)*1);
+					*value_tag = M_MANUAL;
+					type_tag = T_MODE;
+					Packet *pkt = Create_Packet(type_tag,1,value_tag);
+					break;
 
-				break;
-				case 6:
+				case THREE:
+					value_tag = (char *)malloc(sizeof(char)*1);
+					*value_tag = M_CALIBRATION;
+					type_tag = T_MODE;
+					Packet *pkt = Create_Packet(type_tag,1,value_tag);
+					break;
 
-				break;
-				case 7:
+				case FOUR:
+					value_tag = (char *)malloc(sizeof(char)*1);
+					*value_tag = M_YAWCONTROL;
+					type_tag = T_MODE;
+					Packet *pkt = Create_Packet(type_tag,1,value_tag);
+					break;
 
-				break;
-				case 8:
+				case FIVE:
+					value_tag = (char *)malloc(sizeof(char)*1);
+					*value_tag = M_FULLCONTROL;
+					type_tag = T_MODE;
+					Packet *pkt = Create_Packet(type_tag,1,value_tag);
+					break;
 
-				break;
+				case SIX:
+					value_tag = (char *)malloc(sizeof(char)*1);
+					*value_tag = M_RAWMODE;
+					type_tag = T_MODE;
+					Packet *pkt = Create_Packet(type_tag,1,value_tag);
+					break;
+
+				case SEVEN:
+					value_tag = (char *)malloc(sizeof(char)*1);
+					*value_tag = M_HEIGHTCONTROL;
+					type_tag = T_MODE;
+					Packet *pkt = Create_Packet(type_tag,1,value_tag);
+					break;
+
+				case EIGHT:
+					value_tag = (char *)malloc(sizeof(char)*1);
+					*value_tag = M_WIRELESS;
+					type_tag = T_MODE;
+					Packet *pkt = Create_Packet(type_tag,1,value_tag);
+					break;
+
 				case 'a'://lift up
 					//Create Packet Tag:Control+Value
 					printf("a\n");
@@ -161,9 +208,24 @@ int c  = 0;
 				//break;
 
 				default:
-				printf("Junk\n");
-
+				printf("Invalid Control Input\n");
+				invalid_input=1;
 				break;
+			}
+			if(!invalid_input)
+			{
+
+					char *packetByteStream = Get_Byte_Stream(pkt);
+					//Send Packet bytes through RS232
+					printf("Testing:%c",pkt->type);
+					Destroy_Packet(pkt);
+					free(packetByteStream);			
+
+
+			}
+			else
+			{
+				invalid_input =0;
 			}
 		}
 
