@@ -35,6 +35,18 @@
 #define C_P2UP 22
 #define C_P2DOWN 23
 
+//Control Joystick Types
+#define CJ_LIFT 24
+
+#define CJ_ROLL 26
+
+#define CJ_PITCH 28
+
+#define CJ_YAW 30
+
+
+
+
 #define CRC_BIT_SIZE 16
 
 typedef struct packet

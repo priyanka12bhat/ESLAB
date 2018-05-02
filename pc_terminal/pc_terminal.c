@@ -335,10 +335,18 @@ void kb_input_handler(unsigned char c)
 
 		break;
 	case 'l':// P2 down
-		value_tag = (unsigned char *)malloc(sizeof(unsigned char) * 1);
+		/*value_tag = (unsigned char *)malloc(sizeof(unsigned char) * 1);
 		*value_tag = C_P2DOWN;
 		type_tag = T_CONTROL;
 		pkt = Create_Packet(type_tag, 1, value_tag);
+		printf("P2 down\n");*/
+
+		value_tag = (unsigned char *)malloc(sizeof(unsigned char) * 3);
+		*value_tag = CJ_LIFT;
+		value_tag[1] = 0x7F;
+		value_tag[2] = 0xFF;
+		type_tag = T_CONTROL;
+		pkt = Create_Packet(type_tag, 3, value_tag);
 		printf("P2 down\n");
 		break;
 
@@ -374,6 +382,9 @@ void kb_input_handler(unsigned char c)
 				type_tag = T_CONTROL;
 				pkt = Create_Packet(type_tag, 1, value_tag);
 				printf("PitchUP\n");
+
+
+
 				break;
 			default:
 				printf("Exiting....\n");

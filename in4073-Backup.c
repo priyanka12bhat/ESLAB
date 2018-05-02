@@ -21,30 +21,29 @@
 //#include "keyboard.h"
 
 int mode = 0;
-char currentByte;
-char msgSize;
-char msgType;
-bool operation = 0;
-char *ptr;
+unsigned char currentByte;
+unsigned char msgSize;
+unsigned char msgType;
+bool operation = 1;
+unsigned char *ptr;
 unsigned counter = 0;
 Packet *pkt_R=NULL;
+
+int maxMsgSize = 5;
 
 void DoAction();
 
 
-char CRC0;
-char CRC1;
 
-
-typedef struct LinkedList{
-	char data;
-	struct LinkedList *next;
+typedef struct Node{
+	unsigned char data;
+	struct Node *next;
 }node;
 
+node *InputDataBuffer = NULL;
 
-node *MsgBuffer = NULL;
 
-node *addNode(node* firstNode, char newData){
+node *addNode(node* firstNode, unsigned char newData){
 	node *temp;
 	temp = (node *)malloc(sizeof(node));
 	temp->data = newData;
@@ -56,40 +55,69 @@ node *addNode(node* firstNode, char newData){
 	return temp;
 }
 
-void freeList(node *list)
+
+unsigned char readData()
 {
-	if(list!=NULL){
-	node *temp = list;
-	list = list->next;
-	free(temp);
-	freeList(list);
+	if(InputDataBuffer==NULL)
+		return dequeue(&rx_queue);
+	else
+	{
+
+		unsigned char dataToReturn = InputDataBuffer->data;
+		node *temp = InputDataBuffer->next;
+		free(InputDataBuffer);
+		InputDataBuffer = temp;
+		return dataToReturn;
+
+	}
+}
+
+uint16_t checkCount()
+{
+	return InputDataBuffer!=NULL?1:rx_queue.count;
+}
+
+void addData(unsigned char *datas, unsigned char length)
+{
+	for(int i =length-1;i>=0;i--)
+	{
+		InputDataBuffer = addNode(InputDataBuffer, datas[i]);
 	}
 
 }
+
+
+
 
 /*------------------------------------------------------------------
  * process_key -- process command keys
  *------------------------------------------------------------------
  */
-/*void process_key(uint8_t c)
+void process_packet(Packet *pkt_R)
 {
-	switch (c)
+	switch (pkt_R->type)
 	{
-		case ONE:
-			nrf_gpio_pin_toggle(YELLOW)
+		case T_MODE:
+			nrf_gpio_pin_toggle(YELLOW);
 			break;
-		case TWO:
-			nrf_gpio_pin_toggle(BLUE)
+		case T_CONTROL:
+			nrf_gpio_pin_toggle(BLUE);
 			break;
 		default:
 			nrf_gpio_pin_toggle(RED);
+
 	}
-}*/
+	//printf("FCB\n");
+
+	Destroy_Packet(pkt_R);
+}
+
+
 
 
 //Enums with all the possible states and events
 
-enum stateList	{checkStartByte, getMsgSize, checkMessageType, setupMsg, getMsg, checkCRC0, checkCRC1}	currentState, nextState;
+enum stateList	{checkStartByte, getMsgSize, checkMessageType,setupMsg, getMsg, checkCRC0, checkCRC1}	currentState, nextState;
 
 enum eventList	{noEvent, byteReceived, error, timeout} currentEvent;
 
@@ -108,86 +136,38 @@ void clearEvents(void){
 	currentEvent = noEvent;
 }
 
-void SearchforStartByte(int CRCByte)
+void SearchforStartByte(unsigned char CRCPos)
 {
-	char *serialPacket = Get_Byte_Stream(pkt_R);
-	int i = 0;
-	for(i=pkt->packetLength-1;i>0;i--)
+	unsigned char *serialPacket = Get_Byte_Stream(pkt_R);
+	unsigned char byteLength=pkt_R->packetLength-(1-CRCPos);
+
+	for(int i =1;i<byteLength;i++)
 	{
 		if(serialPacket[i]==START_BYTE)
 		{
+			addData(&serialPacket[i],byteLength-i);
 			break;
 		}
 	}
-
-	if(i!=0)
-	{
-		for(j=1;j+i<packetLength-1;j++)
-		{
-			serialPacket[i+j]
-		}
-	}
-
-
-
-				node *searchNode=MsgBuffer;
-				int count = 0;
-				while(searchNode!=NULL)
-				{
-					if(searchNode->data!=START_BYTE)
-					{
-						searchNode=searchNode->next;
-						count++;
-					}
-					else
-					{
-						switch(count)
-						{
-							case 0:
-							nextState=getMsgSize;
-							break;
-							
-							case 1:
-							msgSize=MsgBuffer->data;
-							nextState=checkMessageType;
-							break;
-
-							case 2:
-							msgType=MsgBuffer->data;
-							msgSize=MsgBuffer->next->data;
-							nextState=setupMsg;
-							counter=0;
-							break;
-
-							default:
-							nextState=checkStartByte;
-							break;
-						}
-						
-						break;
-
-
-					}
-				}
-				if(searchNode==NULL)
-				{
-					nextState=checkStartByte;
-				}else
-				{
-					if(searchNode->next!=NULL)
-					{
-						freeList(searchNode->next);
-						searchNode->next=NULL;
-					}
-
-				}
-
-
-
-				nextState=checkStartByte;
-
+	Destroy_Packet(pkt_R);
+	free(serialPacket);
+	nextState=checkStartByte;
 }
 
+
+void storeValues()
+{
+			ptr[counter] = currentByte;
+
+
+			counter++;
+			if (counter >= msgSize-1) {
+				nextState = checkCRC0;
+			} else {
+				nextState = getMsg;
+			}
+
+}
 /*------------------------------------------------------------------
  * State Machine 
  *------------------------------------------------------------------
@@ -198,21 +178,38 @@ void stateHandler(){
 	switch(currentState){
 		case checkStartByte:
 			if(currentByte != START_BYTE){
-				freeList(MsgBuffer);
-				MsgBuffer=NULL;
+
+
 				nextState = checkStartByte;
+			}else{
+				nextState = getMsgSize;
 			}
-			nextState = getMsgSize;
 			break;
 		case getMsgSize:
-			nextState = checkMessageType;
+			
 			msgSize = currentByte;
+			nextState = checkMessageType;
+			if(msgSize>maxMsgSize)
+			{
+				if(currentByte==START_BYTE)
+				{
+					nextState=getMsgSize;
+				}
+				else
+				{
+				nextState=checkStartByte;
+				}
+
+			}
+
+
 			break;
 		case checkMessageType:
 			if((currentByte==T_MODE) || (currentByte==T_CONTROL) || (currentByte==T_DATA))
 			{
 				msgType = currentByte;
 				nextState = setupMsg;
+				counter = 0;
 
 			}
 			else
@@ -230,30 +227,44 @@ void stateHandler(){
 
 					nextState=checkStartByte;
 				}
-				freeList(MsgBuffer);
-				MsgBuffer=NULL;
+
 			}
 
 			break;
+
 		case setupMsg:
-			ptr = (char *)malloc(sizeof(char)*(msgSize-1));
-			ptr[0]=currentByte;
-			counter = 1;
-			nextState = getMsg;
-			break;
-		case getMsg:
-			ptr[counter] = currentByte;
-			counter++;
-			if (counter > msgSize-1) {
-				nextState = checkCRC0;
-			} else {
-				nextState = getMsg;
+
+			if(ptr!=NULL)
+			{
+				free(ptr);
 			}
+
+			ptr = (unsigned char *)malloc(sizeof(unsigned char)*(msgSize-1));
+
+			storeValues();
+
+		break;
+
+		case getMsg:
+
+			storeValues();
+
 			break;
 		case checkCRC0:
+			counter=0;
+
 			pkt_R = Create_Packet(msgType,msgSize-1, ptr);
 
-			if(pkt_R->CRC[0]==currentByte){
+				//printf("TestingF- Type:%d\n", pkt_R->type);
+				//printf("TestingF- startbyte:%d\n", pkt_R->startByte);
+				//printf("TestingF- datalength:%d\n", pkt_R->dataLength);
+				//printf("TestingF- value length:%d\n", pkt_R->valueLength);
+				//printf("TestingF- value:%d\n", *(pkt_R->value));
+				//printf("TestingF- CRC0:%d\n", *(pkt_R->CRC));
+				//printf("TestingF- CRC1:%d\n", pkt_R->CRC[1]);
+
+
+			if(pkt_R->CRC[0]==(unsigned char)currentByte){
 				nextState = checkCRC1;
 			}
 			else
@@ -269,8 +280,8 @@ void stateHandler(){
 			if(pkt_R->CRC[1]==currentByte){
 				nextState=checkStartByte;
 				DoAction(); //todo
-				freeList(MsgBuffer);
-				MsgBuffer = NULL;
+				process_packet(pkt_R);
+
 			}
 			else{
 				pkt_R->CRC[1]=currentByte;
@@ -283,6 +294,9 @@ void stateHandler(){
 	currentState = nextState;
 
 }
+
+
+
 
 /*------------------------------------------------------------------
  * main -- everything you need is here :)
@@ -306,12 +320,30 @@ int main(void)
 
 
 	while(operation) {
-		if (rx_queue.count){  //continuously check for new elements in the UART queue
-			currentByte = dequeue(&rx_queue);
-			MsgBuffer = addNode(MsgBuffer, currentByte);
-			changeEvent(byteReceived);
+
+
+		/*if (rx_queue.count) {process_Test( dequeue(&rx_queue) );
+			printf("T\n");
+
+
+		}*/
+
+		if (checkCount()){  //continuously check for new elements in the UART queue
+			currentByte = readData();
+			//printf("State:%d\n",(int)currentState);
+			//printf("FCB: %d\n",currentByte);
 			stateHandler();
+			//printf("State:%d\n",(int)currentState);
+
 		}
+
+		nrf_delay_ms(1);
+
+		/*if (checkCount()){  //continuously check for new elements in the UART queue
+			currentByte = readData();
+			printf("FCB: %d",currentByte);
+			stateHandler();
+		}*/
 	}
 	
 	

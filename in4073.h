@@ -30,7 +30,7 @@
 bool demo_done;
 
 // Control
-int16_t motor[4],ae[4];
+int16_t motor[4],ae[4],aej[4];
 void run_filters_and_control();
 
 // Timers

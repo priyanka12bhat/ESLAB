@@ -14,10 +14,11 @@
 
 void update_motors(void)
 {					
-	motor[0] = ae[0];
-	motor[1] = ae[1];
-	motor[2] = ae[2];
-	motor[3] = ae[3];
+	int aeMax=500;
+	motor[0] = (ae[0]+aej[0])<aeMax?(ae[0]+aej[0]):motor[0];
+	motor[1] = (ae[1]+aej[1])<aeMax?(ae[1]+aej[1]):motor[1];
+	motor[2] = (ae[2]+aej[2])<aeMax?(ae[2]+aej[2]):motor[2];
+	motor[3] = (ae[3]+aej[3])<aeMax?(ae[3]+aej[3]):motor[3];
 }
 
 void run_filters_and_control()
