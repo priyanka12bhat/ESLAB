@@ -232,4 +232,3 @@ pc-run:
 upload-run: default pc
 	dfu_serial/./serial_dfu.py  _build/in4073.bin
 	cd pc_terminal/; make run
-	cd pc_terminal/; make run

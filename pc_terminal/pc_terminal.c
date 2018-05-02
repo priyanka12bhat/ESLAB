@@ -343,6 +343,7 @@ void kb_input_handler(unsigned char c)
 		break;
 
 	case 27:
+	printf("%i\n",c );
 		if ((c = term_getchar_nb()) != -1)
 		{
 			switch (c = term_getchar_nb()) {
@@ -374,18 +375,19 @@ void kb_input_handler(unsigned char c)
 				pkt = Create_Packet(type_tag, 1, value_tag);
 				printf("PitchUP\n");
 				break;
+			default:
+				printf("Exiting....\n");
+				value_tag = (unsigned char *)malloc(sizeof(unsigned char) * 1);
+				*value_tag = M_PANIC;
+				type_tag = T_MODE;
+				pkt = Create_Packet(type_tag, 1, value_tag);
+				ExitSafe();
+				break;
+
 			}
 		}
-		else
-		{
-			printf("Exiting....\n");
-			value_tag = (unsigned char *)malloc(sizeof(unsigned char) * 1);
-			*value_tag = M_PANIC;
-			type_tag = T_MODE;
-			pkt = Create_Packet(type_tag, 1, value_tag);
-			ExitSafe();
-		}
 		break;
+
 		//case 27:
 		//break;
 	default:
