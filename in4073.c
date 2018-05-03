@@ -478,8 +478,18 @@ int main(void)
 			//printf("State:%d\n",(int)currentStateR);
 
 		}
+		
+		
 
 		nrf_delay_ms(1);
+		
+		//battery handling code		
+		NRF_ADC->EVENTS_END = 0;
+		bat_volt = NRF_ADC -> RESULT*7;
+		if (bat_volt <= 10.5){
+			droneState = panic;
+		}
+
 
 		/*if (checkCount()){  //continuously check for new elements in the UART queue
 			currentByte = readData();
