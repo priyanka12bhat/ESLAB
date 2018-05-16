@@ -21,17 +21,20 @@
 
 //#include "keyboard.h"
 
-int mode = 0;
 unsigned char currentByte;
 unsigned char msgSize;
 unsigned char msgType;
-bool operation = 1;
+
 unsigned char *ptr;
 unsigned counter = 0;
 Packet *pkt_R=NULL;
 
-int maxMsgSize = 5;
+int maxMsgSize = 12;
 
+void update_motors(void);
+
+
+bool operation = 1;
 
 void DoAction();
 void process_packet(Packet *pkt_R);
@@ -281,6 +284,22 @@ void DroneStateHandler()
 
 }
 
+void EnterSafeMode()
+{
+	printf("Entered Safe Mode\n");
+	droneState = Safe;
+	ae[0] = 0;
+	ae[1] = 0;
+	ae[2] = 0;
+	ae[3] = 0;
+	aej[0] = 0;
+	aej[1] = 0;
+	aej[2] = 0;
+	aej[3] = 0;
+
+
+}
+
 
 /*------------------------------------------------------------------
  * process_packet -- process command keys
@@ -296,26 +315,16 @@ void process_packet(Packet *pkt_R)
 				switch(pkt_R->value[0])
 				{
 					case M_SAFE:
-						droneState = Safe;
-						ae[0] = 0;
-						ae[1] = 0;
-						ae[2] = 0;
-						ae[3] = 0;
-						
+
+						EnterSafeMode();
 					break;
 					case M_PANIC:
-						if(droneState==Safe)
-						{
-							operation=0;
-						}else
-						{
+						printf("Mode Switched to Panic mode\n");
 						droneState = Panic;
-						//checkbarometer reading till reached safe limit
 
-						droneState = Safe;
-						}
 					break;
 					case M_MANUAL:
+						printf("Mode Switched to Manual mode\n");
 						if(droneState==Safe){
 							droneState = Manual;
 						}
@@ -329,7 +338,11 @@ void process_packet(Packet *pkt_R)
 				nrf_gpio_pin_toggle(BLUE);
 				if(droneState==Manual){					
 					nrf_gpio_pin_toggle(RED);
-					uint16_t value = 0; 
+					int16_t JSYaw = 0;
+					int16_t JSRoll = 0;
+					int16_t JSPitch = 0;
+					int16_t JSLift = 0;
+
 					int16_t incrementK=10;
 					switch(pkt_R->value[0])
 					{
@@ -381,8 +394,7 @@ void process_packet(Packet *pkt_R)
 							ae[3] = (ae[3]-incrementK)>=0?(ae[3]-incrementK):ae[3];
 						break;
 
-						case CJ_LIFT:
-
+						/*case CJ_LIFT:
 							value= ((((int16_t)pkt_R->value[1])<<8) | ((int16_t)pkt_R->value[2]));
 							aej[0]= value*incrementK/65534;
 							aej[1]= value*incrementK/65534;
@@ -408,21 +420,35 @@ void process_packet(Packet *pkt_R)
 						break;
 
 						case CJ_YAW:
-
+							
 							value= ((((int16_t)pkt_R->value[1])<<8) | ((int16_t)pkt_R->value[2]));
 							aej[1]= value*incrementK/65534;
 							aej[3]= value*incrementK/65534;
 							aej[0]= -1*value*incrementK/65534;
 							aej[2]= -1*value*incrementK/65534;
 							printf("%d\n",value);
+						break;*/
+
+
+						case C_JOYSTICK:
+						JSRoll = ((int8_t)pkt_R->value[1])*incrementK/JSSCALEMAX;
+						JSPitch = ((int8_t)pkt_R->value[2])*incrementK/JSSCALEMAX;
+						JSYaw = ((int8_t)pkt_R->value[3])*incrementK/JSSCALEMAX;
+						JSLift = ((int8_t)pkt_R->value[4])*incrementK/JSSCALEMAX;
+						printf("R:%d\n",JSRoll);
+						printf("P:%d\n",JSPitch);
+						printf("Y:%d\n",JSYaw);
+						printf("L:%d\n",JSLift);
+
+						aej[0]=JSPitch-1*JSYaw+JSLift;
+						aej[1]=JSRoll+JSYaw+JSLift;
+						aej[2]=-1*JSPitch-1*JSYaw+JSLift;
+						aej[3]=-1*JSRoll+JSYaw+JSLift;
+
 						break;
-
-
-
-
-				}
-				printf("%d,%d,%d,%d\n",ae[0]+aej[0],ae[1]+aej[1],ae[2]+aej[2],ae[3]+aej[3]);
-				//update_motors();
+					}				
+				printf("Motor[0]:%d,Motor[1]:%d,Motor[2]:%d,Motor[3]:%d\n",ae[0]+aej[0],ae[1]+aej[1],ae[2]+aej[2],ae[3]+aej[3]);
+				update_motors();
 			}
 				
 				break;
@@ -454,12 +480,15 @@ int main(void)
 	baro_init();
 	spi_flash_init();
 
+
 	//ble_init();
+
+
 
 	demo_done = true;
 	currentStateR=checkStartByte;
 	droneState = Safe;
-
+	uint32_t us_TimeStamp = 0;
 
 	while(operation) {
 
@@ -486,6 +515,42 @@ int main(void)
 			printf("FCB: %d",currentByte);
 			stateHandler();
 		}*/
+
+		if(droneState==Panic)
+		{
+			uint32_t us_currentTime = get_time_us();
+			if(us_currentTime>us_TimeStamp?us_currentTime-us_TimeStamp>500000: (UINT32_MAX-us_TimeStamp+us_currentTime)>500000){
+			//printf("%10ld | ", us_currentTime);
+			//printf("%10ld | \n", us_TimeStamp);
+			aej[0]=0;aej[1]=0;aej[2]=0;aej[3]=0;
+			if(ae[0]>10)
+			{
+				ae[0]-=10;
+			}
+			if(ae[1]>10)
+			{
+				ae[1]-=10;
+			}
+			if(ae[2]>10)
+			{
+				ae[2]-=10;
+			}
+			if(ae[3]>10)
+			{
+				ae[3]-=10;
+			}
+
+			printf("Motor[0]:%d,Motor[1]:%d,Motor[2]:%d,Motor[3]:%d\n",ae[0]+aej[0],ae[1]+aej[1],ae[2]+aej[2],ae[3]+aej[3]);
+			us_TimeStamp = us_currentTime;
+			if(ae[0]<=10 && ae[1]<=10 && ae[2]<=10 && ae[3]<=10)
+			{
+				
+				EnterSafeMode();
+
+			}
+		}
+
+		}
 	}
 	
 	
@@ -521,6 +586,7 @@ int main(void)
 	nrf_delay_ms(100);
 
 	NVIC_SystemReset();
+
 }
 
 void DoAction(){}

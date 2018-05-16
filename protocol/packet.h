@@ -7,6 +7,7 @@
 #define T_MODE 1
 #define T_CONTROL 2
 #define T_DATA 3
+#define T_CONFIG 4
 
 //Mode Types
 #define M_SAFE 1
@@ -36,15 +37,16 @@
 #define C_P2DOWN 23
 
 //Control Joystick Types
-#define CJ_LIFT 24
+//#define CJ_LIFT 24
 
-#define CJ_ROLL 26
+//#define CJ_ROLL 26
 
-#define CJ_PITCH 28
+//#define CJ_PITCH 28
 
-#define CJ_YAW 30
+//#define CJ_YAW 30
+#define C_JOYSTICK 24
 
-
+#define JSSCALEMAX 100
 
 
 #define CRC_BIT_SIZE 16

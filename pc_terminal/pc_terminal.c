@@ -200,20 +200,23 @@ void kb_input_handler(unsigned char c)
 		type_tag = T_MODE;
 		pkt = Create_Packet(type_tag, 1, value_tag);
 
-		term_puts("changed mode to safe mode\n");
+		term_puts("Switching mode to safe mode\n");
 		break;
 
 	case ONE:
 		value_tag = (unsigned char *)malloc(sizeof(unsigned char) * 1);
 		*value_tag = M_PANIC;
 		type_tag = T_MODE;
+
 		pkt = Create_Packet(type_tag, 1, value_tag);
+		term_puts("Switching mode to panic mode\n");
 		break;
 
 	case TWO:
 		value_tag = (unsigned char *)malloc(sizeof(unsigned char) * 1);
 		*value_tag = M_MANUAL;
 		type_tag = T_MODE;
+		term_puts("Switching mode to manual mode\n");
 		pkt = Create_Packet(type_tag, 1, value_tag);
 		break;
 
@@ -335,21 +338,49 @@ void kb_input_handler(unsigned char c)
 
 		break;
 	case 'l':// P2 down
+		value_tag = (unsigned char *)malloc(sizeof(unsigned char) * 1);
+		*value_tag = C_P2DOWN;
+		type_tag = T_CONTROL;
+		pkt = Create_Packet(type_tag, 1, value_tag);
+		printf("P2 down\n");
+
+		break;
+
+		case 't':// P2 down
 		/*value_tag = (unsigned char *)malloc(sizeof(unsigned char) * 1);
 		*value_tag = C_P2DOWN;
 		type_tag = T_CONTROL;
 		pkt = Create_Packet(type_tag, 1, value_tag);
 		printf("P2 down\n");*/
 
-		value_tag = (unsigned char *)malloc(sizeof(unsigned char) * 3);
-		*value_tag = CJ_LIFT;
-		value_tag[1] = 0x7F;
-		value_tag[2] = 0xFF;
+		value_tag = (unsigned char *)malloc(sizeof(unsigned char) * 9);
+		*value_tag = C_JOYSTICK;
+		value_tag[1] = -100;
+		value_tag[2] = 12;
+		value_tag[3] = 80;
+		value_tag[4] = -52;
 		type_tag = T_CONTROL;
-		pkt = Create_Packet(type_tag, 3, value_tag);
-		printf("P2 down\n");
+		pkt = Create_Packet(type_tag, 5, value_tag);
+		printf("JS SIMULATION TESTING\n");
 		break;
 
+		case 'y':// P2 down
+		/*value_tag = (unsigned char *)malloc(sizeof(unsigned char) * 1);
+		*value_tag = C_P2DOWN;
+		type_tag = T_CONTROL;
+		pkt = Create_Packet(type_tag, 1, value_tag);
+		printf("P2 down\n");*/
+
+		value_tag = (unsigned char *)malloc(sizeof(unsigned char) * 9);
+		*value_tag = C_JOYSTICK;
+		value_tag[1] = 100;
+		value_tag[2] = -12;
+		value_tag[3] = -80;
+		value_tag[4] = 52;
+		type_tag = T_CONTROL;
+		pkt = Create_Packet(type_tag, 5, value_tag);
+		printf("JS SIMULATION TESTING\n");
+		break;
 	case 27:
 	printf("%i\n",c );
 		if ((c = term_getchar_nb()) != -1)

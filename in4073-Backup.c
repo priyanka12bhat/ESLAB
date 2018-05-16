@@ -16,24 +16,27 @@
 #include <stdlib.h>
 #include "in4073.h"
 #include "protocol/packet.h"
+//#include "control.c"
 
 
 //#include "keyboard.h"
 
-int mode = 0;
 unsigned char currentByte;
 unsigned char msgSize;
 unsigned char msgType;
-bool operation = 1;
+
 unsigned char *ptr;
 unsigned counter = 0;
 Packet *pkt_R=NULL;
 
 int maxMsgSize = 5;
 
+
+bool operation = 1;
+
 void DoAction();
-
-
+void process_packet(Packet *pkt_R);
+enum DroneState {Safe,Panic,Manual,Callibration, YawControlled, FullControl, RawMode, HeightControl,Wireless} droneState;
 
 typedef struct Node{
 	unsigned char data;
@@ -89,46 +92,23 @@ void addData(unsigned char *datas, unsigned char length)
 
 
 
-/*------------------------------------------------------------------
- * process_key -- process command keys
- *------------------------------------------------------------------
- */
-void process_packet(Packet *pkt_R)
-{
-	switch (pkt_R->type)
-	{
-		case T_MODE:
-			nrf_gpio_pin_toggle(YELLOW);
-			break;
-		case T_CONTROL:
-			nrf_gpio_pin_toggle(BLUE);
-			break;
-		default:
-			nrf_gpio_pin_toggle(RED);
-
-	}
-	//printf("FCB\n");
-
-	Destroy_Packet(pkt_R);
-}
 
 
 
 
 //Enums with all the possible states and events
 
-enum stateList	{checkStartByte, getMsgSize, checkMessageType,setupMsg, getMsg, checkCRC0, checkCRC1}	currentState, nextState;
+enum stateListR	{checkStartByte, getMsgSize, checkMessageType,setupMsg, getMsg, checkCRC0, checkCRC1}	currentStateR, nextState;
 
-enum eventList	{noEvent, byteReceived, error, timeout} currentEvent;
-
-
+enum eventListR	{noEvent, byteReceived, error, timeout} currentEvent;
+	
 //Event handling functions
 
-void changeEvent(enum eventList newEventType){
+void changeEvent(enum eventListR newEventType){
 	currentEvent = newEventType;
 }
 
-enum eventList getEvent(void){
+enum eventListR getEvent(void){
 	return currentEvent;
 }
 
@@ -175,7 +155,7 @@ void storeValues()
 
 
 void stateHandler(){
-	switch(currentState){
+	switch(currentStateR){
 		case checkStartByte:
 			if(currentByte != START_BYTE){
 
@@ -291,8 +271,170 @@ void stateHandler(){
 		break;		
 
 	}
-	currentState = nextState;
+	currentStateR = nextState;
 
+}
+
+
+
+void DroneStateHandler()
+{
+
+}
+
+
+/*------------------------------------------------------------------
+ * process_packet -- process command keys
+ *------------------------------------------------------------------
+ */
+void process_packet(Packet *pkt_R)
+{
+	if(droneState!=Panic){
+		switch (pkt_R->type)
+		{
+			case T_MODE:
+				nrf_gpio_pin_toggle(YELLOW);
+				switch(pkt_R->value[0])
+				{
+					case M_SAFE:
+						droneState = Safe;
+						ae[0] = 0;
+						ae[1] = 0;
+						ae[2] = 0;
+						ae[3] = 0;
+						
+					break;
+					case M_PANIC:
+						if(droneState==Safe)
+						{
+							operation=0;
+						}else
+						{
+						droneState = Panic;
+						//checkbarometer reading till reached safe limit
+
+						droneState = Safe;
+						}
+					break;
+					case M_MANUAL:
+						if(droneState==Safe){
+							droneState = Manual;
+						}
+
+					break;
+
+
+				}
+				break;
+			case T_CONTROL:
+				nrf_gpio_pin_toggle(BLUE);
+				if(droneState==Manual){					
+					nrf_gpio_pin_toggle(RED);
+					uint16_t value = 0; 
+					int16_t incrementK=10;
+					switch(pkt_R->value[0])
+					{
+						
+
+						case C_LIFTUP:
+							ae[0] += incrementK;
+							ae[1] += incrementK;
+							ae[2] += incrementK;
+							ae[3] += incrementK;
+						break;
+						case C_LIFTDOWN:
+							ae[0] = (ae[0]-incrementK)>=0?(ae[0]-incrementK):ae[0];
+							ae[1] = (ae[1]-incrementK)>=0?(ae[1]-incrementK):ae[1];
+							ae[2] = (ae[2]-incrementK)>=0?(ae[2]-incrementK):ae[2];
+							ae[3] = (ae[3]-incrementK)>=0?(ae[3]-incrementK):ae[3];
+						break;
+						case C_ROLLUP:
+							ae[1] = (ae[1]-incrementK)>=0?(ae[1]-incrementK):ae[1];
+							ae[3] += incrementK;
+						break;
+
+						case C_ROLLDOWN:
+							ae[3] = (ae[3]-incrementK)>=0?(ae[3]-incrementK):ae[3];
+							ae[1] += incrementK;
+						break;
+
+						case C_PITCHUP:
+							ae[0] = (ae[0]-incrementK)>=0?(ae[0]-incrementK):ae[0];
+							ae[2] += incrementK;
+						break;
+
+						case C_PITCHDOWN:
+							ae[2] = (ae[2]-incrementK)>=0?(ae[2]-incrementK):ae[2];
+							ae[0] += incrementK;
+						break;
+
+						case C_YAWUP:
+							ae[0] = (ae[0]-incrementK)>=0?(ae[0]-incrementK):ae[0];
+							ae[1] += incrementK;
+							ae[2] = (ae[2]-incrementK)>=0?(ae[2]-incrementK):ae[2];
+							ae[3] += incrementK;
+						break;
+
+						case C_YAWDOWN:
+							ae[0] += incrementK;
+							ae[1] = (ae[1]-incrementK)>=0?(ae[1]-incrementK):ae[1];
+							ae[2] += incrementK;
+							ae[3] = (ae[3]-incrementK)>=0?(ae[3]-incrementK):ae[3];
+						break;
+
+						case CJ_LIFT:
+
+							value= ((((int16_t)pkt_R->value[1])<<8) | ((int16_t)pkt_R->value[2]));
+							aej[0]= value*incrementK/65534;
+							aej[1]= value*incrementK/65534;
+							aej[2]= value*incrementK/65534;
+							aej[3]= value*incrementK/65534;
+							printf("%d\n",value);
+						break;
+
+						case CJ_ROLL:
+
+							value= ((((int16_t)pkt_R->value[1])<<8) | ((int16_t)pkt_R->value[2]));
+							aej[1]= value*incrementK/65534;
+							aej[3]= -1*value*incrementK/65534;
+							printf("%d\n",value);
+						break;
+
+						case CJ_PITCH:
+
+							value= ((((int16_t)pkt_R->value[1])<<8) | ((int16_t)pkt_R->value[2]));
+							aej[0]= value*incrementK/65534;
+							aej[2]= -1*value*incrementK/65534;
+							printf("%d\n",value);
+						break;
+
+						case CJ_YAW:
+
+							value= ((((int16_t)pkt_R->value[1])<<8) | ((int16_t)pkt_R->value[2]));
+							aej[1]= value*incrementK/65534;
+							aej[3]= value*incrementK/65534;
+							aej[0]= -1*value*incrementK/65534;
+							aej[2]= -1*value*incrementK/65534;
+							printf("%d\n",value);
+						break;
+
+
+
+
+				}
+				printf("%d,%d,%d,%d\n",ae[0]+aej[0],ae[1]+aej[1],ae[2]+aej[2],ae[3]+aej[3]);
+				//update_motors();
+			}
+				
+				break;
+			default:
+				nrf_gpio_pin_toggle(RED);
+
+		}
+	}
+	//printf("FCB\n");
+
+	Destroy_Packet(pkt_R);
 }
 
 
@@ -316,7 +458,8 @@ int main(void)
 	//ble_init();
 
 	demo_done = true;
-	currentState=checkStartByte;
+	currentStateR=checkStartByte;
+	droneState = Safe;
 
 
 	while(operation) {
@@ -330,10 +473,10 @@ int main(void)
 
 		if (checkCount()){  //continuously check for new elements in the UART queue
 			currentByte = readData();
-			//printf("State:%d\n",(int)currentState);
+			//printf("State:%d\n",(int)currentStateR);
 			//printf("FCB: %d\n",currentByte);
 			stateHandler();
-			//printf("State:%d\n",(int)currentState);
+			//printf("State:%d\n",(int)currentStateR);
 
 		}
 
