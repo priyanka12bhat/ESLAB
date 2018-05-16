@@ -3,7 +3,7 @@ Steps:
 	1. Initialize joystick and communication
 	2. Read inputs from joystick and keyboard
 	3. Create packet
-	4. Send packet (todo)
+	4. Send packet
 */
 #include <stdio.h>
 #include <termios.h>
@@ -87,13 +87,14 @@ int	term_getchar()
 #include <stdlib.h>
 #include "../protocol/packet.h"
 #include "keyboard.h"
+#include "joystick.h"
 
 int run = 1;
 unsigned char* value_tag = NULL;
 unsigned char type_tag = 0;
 Packet *pkt = NULL;
 
-
+uint32_t JSLastReadTimeStamp = 0;
 int serial_device = 0;
 int fd_RS232;
 
@@ -492,6 +493,185 @@ void Send_Packet(Packet *pkt)
 	free(packetByteStream);
 }
 
+/* Joystick Initialization
+*/
+void joystick_init(int *fd)
+{
+
+    if ((*fd = open(JS_DEV, O_RDONLY)) < 0)
+    {
+        perror("jstest");
+    }
+    // non-blocking mode
+    fcntl(*fd, F_SETFL, O_NONBLOCK);
+}
+
+
+/* time
+ */
+unsigned int    mon_time_ms(void)
+{
+        unsigned int    ms;
+        struct timeval  tv;
+        struct timezone tz;
+
+        gettimeofday(&tv, &tz);
+        ms = 1000 * (tv.tv_sec % 65); // 65 sec wrap around
+        ms = ms + tv.tv_usec / 1000;
+        return ms;
+}
+
+void    mon_delay_ms(unsigned int ms)
+{
+        struct timespec req, rem;
+
+        req.tv_sec = ms / 1000;
+        req.tv_nsec = 1000000 * (ms % 1000);
+        assert(nanosleep(&req,&rem) == 0);
+}
+
+
+/*
+	Description: 
+		Read inputs from joystick
+	Inputs:
+		* fd, axis, button
+	Outputs:
+		a js_command
+*/
+js_command *read_js(int* fd, int axis[], int button[])
+{
+	struct js_event js;
+	js_command *js_c;
+	/* check up on JS
+	*/
+	while (read(*fd, &js, sizeof(struct js_event)) ==
+		sizeof(struct js_event)) {
+
+		/* register data
+		*/
+		// fprintf(stderr,".");
+		switch (js.type & ~JS_EVENT_INIT) {
+		case JS_EVENT_BUTTON:
+			button[js.number] = js.value;
+			break;
+		case JS_EVENT_AXIS:
+			axis[js.number] = js.value;
+			break;
+		}
+	
+		if((js.time - JSLastReadTimeStamp) <JS_READ_GAP)
+		{
+			return NULL;
+		}
+		JSLastReadTimeStamp=js.time;
+	
+		js_c= (js_command *)malloc(sizeof(js_command));
+
+
+		if (errno != EAGAIN)
+		{
+			perror("\njs: error reading (EAGAIN)");
+			exit(1);
+		}
+
+		// Switch the mode
+		/*if (button[0])
+			js_c->Type = T_MODE;
+			js_c->Mode = M_SAFE;
+		if (button[1])
+			js_c->Type = T_MODE;
+			js_c->Mode = M_PANIC;
+		if (button[2])
+			js_c->Type = T_MODE;
+			js_c->Mode = M_MANUAL;
+		if (button[3])
+			js_c->Type = T_MODE;
+			js_c->Mode = M_CALIBRATION;
+		if (button[4])
+			js_c->Type = T_MODE;
+			js_c->Mode = M_YAWCONTROL;
+		if (button[5])
+			js_c->Type = T_MODE;
+			js_c->Mode = M_FULLCONTROL;
+		if (button[6])
+			js_c->Type = T_MODE;
+			js_c->Mode = M_RAWMODE;
+		if (button[7])
+			js_c->Type = T_MODE;
+			js_c->Mode = M_HEIGHTCONTROL;
+		if (button[8])
+			js_c->Type = T_MODE;
+			js_c->Mode = M_WIRELESS;*/						
+
+		// roll
+		if (axis[0])
+		{
+			js_c->Type = T_CONTROL;
+			js_c->Roll = axis[0];
+		}
+
+		// pitch
+		if (axis[1])
+		{
+			js_c->Type = T_CONTROL;
+			js_c->Pitch = axis[1];
+		}
+
+		// yaw
+		if (axis[2])
+		{
+			js_c->Type = T_CONTROL;
+			js_c->Yaw = axis[2];
+		}
+
+		// lift
+		if (axis[3])
+		{
+			js_c->Type = T_CONTROL;
+			js_c->Lift = axis[3];
+		}
+	}
+
+	return js_c;
+}
+
+
+void Create_jsPacket(js_command* js_comm)
+{
+
+	if(js_comm->Type == T_MODE)
+	{
+			
+		//value_tag = (unsigned char *)malloc(sizeof(unsigned char) * 1);
+		//*value_tag = js_comm->Mode;
+		//type_tag = T_MODE;
+
+		//pkt = Create_Packet(type_tag, 1, value_tag);
+	}
+	else
+	{
+		if(js_comm->Mode == T_CONTROL)
+		{
+			value_tag = (unsigned char *)malloc(sizeof(unsigned char) * 5);
+			*value_tag = C_JOYSTICK;
+
+			value_tag[1] = (char)((int32_t)js_comm->Roll*100/32767);
+			value_tag[2] = (char)((int32_t)js_comm->Pitch*100/32767);
+			value_tag[3] = (char)((int32_t)js_comm->Yaw*100/32767);
+			value_tag[4] = (char)((int32_t)js_comm->Lift*100/32767);			
+			type_tag = T_CONTROL;
+			pkt = Create_Packet(type_tag, 5, value_tag);	
+		}
+	}
+	free(js_comm);
+	js_comm = NULL;
+}
+
+
+
+
+
 
 /*----------------------------------------------------------------
  * main -- execute terminal
@@ -499,9 +679,15 @@ void Send_Packet(Packet *pkt)
  */
 int main(int argc, char **argv)
 {
+	int axis[6];
+	int button[12];
+	int fd = 0;
+
+	js_command *js_comm;
+		
 	/* communication initialization
 	*/
-	int	c = 0;
+	int c = 0;
 
 	term_puts("\nTerminal program - Embedded Real-Time Systems\n");
 
@@ -517,7 +703,7 @@ int main(int argc, char **argv)
 
 	/* joystick initialization
 	*/
-	//js_init(&fd);
+	//joystick_init(&fd);
 
 	/* send & receive
 	 */
@@ -525,9 +711,21 @@ int main(int argc, char **argv)
 	{
 		/* read joystick inputs
 		*/
-		//read_js(&fd, &axis, &button);
+		/*		
+		js_comm = read_js(&fd, axis, button);
+		if (js_comm != NULL){
 
-		/* read keyboard inputs
+			 Create_jsPacket(js_comm);
+		
+		
+			if (pkt != NULL)
+			{
+				//Send Packet bytes through RS232
+				Send_Packet(pkt);
+				Destroy_Packet(pkt);
+				pkt = NULL;
+			}
+		}
 		*/
 		if ((c = term_getchar_nb()) != -1)
 		{
@@ -551,14 +749,10 @@ int main(int argc, char **argv)
 
 		if((c = rs232_getchar_nb()) != -1)
 			term_putchar(c);
-		/* create packet and send packet to the board
-		*/
 
 	}
 	term_exitio();
 	rs232_close();
 	term_puts("\n<exit>\n");
-
 	return 0;
 }
-

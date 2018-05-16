@@ -29,8 +29,22 @@
  * Vojtech Pavlik, Ucitelska 1576, Prague 8, 182 00 Czech Republic
  */
 
+#include <sys/ioctl.h>
+#include <sys/time.h>
+#include <sys/types.h>
+#include <stdlib.h>
+#include <fcntl.h>
+#include <unistd.h>
+#include <stdio.h>
+#include <errno.h>
+#include <string.h>
+
 #include <asm/types.h>
 #include <linux/input.h>
+#include <time.h>
+#include <assert.h>
+
+#include "../protocol/packet.h"
 
 /*
  * Version
@@ -128,7 +142,18 @@ struct JS_DATA_SAVE_TYPE {
 	struct JS_DATA_TYPE JS_CORR;
 };
 
-void js_init(int* fd);
-void read_js(int* fd, int* axis, int* button);
+typedef struct JS_COMMAND
+{
+	unsigned char Type;
+	unsigned char Mode;
+	int16_t Roll;
+	int16_t Pitch;
+	int16_t Yaw;
+	int16_t Lift;
+}js_command;
+
+
+#define JS_READ_GAP 5
+
 
 #endif /* _LINUX_JOYSTICK_H */
