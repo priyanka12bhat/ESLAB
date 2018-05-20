@@ -317,6 +317,7 @@ void process_packet(Packet *pkt_R)
 					case M_SAFE:
 
 						EnterSafeMode();
+						update_motors();
 					break;
 					case M_PANIC:
 						printf("Mode Switched to Panic mode\n");
@@ -343,7 +344,7 @@ void process_packet(Packet *pkt_R)
 					int16_t JSPitch = 0;
 					int16_t JSLift = 0;
 
-					int16_t incrementK=10;
+					int16_t incrementK=50;
 					switch(pkt_R->value[0])
 					{
 						
@@ -489,6 +490,7 @@ int main(void)
 	currentStateR=checkStartByte;
 	droneState = Safe;
 	uint32_t us_TimeStamp = 0;
+	int readCounter = 10;
 
 	while(operation) {
 
@@ -509,6 +511,23 @@ int main(void)
 		}
 
 		nrf_delay_ms(1);
+
+		
+		if (readCounter == 10){
+			adc_request_sample();
+			
+			readCounter = 0;
+		}
+		//printf("%4d\n",bat_volt);
+		readCounter++;
+
+		if(bat_volt <= 1050 && bat_volt>0 )
+		{	
+			droneState = Panic;
+		}
+
+		
+
 
 		/*if (checkCount()){  //continuously check for new elements in the UART queue
 			currentByte = readData();
@@ -548,6 +567,8 @@ int main(void)
 				EnterSafeMode();
 
 			}
+
+			update_motors();
 		}
 
 		}

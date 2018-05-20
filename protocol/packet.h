@@ -8,6 +8,7 @@
 #define T_CONTROL 2
 #define T_DATA 3
 #define T_CONFIG 4
+#define T_EXIT 5
 
 //Mode Types
 #define M_SAFE 1

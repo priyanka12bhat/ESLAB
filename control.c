@@ -14,7 +14,7 @@
 
 void update_motors(void)
 {					
-	int aeMax=500;
+	int aeMax=400;
 	motor[0] = (ae[0]+aej[0])<aeMax?(ae[0]+aej[0]):motor[0];
 	motor[1] = (ae[1]+aej[1])<aeMax?(ae[1]+aej[1]):motor[1];
 	motor[2] = (ae[2]+aej[2])<aeMax?(ae[2]+aej[2]):motor[2];
