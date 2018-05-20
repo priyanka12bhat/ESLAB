@@ -42,7 +42,10 @@ unsigned char *Get_CRCValue(Packet *pkt)
 
 void Destroy_Packet(Packet *pkt)
 {
-	free(pkt->value);
+	if(pkt->value!=NULL)
+		{
+			free(pkt->value);
+		}
 	free(pkt->CRC);
 	free(pkt);
 }

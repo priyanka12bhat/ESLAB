@@ -93,6 +93,7 @@ int run = 1;
 unsigned char* value_tag = NULL;
 unsigned char type_tag = 0;
 Packet *pkt = NULL;
+Packet *pkt_K = NULL;
 
 uint32_t JSLastReadTimeStamp = 0;
 int serial_device = 0;
@@ -189,6 +190,9 @@ void ExitSafe(void)
 {
 	//implement 
 	run = 0;
+
+
+	
 }
 
 void kb_input_handler(unsigned char c)
@@ -421,9 +425,10 @@ void kb_input_handler(unsigned char c)
 			default:
 				printf("Exiting....\n");
 				value_tag = (unsigned char *)malloc(sizeof(unsigned char) * 1);
-				*value_tag = M_PANIC;
-				type_tag = T_MODE;
+				*value_tag = M_SAFE;
+				type_tag = T_EXIT;
 				pkt = Create_Packet(type_tag, 1, value_tag);
+
 				ExitSafe();
 				break;
 
@@ -501,9 +506,30 @@ void joystick_init(int *fd)
     if ((*fd = open(JS_DEV, O_RDONLY)) < 0)
     {
         perror("jstest");
+        exit(1);
     }
+
+    	unsigned char axes = 2;
+
+    unsigned char buttons = 2;
+	int version = 0x000800;
+	char name[NAME_LENGTH] = "Unknown";
+
+    ioctl(*fd, JSIOCGVERSION, &version);
+	ioctl(*fd, JSIOCGAXES, &axes);
+	ioctl(*fd, JSIOCGBUTTONS, &buttons);
+	ioctl(*fd, JSIOCGNAME(NAME_LENGTH), name);
+
+	printf("Joystick (%s) has %d axes and %d buttons. Driver version is %d.%d.%d.\n",
+		name, axes, buttons, version >> 16, (version >> 8) & 0xff, version & 0xff);
+	printf("Testing ... (interrupt to exit)\n");
+
+
     // non-blocking mode
     fcntl(*fd, F_SETFL, O_NONBLOCK);
+
+
+
 }
 
 
@@ -542,24 +568,35 @@ void    mon_delay_ms(unsigned int ms)
 js_command *read_js(int* fd, int axis[], int button[])
 {
 	struct js_event js;
-	js_command *js_c;
+	js_command *js_c = NULL;
 	/* check up on JS
+
 	*/
-	while (read(*fd, &js, sizeof(struct js_event)) ==
-		sizeof(struct js_event)) {
+
+
+	while (read(*fd, &js, sizeof(struct js_event)) == sizeof(struct js_event)) {
+
+
+		//printf("%d\n",js.time);
+		//printf("%d\n",js.value);
+		//printf("%d\n",js.type);
+		//printf("%d\n",js.number);
 
 		/* register data
 		*/
 		// fprintf(stderr,".");
 		switch (js.type & ~JS_EVENT_INIT) {
+
 		case JS_EVENT_BUTTON:
+			//printf("%d\n",js.value);
 			button[js.number] = js.value;
 			break;
 		case JS_EVENT_AXIS:
+			//printf("%d\n",js.value);
 			axis[js.number] = js.value;
 			break;
 		}
-	
+		//printf("%d\n",js.time);
 		if((js.time - JSLastReadTimeStamp) <JS_READ_GAP)
 		{
 			return NULL;
@@ -568,12 +605,6 @@ js_command *read_js(int* fd, int axis[], int button[])
 	
 		js_c= (js_command *)malloc(sizeof(js_command));
 
-
-		if (errno != EAGAIN)
-		{
-			perror("\njs: error reading (EAGAIN)");
-			exit(1);
-		}
 
 		// Switch the mode
 		/*if (button[0])
@@ -605,7 +636,7 @@ js_command *read_js(int* fd, int axis[], int button[])
 			js_c->Mode = M_WIRELESS;*/						
 
 		// roll
-		if (axis[0])
+		/*if (axis[0])
 		{
 			js_c->Type = T_CONTROL;
 			js_c->Roll = axis[0];
@@ -630,8 +661,30 @@ js_command *read_js(int* fd, int axis[], int button[])
 		{
 			js_c->Type = T_CONTROL;
 			js_c->Lift = axis[3];
-		}
+		}*/
+
+
+		js_c->Type = T_CONTROL;
+		js_c->Roll = axis[0];
+		js_c->Pitch = axis[1];
+		js_c->Yaw = axis[2];
+		js_c->Lift = axis[3];
+
+		//printf("%d\n",js_c->Type);
+		//printf("%d\n",js_c->Roll);
+		//printf("%d\n",js_c->Pitch);
+		//printf("%d\n",js_c->Yaw);	
+		//printf("%d\n",js_c->Lift);
+
+
 	}
+
+	if ((errno != EAGAIN) && (errno != 0 ))
+		{
+			//printf("abcd%d\n",errno);
+			perror("\njs: error reading (EAGAIN)");
+			exit(1);
+		}
 
 	return js_c;
 }
@@ -639,6 +692,12 @@ js_command *read_js(int* fd, int axis[], int button[])
 
 void Create_jsPacket(js_command* js_comm)
 {
+
+	printf("%d\n",js_comm->Type);
+	printf("%d\n",js_comm->Roll);
+	printf("%d\n",js_comm->Pitch);
+	printf("%d\n",js_comm->Yaw);	
+	printf("%d\n",js_comm->Lift);
 
 	if(js_comm->Type == T_MODE)
 	{
@@ -651,7 +710,7 @@ void Create_jsPacket(js_command* js_comm)
 	}
 	else
 	{
-		if(js_comm->Mode == T_CONTROL)
+		if(js_comm->Type == T_CONTROL)
 		{
 			value_tag = (unsigned char *)malloc(sizeof(unsigned char) * 5);
 			*value_tag = C_JOYSTICK;
@@ -659,7 +718,7 @@ void Create_jsPacket(js_command* js_comm)
 			value_tag[1] = (char)((int32_t)js_comm->Roll*100/32767);
 			value_tag[2] = (char)((int32_t)js_comm->Pitch*100/32767);
 			value_tag[3] = (char)((int32_t)js_comm->Yaw*100/32767);
-			value_tag[4] = (char)((int32_t)js_comm->Lift*100/32767);			
+			value_tag[4] = (char)((int32_t)js_comm->Lift*-100/32767);			
 			type_tag = T_CONTROL;
 			pkt = Create_Packet(type_tag, 5, value_tag);	
 		}
@@ -683,6 +742,11 @@ int main(int argc, char **argv)
 	int button[12];
 	int fd = 0;
 
+
+
+
+
+
 	js_command *js_comm;
 		
 	/* communication initialization
@@ -703,7 +767,7 @@ int main(int argc, char **argv)
 
 	/* joystick initialization
 	*/
-	//joystick_init(&fd);
+	joystick_init(&fd);
 
 	/* send & receive
 	 */
@@ -711,22 +775,25 @@ int main(int argc, char **argv)
 	{
 		/* read joystick inputs
 		*/
-		/*		
 		js_comm = read_js(&fd, axis, button);
 		if (js_comm != NULL){
+			//printf("js_comm not null\n");
 
 			 Create_jsPacket(js_comm);
-		
+			 //printf("packet created\n");
 		
 			if (pkt != NULL)
 			{
+				//printf("pkt not null\n");
 				//Send Packet bytes through RS232
 				Send_Packet(pkt);
+				//printf("pkt send\n");
 				Destroy_Packet(pkt);
+				//printf("pkt destroyed\n");
 				pkt = NULL;
 			}
 		}
-		*/
+		
 		if ((c = term_getchar_nb()) != -1)
 		{
 			//rs232_putchar(c);
@@ -751,8 +818,26 @@ int main(int argc, char **argv)
 			term_putchar(c);
 
 	}
+
+
+	for (;;)
+	{
+
+		if ((c = rs232_getchar_nb()) != -1)
+			term_putchar(c);
+		if(c==27)
+		{
+			break;
+		}
+
+	}
+	term_puts("\nFCB Exited\n");
+
+
+
 	term_exitio();
 	rs232_close();
-	term_puts("\n<exit>\n");
+
+	term_puts("Exiting Host Program\n");
 	return 0;
 }
