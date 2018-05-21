@@ -603,9 +603,9 @@ js_command *read_js(int* fd, int axis[], int button[])
 			return NULL;
 		}
 		JSLastReadTimeStamp=js.time;
-	
-		js_c= (js_command *)malloc(sizeof(js_command));
 		*/
+		js_c= (js_command *)malloc(sizeof(js_command));
+
 
 		// Switch the mode
 		/*if (button[0])
