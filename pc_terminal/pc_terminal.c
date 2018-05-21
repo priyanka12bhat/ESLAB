@@ -597,6 +597,7 @@ js_command *read_js(int* fd, int axis[], int button[])
 			break;
 		}
 		//printf("%d\n",js.time);
+		/*
 		if((js.time - JSLastReadTimeStamp) <JS_READ_GAP)
 		{
 			return NULL;
@@ -604,7 +605,7 @@ js_command *read_js(int* fd, int axis[], int button[])
 		JSLastReadTimeStamp=js.time;
 	
 		js_c= (js_command *)malloc(sizeof(js_command));
-
+		*/
 
 		// Switch the mode
 		/*if (button[0])
@@ -741,11 +742,8 @@ int main(int argc, char **argv)
 	int axis[6];
 	int button[12];
 	int fd = 0;
-
-
-
-
-
+	unsigned int start = 0;
+	unsigned int end = 0;
 
 	js_command *js_comm;
 		
@@ -776,7 +774,8 @@ int main(int argc, char **argv)
 		/* read joystick inputs
 		*/
 		js_comm = read_js(&fd, axis, button);
-		if (js_comm != NULL){
+		end = mon_time_ms();
+		if ((js_comm != NULL) && (end - start > JS_READ_GAP)){
 			//printf("js_comm not null\n");
 
 			 Create_jsPacket(js_comm);
@@ -792,6 +791,7 @@ int main(int argc, char **argv)
 				//printf("pkt destroyed\n");
 				pkt = NULL;
 			}
+			start = mon_time_ms();
 		}
 		
 		if ((c = term_getchar_nb()) != -1)
