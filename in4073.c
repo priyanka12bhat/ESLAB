@@ -461,10 +461,12 @@ void process_packet(Packet *pkt_R)
 	}
 	//printf("FCB\n");
 	flash_write_byte(0x000000+flashCounter,(uint8_t) pkt_R->startByte);
-	flash_write_byte(0x000001+flashCounter,(uint8_t) pkt_R->packetLength);
-	flash_write_byte(0x000002+flashCounter,(uint8_t) pkt_R->dataLength);
+	//flash_write_byte(0x000001+flashCounter,(uint8_t) pkt_R->packetLength);
+	//flash_write_byte(0x000002+flashCounter,(uint8_t) pkt_R->dataLength);
 	flash_write_byte(0x000003+flashCounter,(uint8_t) pkt_R->type);
-	flash_write_byte(0x000004+flashCounter,(uint8_t)* pkt_R->value);
+	for (int i = 0; i<pkt_R->packetLength - 1; i++){	
+		flash_write_byte(0x000004+flashCounter,(uint8_t) pkt_R->value[i]);
+	}
 	flash_write_byte(0x000005+flashCounter,(uint8_t) pkt_R->valueLength);
 	flash_write_byte(0x000006+flashCounter,(uint8_t) pkt_R->CRC[0]); 
 	flash_write_byte(0x000007+flashCounter,(uint8_t) pkt_R->CRC[1]); 
