@@ -30,6 +30,7 @@ unsigned counter = 0;
 Packet *pkt_R=NULL;
 
 int maxMsgSize = 12;
+int flashCounter = 0x000000;
 
 void update_motors(void);
 
@@ -459,8 +460,16 @@ void process_packet(Packet *pkt_R)
 		}
 	}
 	//printf("FCB\n");
-
+	flash_write_byte(0x000000+flashCounter,(uint8_t) pkt_R->startByte);
+	flash_write_byte(0x000001+flashCounter,(uint8_t) pkt_R->packetLength);
+	flash_write_byte(0x000002+flashCounter,(uint8_t) pkt_R->dataLength);
+	flash_write_byte(0x000003+flashCounter,(uint8_t) pkt_R->type);
+	flash_write_byte(0x000004+flashCounter,(uint8_t)* pkt_R->value);
+	flash_write_byte(0x000005+flashCounter,(uint8_t) pkt_R->valueLength);
+	flash_write_byte(0x000006+flashCounter,(uint8_t) pkt_R->CRC[0]); 
+	flash_write_byte(0x000007+flashCounter,(uint8_t) pkt_R->CRC[1]); 
 	Destroy_Packet(pkt_R);
+	flashCounter=flashCounter+8;
 }
 
 
