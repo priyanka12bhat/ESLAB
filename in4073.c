@@ -28,6 +28,7 @@ unsigned char msgType;
 unsigned char *ptr;
 unsigned counter = 0;
 Packet *pkt_R=NULL;
+uint8_t *flashBuffer;
 
 int maxMsgSize = 12;
 int flashCounter = 0x000000;
@@ -572,6 +573,10 @@ int main(void)
 
 			printf("Motor[0]:%d,Motor[1]:%d,Motor[2]:%d,Motor[3]:%d\n",ae[0]+aej[0],ae[1]+aej[1],ae[2]+aej[2],ae[3]+aej[3]);
 			us_TimeStamp = us_currentTime;
+			flash_read_bytes(0x000000, flashBuffer, 8*(flashCounter+1));
+			for (int i = 0; i < 8*(flashCounter+1); i++){
+				printf("%c\n",*flashBuffer+i);
+}
 			if(ae[0]<=10 && ae[1]<=10 && ae[2]<=10 && ae[3]<=10)
 			{
 				
