@@ -757,6 +757,15 @@ int main(int argc, char **argv)
 	rs232_open();
 
 	term_puts("Type ^C to exit\n");
+	
+	//init logging
+	FILE *f = fopen("file.txt", "w");
+	if (f == NULL)
+	{
+		printf("Error opening file!\n");
+		exit(1);
+	}
+
 
 	/* discard any incoming text
 	*/
@@ -786,6 +795,15 @@ int main(int argc, char **argv)
 				//printf("pkt not null\n");
 				//Send Packet bytes through RS232
 				Send_Packet(pkt);
+				fprintf("Message received. Start byte:%d\n", pkt_R->startByte);
+				fprintf("Type:%d\n", pkt_R->type);
+				fprintf("Datalength:%d\n", pkt_R->packetLength);
+				
+				for (int i = 0; i < pkt_R->packetLength - 1; i++){
+				fprintf("Value:%d\n", (pkt_R->value[i]));}
+				fprintf("CRC0:%d\n", (pkt_R->CRC[0]));
+				fprintf("CRC1:%d\n", pkt_R->CRC[1]);
+				
 				//printf("pkt send\n");
 				Destroy_Packet(pkt);
 				//printf("pkt destroyed\n");
