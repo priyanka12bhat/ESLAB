@@ -20,7 +20,7 @@
 //#include "control.c"
 
 #define B_DASH 1
-#define D_DASH 1
+#define D_DASH 4
 
 
 #define MAX_SPEED 400
@@ -520,10 +520,10 @@ void process_packet(Packet *pkt_R)
 
 						case C_JOYSTICK:
 
-						JS_L = ((int32_t)INC_L)*((int8_t)pkt_R->value[1])/JSSCALEMAX;
-						JS_M = ((int32_t)INC_M)*((int8_t)pkt_R->value[2])/JSSCALEMAX;
-						JS_N = ((int32_t)INC_N)*((int8_t)pkt_R->value[3])/JSSCALEMAX;
-						JS_Z = ((int32_t)INC_Z)*((int8_t)pkt_R->value[4])/JSSCALEMAX;
+						JS_L = ((int32_t)MAX_L)*((int8_t)pkt_R->value[1])/JSSCALEMAX;
+						JS_M = ((int32_t)MAX_M)*((int8_t)pkt_R->value[2])/JSSCALEMAX;
+						JS_N = ((int32_t)MAX_N)*((int8_t)pkt_R->value[3])/JSSCALEMAX;
+						JS_Z = ((int32_t)MAX_Z)*(JSSCALEMAX+(int8_t)pkt_R->value[4])/JSSCALEMAX;
 						printf("JS_R:%ld|",JS_L);
 						printf("JS_P:%ld|",JS_M);
 						printf("JS_Y:%ld|",JS_N);
@@ -543,6 +543,24 @@ void process_packet(Packet *pkt_R)
 				if(droneState==YawControlled)
 				{	
 					switch(pkt_R->value[0]){
+
+						case C_LIFTUP:
+
+							if((Z+INC_Z)<=MAX_Z){
+								Z+=INC_Z;
+							}						
+
+							
+						break;
+						case C_LIFTDOWN:
+							if(Z>=INC_Z)
+							{
+								Z-=INC_Z;
+							}
+								
+
+						break;
+
 						case C_YAWUP:
 
 							yawSetPoint_K+=10;
@@ -555,20 +573,23 @@ void process_packet(Packet *pkt_R)
 
 						case C_JOYSTICK:
 							yawSetPoint_J = ((int8_t)pkt_R->value[3])*10/JSSCALEMAX;
+							JS_Z = ((int32_t)INC_Z)*2*((int8_t)pkt_R->value[4])/JSSCALEMAX;
 
 						break;
 
 						case C_PUP:
-							P+=100;
+							P+=10;
 						break;
 						case C_PDOWN:
-							if(P-100>=100){
-								P-=100;
+							if(P-10>=10){
+								P-=10;
 							}
 						break;
 
+
 						
 					}
+					printf("P:%d\n",P);
 					yawSetPoint = yawSetPoint_K + yawSetPoint_J;
 
 
@@ -646,6 +667,10 @@ int main(void)
 
 			if(currentTime>lastPacketTime?currentTime-lastPacketTime>DISCONNECTED_GAP_US: (UINT32_MAX-lastPacketTime+currentTime)>DISCONNECTED_GAP_US)
 			{
+							nrf_gpio_pin_set(RED);
+					nrf_gpio_pin_set(BLUE);
+					nrf_gpio_pin_set(GREEN);
+				
 				
 				if(!ExitFlag)
 					{
@@ -654,9 +679,9 @@ int main(void)
 					if(droneState!=Safe){
 					droneState=Panic;
 					printf("Disconnected\n");
-					nrf_gpio_pin_set(RED);
-					nrf_gpio_pin_set(BLUE);
-					nrf_gpio_pin_set(GREEN);
+				//	nrf_gpio_pin_set(RED);
+				//	nrf_gpio_pin_set(BLUE);
+				//	nrf_gpio_pin_set(GREEN);
 				}
 
 			}
@@ -669,7 +694,8 @@ int main(void)
 
 		if(bat_volt <= 1050 && bat_volt>0 )
 		{	
-			//droneState = Panic;
+			droneState = Panic;
+			printf("BAT VOLT:%d\n",bat_volt);
 		}
 
 		
@@ -795,7 +821,7 @@ void SetMotorValues_Manual()
 	int32_t z = (Z+JS_Z)*1/B_DASH;
 	int32_t l = (L+JS_L)*1/B_DASH;
 	int32_t m = (M+JS_M)*1/B_DASH;
-	int32_t n = (N+JS_N)*1/D_DASH;
+	int32_t n = (N+JS_N)*1*D_DASH;
 	int32_t ae0_2 = (m-(n>>1)+(z>>1))>>1;
 	int32_t ae1_2 = ((n>>1)-l+(z>>1))>>1;
 	int32_t ae2_2 = ((z>>1)-(n>>1)-m)>>1;
