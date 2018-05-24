@@ -10,6 +10,7 @@ Steps:
 #include <unistd.h>
 #include <string.h>
 #include <inttypes.h>
+#include <limits.h>
 
 
 //#include "joystick.h"
@@ -96,6 +97,7 @@ Packet *pkt = NULL;
 Packet *pkt_K = NULL;
 
 uint32_t JSLastReadTimeStamp = 0;
+int CheckJSReadGap(unsigned int lastSendTime);
 int serial_device = 0;
 int fd_RS232;
 
@@ -128,7 +130,7 @@ void rs232_open(void)
 	cfsetispeed(&tty, B115200);
 
 	tty.c_cc[VMIN]  = 0;
-	tty.c_cc[VTIME] = 1; // added timeout
+	tty.c_cc[VTIME] = 0; // added timeout
 
 	tty.c_iflag &= ~(IXON|IXOFF|IXANY);
 
@@ -221,22 +223,27 @@ void kb_input_handler(unsigned char c)
 		value_tag = (unsigned char *)malloc(sizeof(unsigned char) * 1);
 		*value_tag = M_MANUAL;
 		type_tag = T_MODE;
-		term_puts("Switching mode to manual mode\n");
+		
 		pkt = Create_Packet(type_tag, 1, value_tag);
+		term_puts("Switching mode to manual mode\n");
 		break;
 
 	case THREE:
 		value_tag = (unsigned char *)malloc(sizeof(unsigned char) * 1);
 		*value_tag = M_CALIBRATION;
 		type_tag = T_MODE;
+
 		pkt = Create_Packet(type_tag, 1, value_tag);
+		term_puts("Requesting calibration mode\n");
 		break;
 
 	case FOUR:
+		
 		value_tag = (unsigned char *)malloc(sizeof(unsigned char) * 1);
 		*value_tag = M_YAWCONTROL;
 		type_tag = T_MODE;
 		pkt = Create_Packet(type_tag, 1, value_tag);
+		term_puts("Switching to Yaw Conrolled mode\n");
 		break;
 
 	case FIVE:
@@ -522,7 +529,7 @@ void joystick_init(int *fd)
 
 	printf("Joystick (%s) has %d axes and %d buttons. Driver version is %d.%d.%d.\n",
 		name, axes, buttons, version >> 16, (version >> 8) & 0xff, version & 0xff);
-	printf("Testing ... (interrupt to exit)\n");
+	
 
 
     // non-blocking mode
@@ -565,15 +572,12 @@ void    mon_delay_ms(unsigned int ms)
 	Outputs:
 		a js_command
 */
-js_command *read_js(int* fd, int axis[], int button[])
+
+
+
+void read_values(int* fd, int axis[], int button[])
 {
 	struct js_event js;
-	js_command *js_c = NULL;
-	/* check up on JS
-
-	*/
-
-
 	while (read(*fd, &js, sizeof(struct js_event)) == sizeof(struct js_event)) {
 
 
@@ -596,6 +600,18 @@ js_command *read_js(int* fd, int axis[], int button[])
 			axis[js.number] = js.value;
 			break;
 		}
+	}
+}
+
+js_command *read_js(int* fd, int axis[], int button[])
+{
+	js_command *js_c = NULL;
+	/* check up on JS
+
+	*/
+
+
+		read_values(fd,axis,button);
 		//printf("%d\n",js.time);
 		/*
 		if((js.time - JSLastReadTimeStamp) <JS_READ_GAP)
@@ -604,7 +620,7 @@ js_command *read_js(int* fd, int axis[], int button[])
 		}
 		JSLastReadTimeStamp=js.time;
 		*/
-		js_c= (js_command *)malloc(sizeof(js_command));
+		
 
 
 		// Switch the mode
@@ -664,7 +680,8 @@ js_command *read_js(int* fd, int axis[], int button[])
 			js_c->Lift = axis[3];
 		}*/
 
-
+	
+		js_c= (js_command *)malloc(sizeof(js_command));
 		js_c->Type = T_CONTROL;
 		js_c->Roll = axis[0];
 		js_c->Pitch = axis[1];
@@ -678,7 +695,7 @@ js_command *read_js(int* fd, int axis[], int button[])
 		//printf("%d\n",js_c->Lift);
 
 
-	}
+	
 
 	if ((errno != EAGAIN) && (errno != 0 ))
 		{
@@ -690,15 +707,29 @@ js_command *read_js(int* fd, int axis[], int button[])
 	return js_c;
 }
 
+void js_safety_check(int* fd, int axis[], int button[])
+{
+	for(int i = 0;i<20;i++)
+	{
+		read_values(fd,axis,button);
+	}
+	
+	if((axis[0]!=0 )|(axis[1]!=0)|(axis[2]!=0)|(axis[3]!=0))
+	{
+		printf("Place jostick in neutral position and Try Again\n");
+	}
+	exit(0);
+}
+
 
 void Create_jsPacket(js_command* js_comm)
 {
 
-	printf("%d\n",js_comm->Type);
-	printf("%d\n",js_comm->Roll);
-	printf("%d\n",js_comm->Pitch);
-	printf("%d\n",js_comm->Yaw);	
-	printf("%d\n",js_comm->Lift);
+	//printf("%d\n",js_comm->Type);
+	//printf("%d\n",js_comm->Roll);
+	//printf("%d\n",js_comm->Pitch);
+	//printf("%d\n",js_comm->Yaw);	
+	//printf("%d\n",js_comm->Lift);
 
 	if(js_comm->Type == T_MODE)
 	{
@@ -724,8 +755,6 @@ void Create_jsPacket(js_command* js_comm)
 			pkt = Create_Packet(type_tag, 5, value_tag);	
 		}
 	}
-	free(js_comm);
-	js_comm = NULL;
 }
 
 
@@ -742,8 +771,7 @@ int main(int argc, char **argv)
 	int axis[6];
 	int button[12];
 	int fd = 0;
-	unsigned int start = 0;
-	unsigned int end = 0;
+	unsigned int lastJSSendTime = 0;
 
 	js_command *js_comm;
 		
@@ -757,15 +785,6 @@ int main(int argc, char **argv)
 	rs232_open();
 
 	term_puts("Type ^C to exit\n");
-	
-	//init logging
-	FILE *f = fopen("file.txt", "w");
-	if (f == NULL)
-	{
-		printf("Error opening file!\n");
-		exit(1);
-	}
-
 
 	/* discard any incoming text
 	*/
@@ -776,42 +795,42 @@ int main(int argc, char **argv)
 	*/
 	joystick_init(&fd);
 
+	//js_safety_check(&fd,axis,button);
+
 	/* send & receive
 	 */
 	while (run)
 	{
 		/* read joystick inputs
 		*/
+		//printf("T1:%d\n",mon_time_ms());
 		js_comm = read_js(&fd, axis, button);
-		end = mon_time_ms();
-		if ((js_comm != NULL) && (end - start > JS_READ_GAP)){
+		
+		
+		
+		if (js_comm != NULL) {
+			if(CheckJSReadGap(lastJSSendTime)){
 			//printf("js_comm not null\n");
 
-			 Create_jsPacket(js_comm);
-			 //printf("packet created\n");
-		
-			if (pkt != NULL)
-			{
-				//printf("pkt not null\n");
-				//Send Packet bytes through RS232
-				Send_Packet(pkt);
-				fprintf("Message received. Start byte:%d\n", pkt_R->startByte);
-				fprintf("Type:%d\n", pkt_R->type);
-				fprintf("Datalength:%d\n", pkt_R->packetLength);
-				
-				for (int i = 0; i < pkt_R->packetLength - 1; i++){
-				fprintf("Value:%d\n", (pkt_R->value[i]));}
-				fprintf("CRC0:%d\n", (pkt_R->CRC[0]));
-				fprintf("CRC1:%d\n", pkt_R->CRC[1]);
-				
-				//printf("pkt send\n");
-				Destroy_Packet(pkt);
-				//printf("pkt destroyed\n");
-				pkt = NULL;
+				 Create_jsPacket(js_comm);
+				 //printf("packet created\n");
+			
+				if (pkt != NULL)
+				{
+					//printf("pkt not null\n");
+					//Send Packet bytes through RS232
+					Send_Packet(pkt);
+					//printf("pkt send\n");
+					Destroy_Packet(pkt);
+					//printf("pkt destroyed\n");
+					pkt = NULL;
+				}
+				lastJSSendTime = mon_time_ms();
+				//printf("%d\n",lastJSSendTime);
 			}
-			start = mon_time_ms();
+			free(js_comm);
 		}
-		
+		//printf("T2:%d\n",mon_time_ms());
 		if ((c = term_getchar_nb()) != -1)
 		{
 			//rs232_putchar(c);
@@ -821,7 +840,7 @@ int main(int argc, char **argv)
 				//Send Packet bytes through RS232
 				Send_Packet(pkt);
 				/*printf("Testing- Type:%d\n", pkt->type);
-				printf("Testing- startbyte:%d\n", pkt->startByte);
+				printf("Testing- lastJSSendTimebyte:%d\n", pkt->lastJSSendTimeByte);
 				printf("Testing- datalength:%d\n", pkt->dataLength);
 				printf("Testing- value length:%d\n", pkt->valueLength);
 				printf("Testing- value:%d\n", *(pkt->value));
@@ -831,9 +850,12 @@ int main(int argc, char **argv)
 				pkt = NULL;
 			}
 		}
+		//printf("T3:%d\n",mon_time_ms());
 
 		if((c = rs232_getchar_nb()) != -1)
 			term_putchar(c);
+
+		//printf("T4:%d\n",mon_time_ms());
 
 	}
 
@@ -858,4 +880,13 @@ int main(int argc, char **argv)
 
 	term_puts("Exiting Host Program\n");
 	return 0;
+}
+
+int CheckJSReadGap(unsigned int lastSendTime)
+{
+	unsigned int currentTime = mon_time_ms();
+
+	return (currentTime==lastSendTime)?0:((currentTime>lastSendTime)?((currentTime - lastSendTime) >= JS_READ_GAP):((UINT_MAX-lastSendTime+currentTime)>=JS_READ_GAP));
+
+
 }

@@ -52,6 +52,9 @@
 
 #define CRC_BIT_SIZE 16
 
+#define JS_READ_GAP 40
+#define DISCONNECTED_GAP_US JS_READ_GAP*1000*10
+
 typedef struct packet
 {
 	unsigned char startByte;

@@ -153,7 +153,6 @@ typedef struct JS_COMMAND
 }js_command;
 
 
-#define JS_READ_GAP 4
 
 
 #endif /* _LINUX_JOYSTICK_H */
