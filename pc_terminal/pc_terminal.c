@@ -95,7 +95,8 @@ unsigned char* value_tag = NULL;
 unsigned char type_tag = 0;
 Packet *pkt = NULL;
 Packet *pkt_K = NULL;
-
+int axis[6];
+	int button[12];
 uint32_t JSLastReadTimeStamp = 0;
 int CheckJSReadGap(unsigned int lastSendTime);
 int serial_device = 0;
@@ -224,8 +225,15 @@ void kb_input_handler(unsigned char c)
 		*value_tag = M_MANUAL;
 		type_tag = T_MODE;
 		
+		if((axis[0]==0) && (axis[1]==0) && (axis[2]==0) &&(axis[3]==32767) ){
 		pkt = Create_Packet(type_tag, 1, value_tag);
+
 		term_puts("Switching mode to manual mode\n");
+		}
+		else
+		{
+			term_puts("Zero Joystick\n");
+		}
 		break;
 
 	case THREE:
@@ -688,6 +696,11 @@ js_command *read_js(int* fd, int axis[], int button[])
 		js_c->Yaw = axis[2];
 		js_c->Lift = axis[3];
 
+
+		if (button[0]){
+			js_c->Type = T_EXIT;
+			js_c->Mode = M_SAFE;
+		}
 		//printf("%d\n",js_c->Type);
 		//printf("%d\n",js_c->Roll);
 		//printf("%d\n",js_c->Pitch);
@@ -731,14 +744,16 @@ void Create_jsPacket(js_command* js_comm)
 	//printf("%d\n",js_comm->Yaw);	
 	//printf("%d\n",js_comm->Lift);
 
-	if(js_comm->Type == T_MODE)
+	if(js_comm->Type == T_EXIT)
 	{
 			
-		//value_tag = (unsigned char *)malloc(sizeof(unsigned char) * 1);
-		//*value_tag = js_comm->Mode;
-		//type_tag = T_MODE;
+				printf("Exiting....\n");
+				value_tag = (unsigned char *)malloc(sizeof(unsigned char) * 1);
+				*value_tag = M_SAFE;
+				type_tag = T_EXIT;
+				pkt = Create_Packet(type_tag, 1, value_tag);
 
-		//pkt = Create_Packet(type_tag, 1, value_tag);
+				ExitSafe();
 	}
 	else
 	{
@@ -768,8 +783,7 @@ void Create_jsPacket(js_command* js_comm)
  */
 int main(int argc, char **argv)
 {
-	int axis[6];
-	int button[12];
+	
 	int fd = 0;
 	unsigned int lastJSSendTime = 0;
 

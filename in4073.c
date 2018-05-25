@@ -523,7 +523,7 @@ void process_packet(Packet *pkt_R)
 						JS_L = ((int32_t)MAX_L)*((int8_t)pkt_R->value[1])/JSSCALEMAX;
 						JS_M = ((int32_t)MAX_M)*((int8_t)pkt_R->value[2])/JSSCALEMAX;
 						JS_N = ((int32_t)MAX_N)*((int8_t)pkt_R->value[3])/JSSCALEMAX;
-						JS_Z = ((int32_t)MAX_Z)*(JSSCALEMAX+(int8_t)pkt_R->value[4])/JSSCALEMAX;
+						JS_Z = ((int32_t)MAX_Z)*(JSSCALEMAX+(int8_t)pkt_R->value[4])/JSSCALEMAX/2;
 						printf("JS_R:%ld|",JS_L);
 						printf("JS_P:%ld|",JS_M);
 						printf("JS_Y:%ld|",JS_N);
@@ -818,6 +818,7 @@ void DoAction(){}
 
 void SetMotorValues_Manual()
 {
+
 	int32_t z = (Z+JS_Z)*1/B_DASH;
 	int32_t l = (L+JS_L)*1/B_DASH;
 	int32_t m = (M+JS_M)*1/B_DASH;
@@ -830,6 +831,23 @@ void SetMotorValues_Manual()
 	ae[1]=(uint16_t)sqrt(ae1_2<0?0:ae1_2);
 	ae[2]=(uint16_t)sqrt(ae2_2<0?0:ae2_2);
 	ae[3]=(uint16_t)sqrt(ae3_2<0?0:ae3_2);
+
+	if(Z+JS_Z==0)
+	{
+		L=0;
+		M=0;
+		N=0;
+		ae[0]=0;
+		ae[1]=0;
+		ae[2]=0;
+		ae[3]=0;
+	}
+	else{
+	ae[0]=ae[0]<200?200:ae[0];
+	ae[1]=ae[1]<200?200:ae[1];
+	ae[2]=ae[2]<200?200:ae[2];
+	ae[3]=ae[3]<200?200:ae[3];
+	}
 
 }
 
