@@ -39,10 +39,11 @@ remduplicates = $(strip $(if $1,$(firstword $1) $(call remduplicates,$(filter-ou
 C_SOURCE_FILES += \
 $(abspath ../components/toolchain/system_nrf51.c) \
 $(abspath ../components/drivers_nrf/delay/nrf_delay.c) \
-$(abspath ./in4073.c) \
-$(abspath ./control.c) \
 $(abspath ./protocol/crc16.c) \
 $(abspath ./protocol/packet.c) \
+$(abspath ./protocol/receivepacket.c) \
+$(abspath ./in4073.c) \
+$(abspath ./control.c) \
 $(abspath ./drivers/gpio.c) \
 $(abspath ./drivers/timers.c) \
 $(abspath ./drivers/uart.c) \

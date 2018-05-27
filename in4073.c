@@ -17,13 +17,15 @@
 #include "in4073.h"
 #include "protocol/packet.h"
 #include "math.h"
-//#include "control.c"
+#include "protocol/receivepacket.h"
+
 
 #define B_DASH 1
 #define D_DASH 4
 
 
 #define MAX_SPEED 400
+#define MIN_SPEED_ONFLY 200
 #define SPEED_SCALE 1
 #define MAX_SPEED_SCALED MAX_SPEED/SPEED_SCALE
 
@@ -43,9 +45,8 @@
 //#include "keyboard.h"
 //General
 void update_motors(void);
-bool operation = 1;
 bool ExitFlag = 0;
-void DoAction();
+
 enum DroneState {Safe,Panic,Manual,Callibration, YawControlled, FullControl, RawMode, HeightControl,Wireless,Exiting} droneState;
 void GetMotorValues();
 void SetMotorValues_Manual();
@@ -57,9 +58,6 @@ int16_t phi_offset=0, theta_offset=0, psi_offset=0;
 int16_t sp_offset=0, sq_offset=0, sr_offset=0;
 int16_t sax_offset=0, say_offset=0, saz_offset=0;
 
-
-//Manual Mode
-int16_t aek[4];
 
 //Yaw Controlled Mode
 int16_t yawSetPoint =0;
@@ -79,251 +77,34 @@ int32_t JS_L = 0;
 int32_t JS_M = 0;
 int32_t JS_Z = 0;
 
-//Packet Reception
-unsigned char currentByte;
-unsigned char msgSize;
-unsigned char msgType;
-unsigned char *ptr;
-unsigned counter = 0;
-Packet *pkt_R=NULL;
-int maxMsgSize = 12;
-uint32_t lastPacketTime = 0;
+//Sending
+Packet *pkt_S=NULL;
 
+
+//Functions for Package Reception
 void process_packet(Packet *pkt_R);
-
-
-typedef struct Node{
-	unsigned char data;
-	struct Node *next;
-}node;
-
-node *InputDataBuffer = NULL;
-
-
-node *addNode(node* firstNode, unsigned char newData){
-	node *temp;
-	temp = (node *)malloc(sizeof(node));
-	temp->data = newData;
-	if (firstNode != NULL){
-		temp->next = firstNode;
-	}else {
-		temp->next = NULL;
-	}
-	return temp;
-}
-
-
-unsigned char readData()
+char getElementFromInputQueue()
 {
-	if(InputDataBuffer==NULL)
-		return dequeue(&rx_queue);
-	else
-	{
-
-		unsigned char dataToReturn = InputDataBuffer->data;
-		node *temp = InputDataBuffer->next;
-		free(InputDataBuffer);
-		InputDataBuffer = temp;
-		return dataToReturn;
-
-	}
-
-
+	return dequeue(&rx_queue);
 }
 
-uint16_t checkCount()
+uint16_t getInputQueueCount()
 {
-	return InputDataBuffer!=NULL?1:rx_queue.count;
-}
-
-void addData(unsigned char *datas, unsigned char length)
-{
-	for(int i =length-1;i>=0;i--)
-	{
-		InputDataBuffer = addNode(InputDataBuffer, datas[i]);
-	}
-
+	return rx_queue.count;
 }
 
 
-//Enums with all the possible states and events
+uint32_t lastPacketTime = 0;
+uint32_t PacketReceptionStartTime = 0;
+uint32_t PacketCount = 0;
 
-enum stateListR	{checkStartByte, getMsgSize, checkMessageType,setupMsg, getMsg, checkCRC0, checkCRC1}	currentStateR, nextState;
-
-enum eventListR	{noEvent, byteReceived, error, timeout} currentEvent;
-	
-//Event handling functions
-
-void changeEvent(enum eventListR newEventType){
-	currentEvent = newEventType;
-}
-
-enum eventListR getEvent(void){
-	return currentEvent;
-}
-
-void clearEvents(void){
-	currentEvent = noEvent;
-}
-
-void SearchforStartByte(unsigned char CRCPos)
-{
-	unsigned char *serialPacket = Get_Byte_Stream(pkt_R);
-	unsigned char byteLength=pkt_R->packetLength-(1-CRCPos);
-
-	for(int i =1;i<byteLength;i++)
-	{
-		if(serialPacket[i]==START_BYTE)
-		{
-			addData(&serialPacket[i],byteLength-i);
-			break;
-		}
-	}
-	Destroy_Packet(pkt_R);
-	free(serialPacket);
-	nextState=checkStartByte;
-}
-
-
-void storeValues()
-{
-			ptr[counter] = currentByte;
-
-
-			counter++;
-			if (counter >= msgSize-1) {
-				nextState = checkCRC0;
-			} else {
-				nextState = getMsg;
-			}
-
-}
 /*------------------------------------------------------------------
  * State Machine 
  *------------------------------------------------------------------
  */
 
 
-void stateHandler(){
-	switch(currentStateR){
-		case checkStartByte:
-			if(currentByte != START_BYTE){
 
-
-				nextState = checkStartByte;
-			}else{
-				nextState = getMsgSize;
-			}
-			break;
-		case getMsgSize:
-			
-			msgSize = currentByte;
-			nextState = checkMessageType;
-			if(msgSize>maxMsgSize)
-			{
-				if(currentByte==START_BYTE)
-				{
-					nextState=getMsgSize;
-				}
-				else
-				{
-				nextState=checkStartByte;
-				}
-
-			}
-
-
-			break;
-		case checkMessageType:
-			if((currentByte==T_MODE) || (currentByte==T_CONTROL) || (currentByte==T_DATA)||(currentByte==T_EXIT))
-			{
-				msgType = currentByte;
-				nextState = setupMsg;
-				counter = 0;
-
-			}
-			else
-			{
-				if(msgSize==START_BYTE)
-				{
-					msgSize=currentByte;
-					nextState = checkMessageType;
-				}
-				else if(currentByte==START_BYTE)
-				{
-					nextState=getMsgSize;
-				}else
-				{
-
-					nextState=checkStartByte;
-				}
-
-			}
-
-			break;
-
-		case setupMsg:
-
-			if(ptr!=NULL)
-			{
-				free(ptr);
-			}
-
-			ptr = (unsigned char *)malloc(sizeof(unsigned char)*(msgSize-1));
-
-			storeValues();
-
-		break;
-
-		case getMsg:
-
-			storeValues();
-
-			break;
-		case checkCRC0:
-			counter=0;
-
-			pkt_R = Create_Packet(msgType,msgSize-1, ptr);
-
-				//printf("TestingF- Type:%d\n", pkt_R->type);
-				//printf("TestingF- startbyte:%d\n", pkt_R->startByte);
-				//printf("TestingF- datalength:%d\n", pkt_R->dataLength);
-				//printf("TestingF- value length:%d\n", pkt_R->valueLength);
-				//printf("TestingF- value:%d\n", *(pkt_R->value));
-				//printf("TestingF- CRC0:%d\n", *(pkt_R->CRC));
-				//printf("TestingF- CRC1:%d\n", pkt_R->CRC[1]);
-
-
-			if(pkt_R->CRC[0]==(unsigned char)currentByte){
-				nextState = checkCRC1;
-			}
-			else
-			{
-				pkt_R->CRC[0]=currentByte;
-				SearchforStartByte(0);
-			}
-
-
-			break;
-		case checkCRC1:
-
-			if(pkt_R->CRC[1]==currentByte){
-				nextState=checkStartByte;
-				DoAction(); //todo
-				process_packet(pkt_R);
-
-			}
-			else{
-				pkt_R->CRC[1]=currentByte;
-				SearchforStartByte(1);
-			}
-
-		break;		
-
-	}
-	currentStateR = nextState;
-
-}
 
 
 
@@ -340,11 +121,6 @@ void EnterSafeMode()
 	ae[1] = 0;
 	ae[2] = 0;
 	ae[3] = 0;
-	aej[0] = 0;
-	aej[1] = 0;
-	aej[2] = 0;
-	aej[3] = 0;
-
 
 }
 
@@ -356,6 +132,11 @@ void EnterSafeMode()
 void process_packet(Packet *pkt_R)
 {
 	lastPacketTime = get_time_us();
+	//printf("RT:%ld\n",lastPacketTime-PacketReceptionStartTime);
+	//PacketReceptionStartTime = 0;
+
+	PacketCount++;
+	printf("PacketRece:%ld\n",PacketCount);
 	if(droneState!=Panic){
 		switch (pkt_R->type)
 		{
@@ -368,7 +149,7 @@ void process_packet(Packet *pkt_R)
 							}
 						else 
 							{
-								operation=0;
+								demo_done=0;
 							}
 						
 						
@@ -600,12 +381,12 @@ void process_packet(Packet *pkt_R)
 				break;
 			default:
 				nrf_gpio_pin_toggle(RED);
+				break;
 
 		}
 	}
 	//printf("FCB\n");
 
-	Destroy_Packet(pkt_R);
 }
 
 
@@ -617,6 +398,8 @@ void process_packet(Packet *pkt_R)
  */
 int main(void)
 {
+	
+
 	uart_init();
 	gpio_init();
 	timers_init();
@@ -625,8 +408,7 @@ int main(void)
 	imu_init(true, 100);	
 	baro_init();
 	spi_flash_init();
-
-
+	Reception_Init(MAX_MSG_SIZE);
 	//ble_init();
 
 
@@ -635,10 +417,10 @@ int main(void)
 	currentStateR=checkStartByte;
 	droneState = Safe;
 	uint32_t us_TimeStamp = 0;
-	int readCounter = 10;
+	int readCounter = 100;
 
-	while(operation) {
-
+	while(demo_done) {
+		//uint32_t LoopTime =  get_time_us();
 
 		/*if (rx_queue.count) {process_Test( dequeue(&rx_queue) );
 			printf("T\n");
@@ -647,7 +429,9 @@ int main(void)
 		}*/
 
 		if (checkCount()){  //continuously check for new elements in the UART queue
-			currentByte = readData();
+			if(PacketReceptionStartTime==0)
+				PacketReceptionStartTime = get_time_us();
+			readData();
 			//printf("State:%d\n",(int)currentStateR);
 			//printf("FCB: %d\n",currentByte);
 			stateHandler();
@@ -655,48 +439,9 @@ int main(void)
 
 		}
 
-		nrf_delay_ms(1);
+		//nrf_delay_ms(1);
 
 		
-		if (readCounter == 10){
-			adc_request_sample();
-
-			readCounter = 0;
-			uint32_t currentTime = get_time_us();
-			//printf("%ld\n",currentTime);
-
-			if(currentTime>lastPacketTime?currentTime-lastPacketTime>DISCONNECTED_GAP_US: (UINT32_MAX-lastPacketTime+currentTime)>DISCONNECTED_GAP_US)
-			{
-							nrf_gpio_pin_set(RED);
-					nrf_gpio_pin_set(BLUE);
-					nrf_gpio_pin_set(GREEN);
-				
-				
-				if(!ExitFlag)
-					{
-				
-				//printf("%ld\n",currentTime);
-					if(droneState!=Safe){
-					droneState=Panic;
-					printf("Disconnected\n");
-				//	nrf_gpio_pin_set(RED);
-				//	nrf_gpio_pin_set(BLUE);
-				//	nrf_gpio_pin_set(GREEN);
-				}
-
-			}
-					
-
-			}
-			}
-			//printf("%4d\n",bat_volt);
-		readCounter++;
-
-		if(bat_volt <= 1050 && bat_volt>0 )
-		{	
-			droneState = Panic;
-			printf("BAT VOLT:%d\n",bat_volt);
-		}
 
 		
 
@@ -714,10 +459,10 @@ int main(void)
 			{
 			get_dmp_data();		
 			N = P* (yawSetPoint - sr + sr_offset);
-			printf("Z:%ld|L:%ld|M:%ld|N:%ld|",Z,L,M,N);
+			//printf("Z:%ld|L:%ld|M:%ld|N:%ld|",Z,L,M,N);
 			GetMotorValues();
 			update_motors();
-			printf("Motor[0]:%d,Motor[1]:%d,Motor[2]:%d,Motor[3]:%d\n",ae[0],ae[1],ae[2],ae[3]);
+			//printf("Motor[0]:%d,Motor[1]:%d,Motor[2]:%d,Motor[3]:%d\n",ae[0],ae[1],ae[2],ae[3]);
 			}
 
 
@@ -761,7 +506,7 @@ int main(void)
 					}
 				else
 				{
-					operation = 0;
+					demo_done = 0;
 				}
 
 
@@ -769,6 +514,60 @@ int main(void)
 
 			update_motors();
 			}
+		}
+		//printf("LoopTime:%ld\n",get_time_us()-LoopTime);
+
+
+		if (readCounter%10 == 0){
+			adc_request_sample();
+
+			uint32_t currentTime = get_time_us();
+			//printf("%ld\n",currentTime);
+
+			if(currentTime>lastPacketTime?currentTime-lastPacketTime>DISCONNECTED_GAP_US: (UINT32_MAX-lastPacketTime+currentTime)>DISCONNECTED_GAP_US)
+			{
+							nrf_gpio_pin_set(RED);
+					nrf_gpio_pin_set(BLUE);
+					nrf_gpio_pin_set(GREEN);
+				
+				
+				if(!ExitFlag){
+				
+				//printf("%ld\n",currentTime);
+					if(droneState!=Safe){
+					droneState=Panic;
+					printf("Disconnected\n");
+				//	nrf_gpio_pin_set(RED);
+				//	nrf_gpio_pin_set(BLUE);
+				//	nrf_gpio_pin_set(GREEN);
+					}
+
+				}
+					
+
+			}
+		}
+
+		if(readCounter%99==0)
+		{
+			readCounter=0;
+			Packet *pkt_S = Create_Telemetery_Packet(bat_volt, ae, phi, theta, psi, sp, sq, sr);
+			unsigned char *dataToSend = Get_Byte_Stream(pkt_S);
+			for(int i =0;i<pkt_S->packetLength;i++)
+			{
+				printf("%c",dataToSend[i]);
+			}
+		}
+
+
+
+			//printf("%4d\n",bat_volt);
+		readCounter++;
+
+		if(bat_volt <= 1050 && bat_volt>0 )
+		{	
+			//droneState = Panic;
+			//printf("BAT VOLT:%d\n",bat_volt);
 		}
 
 		
@@ -779,61 +578,18 @@ int main(void)
 
 	printf("%c%c%c%c%c\n",junk,junk,junk,junk,junk);
 
-	/*while (!demo_done)
-	{
-		if (rx_queue.count) process_key( dequeue(&rx_queue) );
-
-		if (check_timer_flag()) 
-		{
-			if (counter++%20 == 0) nrf_gpio_pin_toggle(BLUE);
-
-			adc_request_sample();
-			read_baro();
-
-			printf("%10ld | ", get_time_us());
-			printf("%3d %3d %3d %3d | ",ae[0],ae[1],ae[2],ae[3]);
-			printf("%6d %6d %6d | ", phi, theta, psi);
-			printf("%6d %6d %6d | ", sp, sq, sr);
-			printf("%4d | %4ld | %6ld \n", bat_volt, temperature, pressure);
-
-			clear_timer_flag();
-		}
-
-		if (check_sensor_int_flag()) 
-		{
-			get_dmp_data();
-			run_filters_and_control();
-		}\
-	}*/	
-
-	//printf("\n\t Goodbye \n\n");
 	nrf_delay_ms(100);
 
 	NVIC_SystemReset();
 
 }
 
-void DoAction(){}
-
-
 void SetMotorValues_Manual()
 {
 
-	int32_t z = (Z+JS_Z)*1/B_DASH;
-	int32_t l = (L+JS_L)*1/B_DASH;
-	int32_t m = (M+JS_M)*1/B_DASH;
-	int32_t n = (N+JS_N)*1*D_DASH;
-	int32_t ae0_2 = (m-(n>>1)+(z>>1))>>1;
-	int32_t ae1_2 = ((n>>1)-l+(z>>1))>>1;
-	int32_t ae2_2 = ((z>>1)-(n>>1)-m)>>1;
-	int32_t ae3_2 = (l+(n>>1)+(z>>1))>>1;
-	ae[0]=(uint16_t)sqrt(ae0_2<0?0:ae0_2);
-	ae[1]=(uint16_t)sqrt(ae1_2<0?0:ae1_2);
-	ae[2]=(uint16_t)sqrt(ae2_2<0?0:ae2_2);
-	ae[3]=(uint16_t)sqrt(ae3_2<0?0:ae3_2);
-
 	if(Z+JS_Z==0)
 	{
+		//setting mottor values to zero in case of zero lift
 		L=0;
 		M=0;
 		N=0;
@@ -843,10 +599,41 @@ void SetMotorValues_Manual()
 		ae[3]=0;
 	}
 	else{
-	ae[0]=ae[0]<200?200:ae[0];
-	ae[1]=ae[1]<200?200:ae[1];
-	ae[2]=ae[2]<200?200:ae[2];
-	ae[3]=ae[3]<200?200:ae[3];
+
+	/*
+	Solving System of Equation
+
+	Z=B_DASH(ae0^2+ae1^2+ae2^2+ae3^2)
+	L=B_DASH(ae0^2-ae2^2)
+	L=B_DASH(ae1^2-ae3^2)
+	N*D_DASH=(ae0^2-ae1^2+ae2^2-ae3^2)
+	*/
+	int32_t z = (Z+JS_Z)/B_DASH;
+	int32_t l = (L+JS_L)/B_DASH;
+	int32_t m = (M+JS_M)/B_DASH;
+	int32_t n = (N+JS_N)*D_DASH;
+
+	int32_t ae0_2 = (m-(n>>1)+(z>>1))>>1;
+	int32_t ae1_2 = ((n>>1)-l+(z>>1))>>1;
+	int32_t ae2_2 = ((z>>1)-(n>>1)-m)>>1;
+	int32_t ae3_2 = (l+(n>>1)+(z>>1))>>1;
+
+	//For negative values, seting minimum as zero
+	ae[0]=(uint16_t)sqrt(ae0_2<0?0:ae0_2);
+	ae[1]=(uint16_t)sqrt(ae1_2<0?0:ae1_2);
+	ae[2]=(uint16_t)sqrt(ae2_2<0?0:ae2_2);
+	ae[3]=(uint16_t)sqrt(ae3_2<0?0:ae3_2);
+
+	//Calculating the speed for current lift applied alone
+	uint16_t minSpeed = (uint16_t)sqrt(z>>2);
+	//Ensuring lift wont go below MIN_SPEED_ONFLY limit, for YAWING, ROLLING, PITCHING with higher lifts
+	minSpeed = (minSpeed<MIN_SPEED_ONFLY)?minSpeed:MIN_SPEED_ONFLY;
+
+	//Confirm Motor Values considering all limits
+	ae[0]=(ae[0]<MIN_SPEED_ONFLY)?minSpeed:ae[0];
+	ae[1]=(ae[1]<MIN_SPEED_ONFLY)?minSpeed:ae[1];
+	ae[2]=(ae[2]<MIN_SPEED_ONFLY)?minSpeed:ae[2];
+	ae[3]=(ae[3]<MIN_SPEED_ONFLY)?minSpeed:ae[3];
 	}
 
 }
