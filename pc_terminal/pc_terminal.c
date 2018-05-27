@@ -19,13 +19,13 @@ uint32_t packetCount=0;
  * console I/O
  *------------------------------------------------------------
  */
-struct termios 	savettyT;
+struct termios 	savetty;
 
 void	term_initio()
 {
 	struct termios tty;
 
-	tcgetattr(0, &savettyT);
+	tcgetattr(0, &savetty);
 	tcgetattr(0, &tty);
 
 	tty.c_lflag &= ~(ECHO|ECHONL|ICANON|IEXTEN);
@@ -37,7 +37,7 @@ void	term_initio()
 
 void	term_exitio()
 {
-	tcsetattr(0, TCSADRAIN, &savettyT);
+	tcsetattr(0, TCSADRAIN, &savetty);
 }
 
 void	term_puts(char *s)
@@ -107,7 +107,7 @@ uint32_t JSLastReadTimeStamp = 0;
 int CheckJSReadGap(unsigned int lastSendTime);
 int serial_device = 0;
 int fd_RS232;
-int c = 0;
+
 char msgToPrint[512];
 void storeUIMessage(const char msg[]);
 
@@ -767,7 +767,7 @@ void Create_jsPacket(js_command* js_comm)
 	{
 		if(js_comm->Type == T_CONTROL)
 		{
-			
+
 			unsigned char value_tag[5];
 			*value_tag = C_JOYSTICK;
 
@@ -794,6 +794,7 @@ int main(int argc, char **argv)
 {
 	
 	int fd = 0;
+	int c = 0;
 	unsigned int lastJSSendTime = 0;
 
 	js_command *js_comm;
@@ -895,7 +896,7 @@ int main(int argc, char **argv)
 	}
 
 
-	for (;;)
+	/*for (;;)
 	{
 
 		if ((c = rs232_getchar_nb()) != -1)
@@ -905,7 +906,8 @@ int main(int argc, char **argv)
 			break;
 		}
 
-	}
+	}*/
+
 	storeUIMessage("\nFCB Exited\n");
 
 
@@ -929,12 +931,21 @@ int CheckJSReadGap(unsigned int lastSendTime)
 char getElementFromInputQueue()
 {
 	//term_putchar(c);
-	return c;
+	return 0;
 }
 
 uint16_t getInputQueueCount()
 {
-	return ((c = rs232_getchar_nb()) != -1);
+	int c;
+	if(((c = rs232_getchar_nb()) != -1))
+	{
+
+
+		addNode(c);
+		return 1;
+
+	}
+	return 0;
 }
 
 
