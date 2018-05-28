@@ -1,6 +1,8 @@
 #ifndef packet__
 #define packet__
 
+#include <stdint.h>
+
 #define START_BYTE 255
 
 //Tag Names
@@ -51,6 +53,13 @@
 
 
 #define CRC_BIT_SIZE 16
+#define CRC_BYTE_SIZE CRC_BIT_SIZE/8
+
+#define MAX_MSG_SIZE 8
+#define P_SIZE MAX_MSG_SIZE
+#define LP_SIZE MAX_MSG_SIZE*3
+#define JS_READ_GAP 40
+#define DISCONNECTED_GAP_US JS_READ_GAP*1000*50
 
 typedef struct packet
 {
@@ -58,15 +67,19 @@ typedef struct packet
 	unsigned char packetLength;
 	unsigned char dataLength;
 	unsigned char type;
-	unsigned char *value;
+	unsigned char value[LP_SIZE];
 	unsigned char valueLength;
-	unsigned char *CRC;
+	unsigned char CRC[CRC_BYTE_SIZE];
 }Packet;
 
 unsigned char Get_DataLength(unsigned char length);
-unsigned char *Get_CRCValue(Packet *pkt);
+//unsigned char *Get_CRCValue(Packet *pkt);
 unsigned char *Get_Byte_Stream(Packet *pkt);
 Packet *Create_Packet(unsigned char type,unsigned char length, unsigned char *value);
 void Destroy_Packet(Packet *pkt);
+void Set_CRCValue(Packet *pkt);
+
+Packet *Create_Telemetery_Packet(uint16_t bat_volt, int16_t *MotorValues, int16_t phi, int16_t theta, int16_t psi, int16_t sp, int16_t sq, int16_t sr);
+
 
 #endif

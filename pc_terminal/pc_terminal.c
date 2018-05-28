@@ -10,11 +10,11 @@ Steps:
 #include <unistd.h>
 #include <string.h>
 #include <inttypes.h>
-
+#include <limits.h>
 
 //#include "joystick.h"
 
-
+uint32_t packetCount=0;
 /*------------------------------------------------------------
  * console I/O
  *------------------------------------------------------------
@@ -88,16 +88,29 @@ int	term_getchar()
 #include "../protocol/packet.h"
 #include "keyboard.h"
 #include "joystick.h"
+#include "../protocol/receivepacket.h"
 
+#define update() printf("\033[H\033[J")
+#define gotoxy(x, y) printf("\033[%d;%dH", x, y)
 int run = 1;
-unsigned char* value_tag = NULL;
+//unsigned char* value_tag = NULL;
+//unsigned char longValueArray[10];
+//unsigned char shortValueArray[1];
+
 unsigned char type_tag = 0;
 Packet *pkt = NULL;
 Packet *pkt_K = NULL;
+int axis[6];
+int button[12];
 
 uint32_t JSLastReadTimeStamp = 0;
+int CheckJSReadGap(unsigned int lastSendTime);
 int serial_device = 0;
 int fd_RS232;
+
+char msgToPrint[512];
+void storeUIMessage(const char msg[]);
+
 
 void rs232_open(void)
 {
@@ -128,7 +141,7 @@ void rs232_open(void)
 	cfsetispeed(&tty, B115200);
 
 	tty.c_cc[VMIN]  = 0;
-	tty.c_cc[VTIME] = 1; // added timeout
+	tty.c_cc[VTIME] = 0; // added timeout
 
 	tty.c_iflag &= ~(IXON|IXOFF|IXANY);
 
@@ -197,71 +210,86 @@ void ExitSafe(void)
 
 void kb_input_handler(unsigned char c)
 {
+	unsigned char value_tag[1];
 	switch (c)
 	{
 	case ZERO:
-		value_tag = (unsigned char *)malloc(sizeof(unsigned char) * 1);
+		
+
 		*value_tag = M_SAFE;
 		type_tag = T_MODE;
 		pkt = Create_Packet(type_tag, 1, value_tag);
 
-		term_puts("Switching mode to safe mode\n");
+		storeUIMessage("Switching mode to safe mode\n");
 		break;
 
 	case ONE:
-		value_tag = (unsigned char *)malloc(sizeof(unsigned char) * 1);
+		
 		*value_tag = M_PANIC;
 		type_tag = T_MODE;
 
 		pkt = Create_Packet(type_tag, 1, value_tag);
-		term_puts("Switching mode to panic mode\n");
+		storeUIMessage("Switching mode to panic mode\n");
 		break;
 
 	case TWO:
-		value_tag = (unsigned char *)malloc(sizeof(unsigned char) * 1);
+		
 		*value_tag = M_MANUAL;
 		type_tag = T_MODE;
-		term_puts("Switching mode to manual mode\n");
+		
+		if(((axis[0]==0) && (axis[1]==0) && (axis[2]==0) &&(axis[3]==32767)) || 1 ){
 		pkt = Create_Packet(type_tag, 1, value_tag);
+
+		storeUIMessage("Switching mode to manual mode\n");
+		}
+		else
+		{
+			storeUIMessage("Zero Joystick\n");
+			//free(value_tag);
+		}
 		break;
 
 	case THREE:
-		value_tag = (unsigned char *)malloc(sizeof(unsigned char) * 1);
+		
 		*value_tag = M_CALIBRATION;
 		type_tag = T_MODE;
+
 		pkt = Create_Packet(type_tag, 1, value_tag);
+		storeUIMessage("Requesting calibration mode\n");
 		break;
 
 	case FOUR:
-		value_tag = (unsigned char *)malloc(sizeof(unsigned char) * 1);
+		
+		
 		*value_tag = M_YAWCONTROL;
 		type_tag = T_MODE;
 		pkt = Create_Packet(type_tag, 1, value_tag);
+		storeUIMessage("Switching to Yaw Conrolled mode\n");
 		break;
 
 	case FIVE:
-		value_tag = (unsigned char *)malloc(sizeof(unsigned char) * 1);
+		
 		*value_tag = M_FULLCONTROL;
 		type_tag = T_MODE;
 		pkt = Create_Packet(type_tag, 1, value_tag);
 		break;
 
 	case SIX:
-		value_tag = (unsigned char *)malloc(sizeof(unsigned char) * 1);
+		
 		*value_tag = M_RAWMODE;
 		type_tag = T_MODE;
 		pkt = Create_Packet(type_tag, 1, value_tag);
 		break;
 
 	case SEVEN:
-		value_tag = (unsigned char *)malloc(sizeof(unsigned char) * 1);
+		
 		*value_tag = M_HEIGHTCONTROL;
 		type_tag = T_MODE;
 		pkt = Create_Packet(type_tag, 1, value_tag);
 		break;
 
 	case EIGHT:
-		value_tag = (unsigned char *)malloc(sizeof(unsigned char) * 1);
+		
 		*value_tag = M_WIRELESS;
 		type_tag = T_MODE;
 		pkt = Create_Packet(type_tag, 1, value_tag);
@@ -269,96 +297,95 @@ void kb_input_handler(unsigned char c)
 
 	case 'a'://lift up
 			 //Create Packet Tag:Control+Value
-		value_tag = (unsigned char *)malloc(sizeof(unsigned char) * 1);
+		
 		*value_tag = C_LIFTUP;
 		type_tag = T_CONTROL;
 		pkt = Create_Packet(type_tag, 1, value_tag);
-		printf("lift up\n");
+		storeUIMessage("lift up\n");
 		break;
 
 	case 'z'://lift down
-		value_tag = (unsigned char *)malloc(sizeof(unsigned char) * 1);
+		
 		*value_tag = C_LIFTDOWN;
 		type_tag = T_CONTROL;
 		pkt = Create_Packet(type_tag, 1, value_tag);
-		printf("lift down\n");
+		storeUIMessage("lift down\n");
 
 		break;
 	case 'q'://Yaw down
-		value_tag = (unsigned char *)malloc(sizeof(unsigned char) * 1);
+		
 		*value_tag = C_YAWDOWN;
 		type_tag = T_CONTROL;
 		pkt = Create_Packet(type_tag, 1, value_tag);
-		printf("Yaw down\n");
+		storeUIMessage("Yaw down\n");
 
 		break;
 	case 'w'://Yaw up
-		value_tag = (unsigned char *)malloc(sizeof(unsigned char) * 1);
+		
 		*value_tag = C_YAWUP;
 		type_tag = T_CONTROL;
 		pkt = Create_Packet(type_tag, 1, value_tag);
-		printf("Yaw up\n");
+		storeUIMessage("Yaw up\n");
 
 		break;
 
 	case 'u'://Yaw control P up
 
-		value_tag = (unsigned char *)malloc(sizeof(unsigned char) * 1);
+		
 		*value_tag = C_PUP;
 		type_tag = T_CONTROL;
 		pkt = Create_Packet(type_tag, 1, value_tag);
-		printf("Yaw control P up\n");
+		storeUIMessage("Yaw control P up\n");
 
 		break;
 
 	case 'j'://Yaw control P down
-		value_tag = (unsigned char *)malloc(sizeof(unsigned char) * 1);
+		
 		*value_tag = C_PDOWN;
 		type_tag = T_CONTROL;
 		pkt = Create_Packet(type_tag, 1, value_tag);
-		printf("Yaw control P down\n");
+		storeUIMessage("Yaw control P down\n");
 		break;
 
 	case 'i':// P1 up
-		value_tag = (unsigned char *)malloc(sizeof(unsigned char) * 1);
+		
 		*value_tag = C_P1UP;
 		type_tag = T_CONTROL;
 		pkt = Create_Packet(type_tag, 1, value_tag);
-		printf("P1 up\n");
+		storeUIMessage("P1 up\n");
 		break;
 
 	case 'k':// P1 down
-		value_tag = (unsigned char *)malloc(sizeof(unsigned char) * 1);
+		
 		*value_tag = C_P1DOWN;
 		type_tag = T_CONTROL;
 		pkt = Create_Packet(type_tag, 1, value_tag);
-		printf("P1 down\n");
+		storeUIMessage("P1 down\n");
 		break;
 	case 'o':// P2 up
-		value_tag = (unsigned char *)malloc(sizeof(unsigned char) * 1);
+		
 		*value_tag = C_P2UP;
 		type_tag = T_CONTROL;
 		pkt = Create_Packet(type_tag, 1, value_tag);
-		printf("P2 up\n");
+		storeUIMessage("P2 up\n");
 
 		break;
 	case 'l':// P2 down
-		value_tag = (unsigned char *)malloc(sizeof(unsigned char) * 1);
+		
 		*value_tag = C_P2DOWN;
 		type_tag = T_CONTROL;
 		pkt = Create_Packet(type_tag, 1, value_tag);
-		printf("P2 down\n");
+		storeUIMessage("P2 down\n");
 
 		break;
 
-		case 't':// P2 down
-		/*value_tag = (unsigned char *)malloc(sizeof(unsigned char) * 1);
-		*value_tag = C_P2DOWN;
+		/*case 't':// P2 down
+				*value_tag = C_P2DOWN;
 		type_tag = T_CONTROL;
 		pkt = Create_Packet(type_tag, 1, value_tag);
-		printf("P2 down\n");*/
+		storeUIMessage("P2 down\n");
 
-		value_tag = (unsigned char *)malloc(sizeof(unsigned char) * 9);
+		unsigned char value_tag[5];
 		*value_tag = C_JOYSTICK;
 		value_tag[1] = -100;
 		value_tag[2] = 12;
@@ -366,17 +393,17 @@ void kb_input_handler(unsigned char c)
 		value_tag[4] = -52;
 		type_tag = T_CONTROL;
 		pkt = Create_Packet(type_tag, 5, value_tag);
-		printf("JS SIMULATION TESTING\n");
-		break;
+		storeUIMessage("JS SIMULATION TESTING\n");
+		break;*/
 
-		case 'y':// P2 down
-		/*value_tag = (unsigned char *)malloc(sizeof(unsigned char) * 1);
+		/*case 'y':// P2 down
+		
 		*value_tag = C_P2DOWN;
 		type_tag = T_CONTROL;
 		pkt = Create_Packet(type_tag, 1, value_tag);
-		printf("P2 down\n");*/
+		storeUIMessage("P2 down\n");
 
-		value_tag = (unsigned char *)malloc(sizeof(unsigned char) * 9);
+		unsigned char value_tag[5];
 		*value_tag = C_JOYSTICK;
 		value_tag[1] = 100;
 		value_tag[2] = -12;
@@ -384,47 +411,47 @@ void kb_input_handler(unsigned char c)
 		value_tag[4] = 52;
 		type_tag = T_CONTROL;
 		pkt = Create_Packet(type_tag, 5, value_tag);
-		printf("JS SIMULATION TESTING\n");
-		break;
+		storeUIMessage("JS SIMULATION TESTING\n");
+		break;*/
 	case 27:
-	printf("%i\n",c );
+	//storeUIMessage("%i\n",c );
 		if ((c = term_getchar_nb()) != -1)
 		{
 			switch (c = term_getchar_nb()) {
 			case 'D'://Left Arrow - RollUp
-				value_tag = (unsigned char *)malloc(sizeof(unsigned char) * 1);
+				
 				*value_tag = C_ROLLUP;
 				type_tag = T_CONTROL;
 				pkt = Create_Packet(type_tag, 1, value_tag);
-				printf("RollUp\n");
+				storeUIMessage("RollUp\n");
 				break;
 			case 'C'://Right Arrow - RollDown
-				value_tag = (unsigned char *)malloc(sizeof(unsigned char) * 1);
+				
 				*value_tag = C_ROLLDOWN;
 				type_tag = T_CONTROL;
 				pkt = Create_Packet(type_tag, 1, value_tag);
-				printf("RollDown\n");
+				storeUIMessage("RollDown\n");
 				break;
 			case 'A'://Up Arrow - PitchDown
-				value_tag = (unsigned char *)malloc(sizeof(unsigned char) * 1);
+				
 				*value_tag = C_PITCHDOWN;
 				type_tag = T_CONTROL;
 				pkt = Create_Packet(type_tag, 1, value_tag);
-				printf("PitchDown\n");
+				storeUIMessage("PitchDown\n");
 				break;
 			case 'B'://Arrow Down - PitchUP
-				value_tag = (unsigned char *)malloc(sizeof(unsigned char) * 1);
+				
 				*value_tag = C_PITCHUP;
 				type_tag = T_CONTROL;
 				pkt = Create_Packet(type_tag, 1, value_tag);
-				printf("PitchUP\n");
+				storeUIMessage("PitchUP\n");
 
 
 
 				break;
 			default:
-				printf("Exiting....\n");
-				value_tag = (unsigned char *)malloc(sizeof(unsigned char) * 1);
+				storeUIMessage("Exiting....\n");
+				
 				*value_tag = M_SAFE;
 				type_tag = T_EXIT;
 				pkt = Create_Packet(type_tag, 1, value_tag);
@@ -439,7 +466,7 @@ void kb_input_handler(unsigned char c)
 		//case 27:
 		//break;
 	default:
-		printf("Invalid Control Input\n");
+		storeUIMessage("Invalid Control Input\n");
 		//invalid_input=1;
 		break;
 	}
@@ -448,9 +475,9 @@ void kb_input_handler(unsigned char c)
 void Send_Packet(Packet *pkt)
 {
 	unsigned char *packetByteStream = Get_Byte_Stream(pkt);
-	/*printf("Packet1\n");
+	//printf("Packet1\n");
 
-	rs232_putchar(1);
+	/*rs232_putchar(1);
 	rs232_putchar(1);
 	rs232_putchar(255);
 	for(int i=0;i<pkt->packetLength;i++)
@@ -458,29 +485,29 @@ void Send_Packet(Packet *pkt)
 		if(i==0 || i==1)
 			continue;
 		rs232_putchar(packetByteStream[i]);
-		printf("Sending:%d\n",packetByteStream[i]);
+		//printf("Sending:%d\n",packetByteStream[i]);
 	}
 
 
-	printf("Packet2\n");
+	//printf("Packet2\n");
 	for(int i=0;i<pkt->packetLength;i++)
 	{
 		if(i==2 || i==1)
 			continue;
 		rs232_putchar(packetByteStream[i]);
-		printf("Sending:%d\n",packetByteStream[i]);
+		//printf("Sending:%d\n",packetByteStream[i]);
 	}
 
-	printf("Packet3\n");
+	//printf("Packet3\n");
 	for(int i=0;i<pkt->packetLength;i++)
 	{
 		if(i==3 || i==4 || i ==5)
 			continue;
 		rs232_putchar(packetByteStream[i]);
-		printf("Sending:%d\n",packetByteStream[i]);
+		//printf("Sending:%d\n",packetByteStream[i]);
 	}
 
-	printf("Packet4\n");
+	//printf("Packet4\n");
 
 	rs232_putchar(255);*/
 
@@ -489,13 +516,9 @@ void Send_Packet(Packet *pkt)
 		rs232_putchar(packetByteStream[i]);
 		//printf("Sending:%d\n",packetByteStream[i]);
 	}
+	packetCount++;
+	//printf("PacketSend:%d\n",packetCount);
 
-
-
-
-
-
-	free(packetByteStream);
 }
 
 /* Joystick Initialization
@@ -522,7 +545,7 @@ void joystick_init(int *fd)
 
 	printf("Joystick (%s) has %d axes and %d buttons. Driver version is %d.%d.%d.\n",
 		name, axes, buttons, version >> 16, (version >> 8) & 0xff, version & 0xff);
-	printf("Testing ... (interrupt to exit)\n");
+	
 
 
     // non-blocking mode
@@ -565,15 +588,12 @@ void    mon_delay_ms(unsigned int ms)
 	Outputs:
 		a js_command
 */
-js_command *read_js(int* fd, int axis[], int button[])
+
+
+
+void read_values(int* fd, int axis[], int button[])
 {
 	struct js_event js;
-	js_command *js_c = NULL;
-	/* check up on JS
-
-	*/
-
-
 	while (read(*fd, &js, sizeof(struct js_event)) == sizeof(struct js_event)) {
 
 
@@ -596,6 +616,18 @@ js_command *read_js(int* fd, int axis[], int button[])
 			axis[js.number] = js.value;
 			break;
 		}
+	}
+}
+
+js_command *read_js(int* fd, int axis[], int button[])
+{
+	js_command *js_c = NULL;
+	/* check up on JS
+
+	*/
+
+
+		read_values(fd,axis,button);
 		//printf("%d\n",js.time);
 		/*
 		if((js.time - JSLastReadTimeStamp) <JS_READ_GAP)
@@ -604,7 +636,7 @@ js_command *read_js(int* fd, int axis[], int button[])
 		}
 		JSLastReadTimeStamp=js.time;
 		*/
-		js_c= (js_command *)malloc(sizeof(js_command));
+		
 
 
 		// Switch the mode
@@ -664,13 +696,19 @@ js_command *read_js(int* fd, int axis[], int button[])
 			js_c->Lift = axis[3];
 		}*/
 
-
+	
+		js_c= (js_command *)malloc(sizeof(js_command));
 		js_c->Type = T_CONTROL;
 		js_c->Roll = axis[0];
 		js_c->Pitch = axis[1];
 		js_c->Yaw = axis[2];
 		js_c->Lift = axis[3];
 
+
+		if (button[0]){
+			js_c->Type = T_EXIT;
+			js_c->Mode = M_SAFE;
+		}
 		//printf("%d\n",js_c->Type);
 		//printf("%d\n",js_c->Roll);
 		//printf("%d\n",js_c->Pitch);
@@ -678,7 +716,7 @@ js_command *read_js(int* fd, int axis[], int button[])
 		//printf("%d\n",js_c->Lift);
 
 
-	}
+	
 
 	if ((errno != EAGAIN) && (errno != 0 ))
 		{
@@ -690,30 +728,47 @@ js_command *read_js(int* fd, int axis[], int button[])
 	return js_c;
 }
 
+void js_safety_check(int* fd, int axis[], int button[])
+{
+	for(int i = 0;i<20;i++)
+	{
+		read_values(fd,axis,button);
+	}
+	
+	if((axis[0]!=0 )|(axis[1]!=0)|(axis[2]!=0)|(axis[3]!=0))
+	{
+		printf("Place jostick in neutral position and Try Again\n");
+	}
+	exit(0);
+}
+
 
 void Create_jsPacket(js_command* js_comm)
 {
 
-	printf("%d\n",js_comm->Type);
-	printf("%d\n",js_comm->Roll);
-	printf("%d\n",js_comm->Pitch);
-	printf("%d\n",js_comm->Yaw);	
-	printf("%d\n",js_comm->Lift);
+	//printf("%d\n",js_comm->Type);
+	//printf("%d\n",js_comm->Roll);
+	//printf("%d\n",js_comm->Pitch);
+	//printf("%d\n",js_comm->Yaw);	
+	//printf("%d\n",js_comm->Lift);
 
-	if(js_comm->Type == T_MODE)
+	if(js_comm->Type == T_EXIT)
 	{
 			
-		//value_tag = (unsigned char *)malloc(sizeof(unsigned char) * 1);
-		//*value_tag = js_comm->Mode;
-		//type_tag = T_MODE;
+				printf("Exiting....\n");
+				unsigned char value_tag[1];
+				*value_tag = M_SAFE;
+				type_tag = T_EXIT;
+				pkt = Create_Packet(type_tag, 1, value_tag);
 
-		//pkt = Create_Packet(type_tag, 1, value_tag);
+				ExitSafe();
 	}
 	else
 	{
 		if(js_comm->Type == T_CONTROL)
 		{
-			value_tag = (unsigned char *)malloc(sizeof(unsigned char) * 5);
+
+			unsigned char value_tag[5];
 			*value_tag = C_JOYSTICK;
 
 			value_tag[1] = (char)((int32_t)js_comm->Roll*100/32767);
@@ -724,8 +779,6 @@ void Create_jsPacket(js_command* js_comm)
 			pkt = Create_Packet(type_tag, 5, value_tag);	
 		}
 	}
-	free(js_comm);
-	js_comm = NULL;
 }
 
 
@@ -739,33 +792,25 @@ void Create_jsPacket(js_command* js_comm)
  */
 int main(int argc, char **argv)
 {
-	int axis[6];
-	int button[12];
+	
 	int fd = 0;
-	unsigned int start = 0;
-	unsigned int end = 0;
+	int c = 0;
+	unsigned int lastJSSendTime = 0;
 
 	js_command *js_comm;
 		
 	/* communication initialization
 	*/
-	int c = 0;
+
 
 	term_puts("\nTerminal program - Embedded Real-Time Systems\n");
 
 	term_initio();
+
+	Reception_Init(LP_SIZE);
 	rs232_open();
 
 	term_puts("Type ^C to exit\n");
-	
-	//init logging
-	FILE *f = fopen("file.txt", "w");
-	if (f == NULL)
-	{
-		printf("Error opening file!\n");
-		exit(1);
-	}
-
 
 	/* discard any incoming text
 	*/
@@ -776,42 +821,43 @@ int main(int argc, char **argv)
 	*/
 	joystick_init(&fd);
 
+	//js_safety_check(&fd,axis,button);
+
 	/* send & receive
 	 */
 	while (run)
 	{
 		/* read joystick inputs
 		*/
+		//printf("T1:%d\n",mon_time_ms());
 		js_comm = read_js(&fd, axis, button);
-		end = mon_time_ms();
-		if ((js_comm != NULL) && (end - start > JS_READ_GAP)){
+		
+		
+		
+		if (js_comm != NULL) {
+			if(CheckJSReadGap(lastJSSendTime)){
 			//printf("js_comm not null\n");
 
-			 Create_jsPacket(js_comm);
-			 //printf("packet created\n");
-		
-			if (pkt != NULL)
-			{
-				//printf("pkt not null\n");
-				//Send Packet bytes through RS232
-				Send_Packet(pkt);
-				fprintf("Message received. Start byte:%d\n", pkt_R->startByte);
-				fprintf("Type:%d\n", pkt_R->type);
-				fprintf("Datalength:%d\n", pkt_R->packetLength);
-				
-				for (int i = 0; i < pkt_R->packetLength - 1; i++){
-				fprintf("Value:%d\n", (pkt_R->value[i]));}
-				fprintf("CRC0:%d\n", (pkt_R->CRC[0]));
-				fprintf("CRC1:%d\n", pkt_R->CRC[1]);
-				
-				//printf("pkt send\n");
-				Destroy_Packet(pkt);
-				//printf("pkt destroyed\n");
-				pkt = NULL;
+				 Create_jsPacket(js_comm);
+				 //printf("packet created\n");
+			
+				if (pkt != NULL)
+				{
+					//printf("pkt not null\n");
+					//Send Packet bytes through RS232
+					Send_Packet(pkt);
+					//printf("pkt send\n");
+					//Destroy_Packet(pkt);
+					//printf("pkt destroyed\n");
+					//free(value_tag);
+					pkt = NULL;
+				}
+				lastJSSendTime = mon_time_ms();
+				//printf("%d\n",lastJSSendTime);
 			}
-			start = mon_time_ms();
+			free(js_comm);
 		}
-		
+		//printf("T2:%d\n",mon_time_ms());
 		if ((c = term_getchar_nb()) != -1)
 		{
 			//rs232_putchar(c);
@@ -821,24 +867,36 @@ int main(int argc, char **argv)
 				//Send Packet bytes through RS232
 				Send_Packet(pkt);
 				/*printf("Testing- Type:%d\n", pkt->type);
-				printf("Testing- startbyte:%d\n", pkt->startByte);
+				printf("Testing- lastJSSendTimebyte:%d\n", pkt->lastJSSendTimeByte);
 				printf("Testing- datalength:%d\n", pkt->dataLength);
 				printf("Testing- value length:%d\n", pkt->valueLength);
 				printf("Testing- value:%d\n", *(pkt->value));
 				printf("Testing- CRC0:%d\n", *(pkt->CRC));
 				printf("Testing- CRC1:%d\n", pkt->CRC[1]);*/
-				Destroy_Packet(pkt);
+				//Destroy_Packet(pkt);
+				//free(value_tag);
 				pkt = NULL;
 			}
 		}
+		//printf("T3:%d\n",mon_time_ms());
 
-		if((c = rs232_getchar_nb()) != -1)
-			term_putchar(c);
+		if (checkCount()){  //continuously check for new elements in the UART queue
+			readData();
+			//printf("State:%d\n",(int)currentStateR);
+			//printf("FCB: %d\n",currentByte);
+			stateHandler();
+			//printf("State:%d\n",(int)currentStateR);
+
+		}
+		//printf("T4:%d\n",mon_time_ms());
+
+		//if ((c = rs232_getchar_nb()) != -1)
+			//term_putchar(c);
 
 	}
 
 
-	for (;;)
+	/*for (;;)
 	{
 
 		if ((c = rs232_getchar_nb()) != -1)
@@ -848,14 +906,84 @@ int main(int argc, char **argv)
 			break;
 		}
 
-	}
-	term_puts("\nFCB Exited\n");
+	}*/
+
+	storeUIMessage("\nFCB Exited\n");
 
 
 
 	term_exitio();
 	rs232_close();
 
-	term_puts("Exiting Host Program\n");
+	storeUIMessage("Exiting Host Program\n");
 	return 0;
 }
+
+int CheckJSReadGap(unsigned int lastSendTime)
+{
+	unsigned int currentTime = mon_time_ms();
+
+	return (currentTime==lastSendTime)?0:((currentTime>lastSendTime)?((currentTime - lastSendTime) >= JS_READ_GAP):((UINT_MAX-lastSendTime+currentTime)>=JS_READ_GAP));
+
+
+}
+
+char getElementFromInputQueue()
+{
+	//term_putchar(c);
+	return 0;
+}
+
+uint16_t getInputQueueCount()
+{
+	int c;
+	if(((c = rs232_getchar_nb()) != -1))
+	{
+
+
+		addNode(c);
+		return 1;
+
+	}
+	return 0;
+}
+
+
+void storeUIMessage(const char msg[])
+{
+	strcpy(msgToPrint,msg);
+
+}
+
+void printUIMessage()
+{
+	gotoxy(15, 0);
+	printf("LastAction:%s\n",msgToPrint);
+}
+
+
+void process_packet(Packet *pkt_R)
+{
+	update();
+	printf("=========================================================================================================\n");
+	gotoxy(2, 45);
+	printf("Quadruple Control\n");
+	printf("=========================================================================================================\n");
+	printf("Battery Voltage:\t%d\n",((uint16_t)pkt_R->value[8])<<4|pkt_R->value[9]);
+	for(int i=0;i<4;i++){
+		printf("Motor[%d]:\t%d\t",i,((uint16_t)pkt_R->value[2*i])<<4|pkt_R->value[2*i+1]);
+	}
+    puts("\n");
+    printf("phi:\t%d\t",((uint16_t)pkt_R->value[10])<<4|pkt_R->value[11]);
+    printf("theta:\t%d\t",((uint16_t)pkt_R->value[12])<<4|pkt_R->value[13]);
+    printf("psi:\t%d\n",((uint16_t)pkt_R->value[14])<<4|pkt_R->value[15]);
+
+    printf("sp:\t%d\t",((uint16_t)pkt_R->value[16])<<4|pkt_R->value[17]);
+    printf("sq:\t%d\t",((uint16_t)pkt_R->value[18])<<4|pkt_R->value[19]);
+    printf("sr:\t%d\n",((uint16_t)pkt_R->value[20])<<4|pkt_R->value[21]);
+
+	//mvprintw (0, 0, "%d", pkt_R->value[0]);     
+	//refresh ();
+	printUIMessage();
+}
+

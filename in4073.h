@@ -30,7 +30,7 @@
 bool demo_done;
 
 // Control
-int16_t motor[4],ae[4],aej[4];
+int16_t motor[4],ae[4];
 void run_filters_and_control();
 
 // Timers
@@ -50,6 +50,8 @@ typedef struct {
 	uint16_t first,last;
   	uint16_t count; 
 } queue;
+
+
 void init_queue(queue *q);
 void enqueue(queue *q, char x);
 char dequeue(queue *q);
