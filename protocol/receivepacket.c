@@ -118,7 +118,7 @@ void storeValues(unsigned char ptr[])
 }
 
 void stateHandler(){
-	static unsigned char ptr[LP_SIZE+1];
+	static unsigned char ptr[LP_SIZE+20];
 
 	switch(currentStateR){
 		case checkStartByte:
@@ -152,7 +152,7 @@ void stateHandler(){
 			break;
 		case checkMessageType:
 
-			if((currentByte==T_MODE) || (currentByte==T_CONTROL) || (currentByte==T_DATA)||(currentByte==T_EXIT))
+			if((currentByte==T_MODE) || (currentByte==T_CONTROL) || (currentByte==T_DATA)||(currentByte==T_EXIT)||(currentByte==T_MSG)||(currentByte==T_HEARTBEAT))
 			{
 				msgType = currentByte;
 				nextState = setupMsg;

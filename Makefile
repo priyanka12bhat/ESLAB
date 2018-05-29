@@ -42,6 +42,7 @@ $(abspath ../components/drivers_nrf/delay/nrf_delay.c) \
 $(abspath ./protocol/crc16.c) \
 $(abspath ./protocol/packet.c) \
 $(abspath ./protocol/receivepacket.c) \
+$(abspath ./modes/modes.c) \
 $(abspath ./in4073.c) \
 $(abspath ./control.c) \
 $(abspath ./drivers/gpio.c) \

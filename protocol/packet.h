@@ -5,12 +5,14 @@
 
 #define START_BYTE 255
 
-//Tag Names
+//packet Tag Names
 #define T_MODE 1
 #define T_CONTROL 2
 #define T_DATA 3
 #define T_CONFIG 4
 #define T_EXIT 5
+#define T_MSG 6
+#define T_HEARTBEAT 7 
 
 //Mode Types
 #define M_SAFE 1
@@ -57,9 +59,11 @@
 
 #define MAX_MSG_SIZE 8
 #define P_SIZE MAX_MSG_SIZE
-#define LP_SIZE MAX_MSG_SIZE*3
+#define LP_SIZE 26
 #define JS_READ_GAP 40
-#define DISCONNECTED_GAP_US JS_READ_GAP*1000*50
+#define DISCONNECTED_GAP_US JS_READ_GAP*1000*100
+#define TELE_SEND_GAP_MS 100
+#define TELE_SEND_GAP_US TELE_SEND_GAP_MS*1000
 
 typedef struct packet
 {
@@ -79,7 +83,12 @@ Packet *Create_Packet(unsigned char type,unsigned char length, unsigned char *va
 void Destroy_Packet(Packet *pkt);
 void Set_CRCValue(Packet *pkt);
 
-Packet *Create_Telemetery_Packet(uint16_t bat_volt, int16_t *MotorValues, int16_t phi, int16_t theta, int16_t psi, int16_t sp, int16_t sq, int16_t sr);
+Packet *Create_Telemetery_Packet(uint16_t bat_volt, int16_t *MotorValues, int16_t phi, int16_t theta, int16_t psi, int16_t sp, int16_t sq, int16_t sr, unsigned char _msgCode);
+
+Packet *Create_MSG_Packet(char code);
+
+Packet *Create_HeartBeatPacket();
+
 
 
 #endif

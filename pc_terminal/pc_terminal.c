@@ -89,6 +89,7 @@ int	term_getchar()
 #include "keyboard.h"
 #include "joystick.h"
 #include "../protocol/receivepacket.h"
+#include "../messages/messagesdecoder.h"
 
 #define update() printf("\033[H\033[J")
 #define gotoxy(x, y) printf("\033[%d;%dH", x, y)
@@ -103,8 +104,9 @@ Packet *pkt_K = NULL;
 int axis[6];
 int button[12];
 
-uint32_t JSLastReadTimeStamp = 0;
-int CheckJSReadGap(unsigned int lastSendTime);
+extern uint32_t JSLastReadTimeStamp = 0;
+extern uint32_t KBLastReadTimeStamp = 0;
+int CheckReadGap(unsigned int lastSendTime, char times);
 int serial_device = 0;
 int fd_RS232;
 
@@ -830,12 +832,12 @@ int main(int argc, char **argv)
 		/* read joystick inputs
 		*/
 		//printf("T1:%d\n",mon_time_ms());
-		js_comm = read_js(&fd, axis, button);
+		/*js_comm = read_js(&fd, axis, button);
 		
 		
 		
 		if (js_comm != NULL) {
-			if(CheckJSReadGap(lastJSSendTime)){
+			if(CheckReadGap(lastJSSendTime,1)){
 			//printf("js_comm not null\n");
 
 				 Create_jsPacket(js_comm);
@@ -856,7 +858,7 @@ int main(int argc, char **argv)
 				//printf("%d\n",lastJSSendTime);
 			}
 			free(js_comm);
-		}
+		}*/
 		//printf("T2:%d\n",mon_time_ms());
 		if ((c = term_getchar_nb()) != -1)
 		{
@@ -864,17 +866,21 @@ int main(int argc, char **argv)
 			kb_input_handler(c);
 			if (pkt != NULL)
 			{
-				//Send Packet bytes through RS232
-				Send_Packet(pkt);
-				/*printf("Testing- Type:%d\n", pkt->type);
-				printf("Testing- lastJSSendTimebyte:%d\n", pkt->lastJSSendTimeByte);
-				printf("Testing- datalength:%d\n", pkt->dataLength);
-				printf("Testing- value length:%d\n", pkt->valueLength);
-				printf("Testing- value:%d\n", *(pkt->value));
-				printf("Testing- CRC0:%d\n", *(pkt->CRC));
-				printf("Testing- CRC1:%d\n", pkt->CRC[1]);*/
-				//Destroy_Packet(pkt);
-				//free(value_tag);
+
+				if(CheckReadGap(KBLastReadTimeStamp,1)){
+					//Send Packet bytes through RS232
+					Send_Packet(pkt);
+					/*printf("Testing- Type:%d\n", pkt->type);
+					printf("Testing- lastJSSendTimebyte:%d\n", pkt->lastJSSendTimeByte);
+					printf("Testing- datalength:%d\n", pkt->dataLength);
+					printf("Testing- value length:%d\n", pkt->valueLength);
+					printf("Testing- value:%d\n", *(pkt->value));
+					printf("Testing- CRC0:%d\n", *(pkt->CRC));
+					printf("Testing- CRC1:%d\n", pkt->CRC[1]);*/
+					//Destroy_Packet(pkt);
+					//free(value_tag);
+				}
+				KBLastReadTimeStamp = mon_time_ms();
 				pkt = NULL;
 			}
 		}
@@ -892,6 +898,15 @@ int main(int argc, char **argv)
 
 		//if ((c = rs232_getchar_nb()) != -1)
 			//term_putchar(c);
+
+		if(CheckReadGap(lastJSSendTime,2))
+		{
+			pkt=Create_HeartBeatPacket();
+			Send_Packet(pkt);
+			pkt=NULL;
+			lastJSSendTime=mon_time_ms();
+
+		}
 
 	}
 
@@ -919,11 +934,11 @@ int main(int argc, char **argv)
 	return 0;
 }
 
-int CheckJSReadGap(unsigned int lastSendTime)
+int CheckReadGap(unsigned int lastSendTime,char times)
 {
 	unsigned int currentTime = mon_time_ms();
 
-	return (currentTime==lastSendTime)?0:((currentTime>lastSendTime)?((currentTime - lastSendTime) >= JS_READ_GAP):((UINT_MAX-lastSendTime+currentTime)>=JS_READ_GAP));
+	return (currentTime==lastSendTime)?0:((currentTime>lastSendTime)?((currentTime - lastSendTime) >= JS_READ_GAP*times):((UINT_MAX-lastSendTime+currentTime)>=JS_READ_GAP*times));
 
 
 }
@@ -969,21 +984,22 @@ void process_packet(Packet *pkt_R)
 	gotoxy(2, 45);
 	printf("Quadruple Control\n");
 	printf("=========================================================================================================\n");
-	printf("Battery Voltage:\t%d\n",((uint16_t)pkt_R->value[8])<<4|pkt_R->value[9]);
+	printf("Battery Voltage:\t%d\n",((uint16_t)pkt_R->value[8])<<8|pkt_R->value[9]);
 	for(int i=0;i<4;i++){
-		printf("Motor[%d]:\t%d\t",i,((uint16_t)pkt_R->value[2*i])<<4|pkt_R->value[2*i+1]);
+		printf("Motor[%d]:\t%d\t",i,((uint16_t)pkt_R->value[2*i])<<8|pkt_R->value[2*i+1]);
 	}
     puts("\n");
-    printf("phi:\t%d\t",((uint16_t)pkt_R->value[10])<<4|pkt_R->value[11]);
-    printf("theta:\t%d\t",((uint16_t)pkt_R->value[12])<<4|pkt_R->value[13]);
-    printf("psi:\t%d\n",((uint16_t)pkt_R->value[14])<<4|pkt_R->value[15]);
+    printf("phi:\t%d\t",(int16_t)(((uint16_t)pkt_R->value[10])<<8|pkt_R->value[11]));
+    printf("theta:\t%d\t",(int16_t)(((uint16_t)pkt_R->value[12])<<8|pkt_R->value[13]));
+    printf("psi:\t%d\n",(int16_t)(((uint16_t)pkt_R->value[14])<<8|pkt_R->value[15]));
 
-    printf("sp:\t%d\t",((uint16_t)pkt_R->value[16])<<4|pkt_R->value[17]);
-    printf("sq:\t%d\t",((uint16_t)pkt_R->value[18])<<4|pkt_R->value[19]);
-    printf("sr:\t%d\n",((uint16_t)pkt_R->value[20])<<4|pkt_R->value[21]);
+    printf("sp:\t%d\t",(int16_t)(((uint16_t)pkt_R->value[16])<<8|pkt_R->value[17]));
+    printf("sq:\t%d\t",(int16_t)(((uint16_t)pkt_R->value[18])<<8|pkt_R->value[19]));
+    printf("sr:\t%d\n",(int16_t)(((uint16_t)pkt_R->value[20])<<8|pkt_R->value[21]));
 
 	//mvprintw (0, 0, "%d", pkt_R->value[0]);     
 	//refresh ();
 	printUIMessage();
+	printf("Drone Say's:%s\n",DecodeMessage(pkt_R->value[22]));
 }
 
