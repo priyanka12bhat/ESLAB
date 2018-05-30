@@ -23,12 +23,20 @@ int16_t yawSetPoint_K = 0;
 int8_t yawSetPoint_J = 0;
 int16_t P = 1000;
 
+//Full Control Mode
+int16_t pitchSetPoint =0;
+int16_t pitchSetPoint_K = 0;
+int8_t pitchSetPoint_J = 0;
+int16_t rollSetPoint =0;
+int16_t rollSetPoint_K = 0;
+int8_t rollSetPoint_J = 0;
+int16_t Q[3] = {1000,1000,1000};
+
 //Sensor Handling
 // MPU wrapper
 int16_t phi_offset=0, theta_offset=0, psi_offset=0;
 int16_t sp_offset=0, sq_offset=0, sr_offset=0;
 int16_t sax_offset=0, say_offset=0, saz_offset=0;
-
 
 void Modes_Initialize()
 {
@@ -57,6 +65,7 @@ void Modes_Initialize()
 	Modes[M_FULLCONTROL-1].state=FullControl;
 	Modes[M_FULLCONTROL-1].Mode_Initialize=&Full_Control_Mode_Initialize;
 	Modes[M_FULLCONTROL-1].Mode_Execute=&Full_Control_Mode_Execute;
+	Modes[M_FULLCONTROL-1].Input_Handler=&Full_Control_Mode_Input_Handler;
 
 	Modes[M_RAWMODE-1].state=RawMode;
 	Modes[M_RAWMODE-1].Mode_Initialize=&Raw_Mode_Initialize;
@@ -106,8 +115,6 @@ void Manual_Mode_Initialize()
 		JS_Z = 0;
 		clearControlVariables();
 	}
-	
-
 }
 
 
@@ -131,9 +138,6 @@ void Callibration_Mode_Initialize()
 
 }
 
-
-
-
 void Yaw_Control_Mode_Initialize()
 {
 	yawSetPoint =0;
@@ -142,7 +146,19 @@ void Yaw_Control_Mode_Initialize()
 	clearControlVariables();
 	SetMessage(MSG_ENTERING_YAWCONTROL_MODE);
 }
-void Full_Control_Mode_Initialize(){}
+void Full_Control_Mode_Initialize(){
+	yawSetPoint = 0;
+	yawSetPoint_K = 0;
+	yawSetPoint_J = 0;
+	pitchSetPoint = 0;
+	pitchSetPoint_K = 0;
+	pitchSetPoint_J = 0;
+	rollSetPoint = 0;
+	rollSetPoint_K = 0;
+	rollSetPoint_J = 0;
+	clearControlVariables();
+	SetMessage(MSG_ENTERING_FULLCONTROL_MODE);
+}
 void Raw_Mode_Initialize(){}
 void Height_Control_Mode_Initialize(){}
 void Wireless_Control_Mode_Initialize(){}
@@ -226,7 +242,20 @@ void Yaw_Control_Mode_Execute()
 			//printf("Motor[0]:%d,Motor[1]:%d,Motor[2]:%d,Motor[3]:%d\n",ae[0],ae[1],ae[2],ae[3]);
 	}
 }
-void Full_Control_Mode_Execute(){}
+void Full_Control_Mode_Execute()
+{
+	if (check_sensor_int_flag()) 
+		{
+			get_dmp_data();		
+			N = Q[1]* (yawSetPoint - sr + sr_offset); //Yaw
+			M = Q[2]* (pitchSetPoint - sr + sr_offset); //Pitch
+			L = Q[3]* (rollSetPoint - sr + sr_offset); //Roll
+				//printf("Z:%ld|L:%ld|M:%ld|N:%ld|",Z,L,M,N);
+			SetMotorValues();
+			update_motors();
+				//printf("Motor[0]:%d,Motor[1]:%d,Motor[2]:%d,Motor[3]:%d\n",ae[0],ae[1],ae[2],ae[3]);
+		}
+}
 void Raw_Mode_Execute(){}
 void Height_Control_Mode_Execute(){}
 void Wireless_Control_Mode_Execute(){}
@@ -250,16 +279,13 @@ void Manual_Mode_Input_Handler(unsigned char *Input)
 							if((Z+INC_Z)<=MAX_Z){
 								Z+=INC_Z;
 							}						
-
-							
 						break;
+
 						case C_LIFTDOWN:
 							if(Z>=INC_Z)
 							{
 								Z-=INC_Z;
 							}
-								
-
 						break;
 
 						case C_ROLLUP:
@@ -316,10 +342,75 @@ void Manual_Mode_Input_Handler(unsigned char *Input)
 
 }
 
+void Full_Control_Mode_Input_Handler(unsigned char *Input)
+{				
+					
+	switch(Input[0]){
+						case C_LIFTUP:
+
+							if((Z+INC_Z)<=MAX_Z){
+								Z+=INC_Z;
+							}						
+
+							
+						break;
+						case C_LIFTDOWN:
+							if(Z>=INC_Z)
+							{
+								Z-=INC_Z;
+							}
+								
+						break;
+
+						case C_YAWUP:
+							yawSetPoint_K+=10;
+						break;
+
+						case C_YAWDOWN:
+							yawSetPoint_K-=10;
+						break;	
+
+						case C_PITCHUP
+							pitchSetPoint_K+=10;
+						break;
+
+						case C_PITCHDOWN
+							pitchSetPoint_K-=10;
+						break;
+
+						case C_ROLLUP
+							rollSetPoint_K+=10;
+						break;
+
+						case C_ROLLDOWN
+							rollSetPoint_K-=10;
+						break;					
+
+						case C_JOYSTICK:
+							yawSetPoint_J = ((int8_t)Input[3])*10/JSSCALEMAX;
+							pitchSetPoint_J = ((int8_t)Input[2])*10/JSSCALEMAX;
+							rollSetPoint_J = ((int8_t)Input[1])*10/JSSCALEMAX;
+							JS_Z = ((int3p0 2_t)INC_Z)*2*((int8_t)Input[4])/JSSCALEMAX;
+						break;
+
+						case C_PUP:
+							P+=10;
+						break;
+						case C_PDOWN:
+							if(P-10>=10){
+								P-=10;
+							}
+						break;
+						
+					}
+					yawSetPoint = yawSetPoint_K + yawSetPoint_J;
+					pitchSetPoint = pitchSetPoint_K + pitchSetPoint_J;
+					rollSetPoint = rollSetPoint_K + rollSetPoint_J;
+}
+
 void Yaw_Controlled_Mode_Input_Handler(unsigned char *Input)
 {
-
-					
+				
 					
 	switch(Input[0]){
 
@@ -336,8 +427,6 @@ void Yaw_Controlled_Mode_Input_Handler(unsigned char *Input)
 							{
 								Z-=INC_Z;
 							}
-								
-
 						break;
 
 						case C_YAWUP:
