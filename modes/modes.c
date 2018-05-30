@@ -247,9 +247,9 @@ void Full_Control_Mode_Execute()
 	if (check_sensor_int_flag()) 
 		{
 			get_dmp_data();		
-			N = Q[1]* (yawSetPoint - sr + sr_offset); //Yaw
-			M = Q[2]* (pitchSetPoint - sr + sr_offset); //Pitch
-			L = Q[3]* (rollSetPoint - sr + sr_offset); //Roll
+			N = Q[0]* (yawSetPoint - sr + sr_offset); //Yaw
+			M = Q[1]* (pitchSetPoint - sr + sr_offset); //Pitch
+			L = Q[2]* (rollSetPoint - sr + sr_offset); //Roll
 				//printf("Z:%ld|L:%ld|M:%ld|N:%ld|",Z,L,M,N);
 			SetMotorValues();
 			update_motors();
@@ -370,19 +370,19 @@ void Full_Control_Mode_Input_Handler(unsigned char *Input)
 							yawSetPoint_K-=10;
 						break;	
 
-						case C_PITCHUP
+						case C_PITCHUP:
 							pitchSetPoint_K+=10;
 						break;
 
-						case C_PITCHDOWN
+						case C_PITCHDOWN:
 							pitchSetPoint_K-=10;
 						break;
 
-						case C_ROLLUP
+						case C_ROLLUP:
 							rollSetPoint_K+=10;
 						break;
 
-						case C_ROLLDOWN
+						case C_ROLLDOWN:
 							rollSetPoint_K-=10;
 						break;					
 
@@ -390,19 +390,41 @@ void Full_Control_Mode_Input_Handler(unsigned char *Input)
 							yawSetPoint_J = ((int8_t)Input[3])*10/JSSCALEMAX;
 							pitchSetPoint_J = ((int8_t)Input[2])*10/JSSCALEMAX;
 							rollSetPoint_J = ((int8_t)Input[1])*10/JSSCALEMAX;
-							JS_Z = ((int3p0 2_t)INC_Z)*2*((int8_t)Input[4])/JSSCALEMAX;
+							JS_Z = ((int32_t)INC_Z)*2*((int8_t)Input[4])/JSSCALEMAX;
 						break;
 
 						case C_PUP:
-							P+=10;
+							Q[0]+=10;
 						break;
+
 						case C_PDOWN:
-							if(P-10>=10){
-								P-=10;
+							if(Q[0]-10>=10){
+								Q[0]-=10;
+							}
+						break;
+
+						case C_P1UP:
+							Q[1]+=10;
+						break;
+
+						case C_P1DOWN:
+							if(Q[1]-10>=10){
+								Q[1]-=10;
+							}
+						break;
+
+						case C_P2UP:
+							Q[2]+=10;
+						break;
+
+						case C_P2DOWN:
+							if(Q[2]-10>=10){
+								Q[2]-=10;
 							}
 						break;
 						
 					}
+
 					yawSetPoint = yawSetPoint_K + yawSetPoint_J;
 					pitchSetPoint = pitchSetPoint_K + pitchSetPoint_J;
 					rollSetPoint = rollSetPoint_K + rollSetPoint_J;
