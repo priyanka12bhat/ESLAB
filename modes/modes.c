@@ -248,8 +248,8 @@ void Full_Control_Mode_Execute()
 		{
 			get_dmp_data();		
 			N = Q[0]* (yawSetPoint - sr + sr_offset); //Yaw
-			M = Q[1]* (pitchSetPoint - sr + sr_offset); //Pitch
-			L = Q[2]* (rollSetPoint - sr + sr_offset); //Roll
+			M = Q[1]* (pitchSetPoint - sp + sp_offset) - Q[2]*(sp + sp_offset); //Pitch
+			L = Q[1]* (rollSetPoint - sp + sp_offset) - Q[2]*(sp + sp_offset); //Roll
 				//printf("Z:%ld|L:%ld|M:%ld|N:%ld|",Z,L,M,N);
 			SetMotorValues();
 			update_motors();
@@ -558,7 +558,6 @@ void SetMotorValues()
 
 
 }
-
 
 inline void EnterSafeMode()
 {
