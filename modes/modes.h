@@ -50,5 +50,6 @@ void Wireless_Control_Mode_Execute();
 
 void Manual_Mode_Input_Handler(unsigned char *Input);
 void Yaw_Controlled_Mode_Input_Handler(unsigned char *Input);
+void Full_Control_Mode_Input_Handler(unsigned char *Input)
 
 #endif
