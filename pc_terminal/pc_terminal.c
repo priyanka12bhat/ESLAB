@@ -104,6 +104,8 @@ Packet *pkt_K = NULL;
 int axis[6];
 int button[12];
 
+FILE *f;
+
 extern uint32_t JSLastReadTimeStamp = 0;
 extern uint32_t KBLastReadTimeStamp = 0;
 int CheckReadGap(unsigned int lastSendTime, char times);
@@ -415,8 +417,15 @@ void kb_input_handler(unsigned char c)
 		pkt = Create_Packet(type_tag, 5, value_tag);
 		storeUIMessage("JS SIMULATION TESTING\n");
 		break;*/
+	/*case 'm':
+		storeUIMessage("Logging stopped");
+		fclose(f);
+	break;*/
+
 	case 27:
-	//storeUIMessage("%i\n",c );
+	fclose(f);
+	storeUIMessage("Exiting \n" );
+
 		if ((c = term_getchar_nb()) != -1)
 		{
 			switch (c = term_getchar_nb()) {
@@ -460,7 +469,6 @@ void kb_input_handler(unsigned char c)
 
 				ExitSafe();
 				break;
-
 			}
 		}
 		break;
@@ -524,7 +532,7 @@ void Send_Packet(Packet *pkt)
 }
 
 /* Joystick Initialization
-*/
+
 void joystick_init(int *fd)
 {
 
@@ -555,7 +563,7 @@ void joystick_init(int *fd)
 
 
 
-}
+}*/
 
 
 /* time
@@ -819,9 +827,17 @@ int main(int argc, char **argv)
 	while ((c = rs232_getchar_nb()) != -1)
 		fputc(c, stderr);
 
+	//init logging
+	f = fopen("file.txt", "a");
+	if (f == NULL)
+	{
+		printf("Error opening file!\n");
+		exit(1);
+	}
+
 	/* joystick initialization
 	*/
-	joystick_init(&fd);
+	//joystick_init(&fd);
 
 	//js_safety_check(&fd,axis,button);
 
@@ -870,13 +886,13 @@ int main(int argc, char **argv)
 				if(CheckReadGap(KBLastReadTimeStamp,1)){
 					//Send Packet bytes through RS232
 					Send_Packet(pkt);
-					/*printf("Testing- Type:%d\n", pkt->type);
-					printf("Testing- lastJSSendTimebyte:%d\n", pkt->lastJSSendTimeByte);
-					printf("Testing- datalength:%d\n", pkt->dataLength);
-					printf("Testing- value length:%d\n", pkt->valueLength);
-					printf("Testing- value:%d\n", *(pkt->value));
-					printf("Testing- CRC0:%d\n", *(pkt->CRC));
-					printf("Testing- CRC1:%d\n", pkt->CRC[1]);*/
+					/*fprintf(f,"Testing- Type:%d\n", pkt->type);
+					//fprintf("Testing- lastJSSendTimebyte:%d\n", pkt->lastJSSendTimeByte);
+					fprintf(f,"Testing- datalength:%d\n", pkt->dataLength);
+					fprintf(f,"Testing- value length:%d\n", pkt->valueLength);
+					fprintf(f,"Testing- value:%d\n", *(pkt->value));
+					fprintf(f,"Testing- CRC0:%d\n", *(pkt->CRC));
+					fprintf(f,"Testing- CRC1:%d\n", pkt->CRC[1]);*/
 					//Destroy_Packet(pkt);
 					//free(value_tag);
 				}
@@ -909,7 +925,8 @@ int main(int argc, char **argv)
 		}
 
 	}
-
+	storeUIMessage("\nFCB Exited\n");
+	//fclose(f);
 
 	/*for (;;)
 	{
@@ -931,6 +948,7 @@ int main(int argc, char **argv)
 	rs232_close();
 
 	storeUIMessage("Exiting Host Program\n");
+
 	return 0;
 }
 
@@ -1001,5 +1019,27 @@ void process_packet(Packet *pkt_R)
 	//refresh ();
 	printUIMessage();
 	printf("Drone Say's:%s\n",DecodeMessage(pkt_R->value[22]));
+
+	//log to txt
+	fprintf(f,"=========================================================================================================\n");
+	fprintf(f,"Quadruple Control\n");
+	fprintf(f,"=========================================================================================================\n");
+	fprintf(f,"Battery Voltage:\t%d\n",((uint16_t)pkt_R->value[8])<<8|pkt_R->value[9]);
+	for(int i=0;i<4;i++){
+		fprintf(f,"Motor[%d]:\t%d\t",i,((uint16_t)pkt_R->value[2*i])<<8|pkt_R->value[2*i+1]);
+	}
+    fprintf(f,"\n");
+    fprintf(f,"phi:\t%d\t",(int16_t)(((uint16_t)pkt_R->value[10])<<8|pkt_R->value[11]));
+    fprintf(f,"theta:\t%d\t",(int16_t)(((uint16_t)pkt_R->value[12])<<8|pkt_R->value[13]));
+    fprintf(f,"psi:\t%d\n",(int16_t)(((uint16_t)pkt_R->value[14])<<8|pkt_R->value[15]));
+
+    fprintf(f,"sp:\t%d\t",(int16_t)(((uint16_t)pkt_R->value[16])<<8|pkt_R->value[17]));
+    fprintf(f,"sq:\t%d\t",(int16_t)(((uint16_t)pkt_R->value[18])<<8|pkt_R->value[19]));
+    fprintf(f,"sr:\t%d\n",(int16_t)(((uint16_t)pkt_R->value[20])<<8|pkt_R->value[21]));
+
+	//mvprintw (0, 0, "%d", pkt_R->value[0]);     
+	//refresh ();
+	printUIMessage();
+	fprintf(f,"Drone Say's:%s\n",DecodeMessage(pkt_R->value[22]));
 }
 
