@@ -11,7 +11,7 @@ const char MsgTable[255][255]=
 	"OH MY GOD! Am Panicy(Panic Mode)",//3
 	"Hmmm.. So Drive Me (Manual Mode)",//4
 	"K!.. Let us try Calibrating (Calibration Mode)",//5
-	"Dude, Am done with calibration",//6
+	"Dude, Am done with calibration(Safe Mode)",//6
 	"K..Let's Try Yaw Control(Yaw Controlled Mode)",//7
 	"DISCONNECTED",//8
 	"Dont over do!..I know it (Invalid Change)",//9

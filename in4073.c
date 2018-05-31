@@ -199,7 +199,7 @@ int main(void)
 		if(checkGap(lastTelePacketSendTime, TELE_SEND_GAP_US))
 		{
 
-			SendPacket(Create_Telemetery_Packet(bat_volt, ae, phi, theta, psi, sp, sq, sr,msgCode));
+			SendPacket(Create_Telemetery_Packet(bat_volt, ae, phi, theta, psi, sp, sq, sr,msgCode,GetPArray()));
 			lastTelePacketSendTime=get_time_us();
 		}
 		

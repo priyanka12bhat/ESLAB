@@ -18,19 +18,18 @@ int32_t JS_Z = 0;
 
 
 //Yaw Controlled Mode
-int16_t yawSetPoint =0;
+int32_t yawSetPoint =0;
 int16_t yawSetPoint_K = 0;
-int8_t yawSetPoint_J = 0;
-int16_t P = 100;
+int16_t yawSetPoint_J = 0;
 
 //Full Control Mode
-int16_t pitchSetPoint =0;
+int32_t pitchSetPoint =0;
 int16_t pitchSetPoint_K = 0;
-int8_t pitchSetPoint_J = 0;
-int16_t rollSetPoint =0;
+int16_t pitchSetPoint_J = 0;
+int32_t rollSetPoint =0;
 int16_t rollSetPoint_K = 0;
-int8_t rollSetPoint_J = 0;
-int16_t Q[3] = {1000,1000,1000};
+int16_t rollSetPoint_J = 0;
+int16_t P[3] = {100,1000,1000};
 
 //Sensor Handling
 // MPU wrapper
@@ -121,23 +120,74 @@ void Manual_Mode_Initialize()
 }
 
 
+#define MAX_SAMPLES 128
+
+
+
+	int32_t phi_offset_sum=0;
+	int32_t theta_offset_sum=0;
+	int32_t psi_offset_sum=0;
+	int32_t sp_offset_sum=0;
+	int32_t sq_offset_sum=0;
+	int32_t sr_offset_sum=0;
 
 void Callibration_Mode_Initialize()
 {
+
+	phi_offset_sum=0;
+	theta_offset_sum=0;
+	psi_offset_sum=0;
+	sp_offset_sum=0;
+	sq_offset_sum=0;
+	sr_offset_sum=0;
+
 	SetMessage(MSG_ENTERING_CALIBRATION_MODE);
 
-	get_dmp_data();
+	char count=0;
+	while(check_sensor_int_flag() && count< MAX_SAMPLES) 
+	{
 
-	phi_offset=phi;
-	theta_offset= theta;
-	psi_offset = psi;
-	sp_offset = sp;
-	sq_offset = sq;
-	sr_offset = sr;
-	sax_offset = sax;
-	say_offset = say;
-	saz_offset = saz;
+		get_dmp_data();
+
+		phi_offset_sum+=phi;
+		theta_offset_sum+= theta;
+		psi_offset_sum = psi;
+		sp_offset_sum = sp;
+		sq_offset_sum = sq;
+		sr_offset_sum = sr;
+
+	count++;
+	}
+
+	phi_offset=phi_offset_sum>>7;
+	theta_offset=theta_offset_sum>>7;
+	psi_offset=psi_offset_sum>>7;
+	sp_offset=sp_offset_sum>>7;	
+	sq_offset=sq_offset_sum>>7;
+	sr_offset=sr_offset_sum>>7;
+
+
 	SetMessage(MSG_EXITING_CALIBRATION_MODE);
+	CurrentMode = GetMode(M_SAFE);
+
+}
+
+void update_offsets()
+{
+	//call only after get_dmp_data()
+	phi_offset_sum = phi_offset_sum-phi_offset+phi;
+	theta_offset_sum = theta_offset_sum-theta_offset+theta;
+	psi_offset_sum = psi_offset_sum-psi_offset+psi;
+	sp_offset_sum = sp_offset_sum-sp_offset+sp;
+	sq_offset_sum = sq_offset_sum-sq_offset+sq;
+	sr_offset_sum = sr_offset_sum-sr_offset+sr;
+
+	phi_offset=phi_offset_sum>>7;
+	theta_offset=theta_offset_sum>>7;
+	psi_offset=psi_offset_sum>>7;
+	sp_offset=sp_offset_sum>>7;	
+	sq_offset=sq_offset_sum>>7;
+	sr_offset=sr_offset_sum>>7;
 
 }
 
@@ -241,8 +291,9 @@ void Yaw_Control_Mode_Execute()
 {
 	if (check_sensor_int_flag()) 
 	{
-		get_dmp_data();		
-		N = P* (yawSetPoint - sr + sr_offset);
+		get_dmp_data();
+		//update_offsets();		
+		N = P[0]* (yawSetPoint - sr + sr_offset);
 			//printf("Z:%ld|L:%ld|M:%ld|N:%ld|",Z,L,M,N);
 		SetMotorValues();
 		update_motors();
@@ -253,10 +304,11 @@ void Full_Control_Mode_Execute()
 {
 	if (check_sensor_int_flag()) 
 		{
-			get_dmp_data();		
-			N = Q[0]* (yawSetPoint - sr + sr_offset); //Yaw
-			M = Q[1]* (pitchSetPoint - sr + sr_offset); //Pitch
-			L = Q[2]* (rollSetPoint - sr + sr_offset); //Roll
+			get_dmp_data();	
+			//update_offsets();	
+			N = P[0]* (yawSetPoint - sr + sr_offset); //Yaw
+			M = P[1]* (pitchSetPoint - sr + sr_offset); //Pitch
+			L = P[2]* (rollSetPoint - sr + sr_offset); //Roll
 				//printf("Z:%ld|L:%ld|M:%ld|N:%ld|",Z,L,M,N);
 			SetMotorValues();
 			update_motors();
@@ -397,39 +449,39 @@ void Full_Control_Mode_Input_Handler(unsigned char *Input)
 						break;					
 
 						case C_JOYSTICK:
-							yawSetPoint_J = ((int8_t)Input[3])*100/JSSCALEMAX;
-							pitchSetPoint_J = ((int8_t)Input[2])*100/JSSCALEMAX;
-							rollSetPoint_J = ((int8_t)Input[1])*100/JSSCALEMAX;
+							yawSetPoint_J = ((int16_t)Input[3])*100/JSSCALEMAX;
+							pitchSetPoint_J = ((int16_t)Input[2])*100/JSSCALEMAX;
+							rollSetPoint_J = ((int16_t)Input[1])*100/JSSCALEMAX;
 							JS_Z = ((int32_t)INC_Z)*2*((int8_t)Input[4])/JSSCALEMAX;
 						break;
 
 						case C_PUP:
-							Q[0]+=10;
+							P[0]+=10;
 						break;
 
 						case C_PDOWN:
-							if(Q[0]-10>=10){
-								Q[0]-=10;
+							if(P[0]-10>=10){
+								P[0]-=10;
 							}
 						break;
 
 						case C_P1UP:
-							Q[1]+=10;
+							P[1]+=10;
 						break;
 
 						case C_P1DOWN:
-							if(Q[1]-10>=10){
-								Q[1]-=10;
+							if(P[1]-10>=10){
+								P[1]-=10;
 							}
 						break;
 
 						case C_P2UP:
-							Q[2]+=10;
+							P[2]+=10;
 						break;
 
 						case C_P2DOWN:
-							if(Q[2]-10>=10){
-								Q[2]-=10;
+							if(P[2]-10>=10){
+								P[2]-=10;
 							}
 						break;
 						
@@ -475,17 +527,17 @@ void Yaw_Controlled_Mode_Input_Handler(unsigned char *Input)
 						break;						
 
 						case C_JOYSTICK:
-							yawSetPoint_J = ((int8_t)Input[3])*100/JSSCALEMAX;
+							yawSetPoint_J = ((int16_t)Input[3])*100/JSSCALEMAX;
 							JS_Z = ((int32_t)INC_Z)*2*((int8_t)Input[4])/JSSCALEMAX;
 
 						break;
 
 						case C_PUP:
-							P+=10;
+							P[0]+=10;
 						break;
 						case C_PDOWN:
-							if(P-10>=10){
-								P-=10;
+							if(P[0]-10>=10){
+								P[0]-=10;
 							}
 						break;
 
@@ -629,4 +681,9 @@ inline void clearControlVariables()
 	ae[1]=0;
 	ae[2]=0;
 	ae[3]=0;
+}
+
+int16_t* GetPArray()
+{
+	return P;
 }

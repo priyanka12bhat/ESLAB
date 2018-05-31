@@ -998,7 +998,9 @@ void process_packet(Packet *pkt_R)
     printf("sp:\t%d\t",(int16_t)(((uint16_t)pkt_R->value[16])<<8|pkt_R->value[17]));
     printf("sq:\t%d\t",(int16_t)(((uint16_t)pkt_R->value[18])<<8|pkt_R->value[19]));
     printf("sr:\t%d\n",(int16_t)(((uint16_t)pkt_R->value[20])<<8|pkt_R->value[21]));
-
+    printf("P:\t%d\t",(((uint16_t)pkt_R->value[23])<<8|pkt_R->value[24]));
+    printf("P1:\t%d\t",(((uint16_t)pkt_R->value[25])<<8|pkt_R->value[26]));
+    printf("P2:\t%d\t",(((uint16_t)pkt_R->value[27])<<8|pkt_R->value[28]));
 	//mvprintw (0, 0, "%d", pkt_R->value[0]);     
 	//refresh ();
 	printUIMessage();
