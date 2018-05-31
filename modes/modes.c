@@ -16,8 +16,6 @@ int32_t JS_L = 0;
 int32_t JS_M = 0;
 int32_t JS_Z = 0;
 
-//Flash Buffer
-uint8_t *flashBuffer;
 
 //Yaw Controlled Mode
 int32_t yawSetPoint =0;
@@ -31,7 +29,7 @@ int16_t pitchSetPoint_J = 0;
 int32_t rollSetPoint =0;
 int16_t rollSetPoint_K = 0;
 int16_t rollSetPoint_J = 0;
-int16_t P[3] = {100,1000,100};
+int16_t P[3] = {100,1000,1000};
 
 //Sensor Handling
 // MPU wrapper
@@ -272,15 +270,6 @@ void Panic_Mode_Execute()
 
 			update_motors();
 			}
-flash_read_bytes(0x000000, flashBuffer, 1048576);
-FILE *f;
-f = fopen("file.txt", "a");
-for (int i=0; i<1048577; i++){
-    fprintf(f,"Quadruple Control\n");
-    fprintf(f,"Battery Voltage:\t%d\n",(*(flashBuffer+i))<<(*(flashBuffer+i+1)));
-}
-fclose(f);
-
 
 }
 
@@ -318,8 +307,8 @@ void Full_Control_Mode_Execute()
 			get_dmp_data();	
 			//update_offsets();	
 			N = P[0]* (yawSetPoint - sr + sr_offset); //Yaw
-			M = P[1]* (pitchSetPoint - phi) - P[2]*(sp + sp_offset); //Pitch
-			L = P[1]* (rollSetPoint - phi) - P[2]*(sq + sq_offset); //Roll
+			M = P[1]* (pitchSetPoint - sr + sr_offset); //Pitch
+			L = P[2]* (rollSetPoint - sr + sr_offset); //Roll
 				//printf("Z:%ld|L:%ld|M:%ld|N:%ld|",Z,L,M,N);
 			SetMotorValues();
 			update_motors();

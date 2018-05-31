@@ -125,7 +125,7 @@ struct js_corr {
 #define JS_SET_ALL		8
 
 #define NAME_LENGTH 128
-#define JS_DEV	"/dev/input/js1"
+#define JS_DEV	"/dev/input/js0"
 
 struct JS_DATA_TYPE {
 	int buttons;
