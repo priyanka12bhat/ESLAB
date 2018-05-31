@@ -29,7 +29,7 @@ int16_t pitchSetPoint_J = 0;
 int32_t rollSetPoint =0;
 int16_t rollSetPoint_K = 0;
 int16_t rollSetPoint_J = 0;
-int16_t P[3] = {100,1000,100};
+int16_t P[3] = {100,1000,1000};
 
 //Sensor Handling
 // MPU wrapper
@@ -307,8 +307,8 @@ void Full_Control_Mode_Execute()
 			get_dmp_data();	
 			//update_offsets();	
 			N = P[0]* (yawSetPoint - sr + sr_offset); //Yaw
-			M = P[1]* (pitchSetPoint - sr + sr_offset); //Pitch
-			L = P[2]* (rollSetPoint - sr + sr_offset); //Roll
+			M = P[1]* (pitchSetPoint - phi) - P[2]*(sp + sp_offset); //Pitch
+			L = P[1]* (rollSetPoint - phi) - P[2]*(sq + sq_offset); //Roll
 				//printf("Z:%ld|L:%ld|M:%ld|N:%ld|",Z,L,M,N);
 			SetMotorValues();
 			update_motors();
@@ -491,6 +491,7 @@ void Full_Control_Mode_Input_Handler(unsigned char *Input)
 					pitchSetPoint = pitchSetPoint_K + pitchSetPoint_J;
 					rollSetPoint = rollSetPoint_K + rollSetPoint_J;
 }
+
 
 void Yaw_Controlled_Mode_Input_Handler(unsigned char *Input)
 {
