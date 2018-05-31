@@ -40,9 +40,6 @@ void SetMessage(unsigned char _msgCode)
 //Sending
 Packet *pkt_S=NULL;
 
-//Logging to flash memory
-int flashCounter = 0x000000;
-
 
 //Functions for Package Reception
 void process_packet(Packet *pkt_R);
@@ -59,6 +56,7 @@ uint16_t getInputQueueCount()
 
 uint32_t lastPacketTime = 0;
 uint32_t lastTelePacketSendTime = 0;
+
 bool checkGap(uint32_t lastTime, uint32_t readGap);
 
 
@@ -68,8 +66,9 @@ bool checkGap(uint32_t lastTime, uint32_t readGap);
  */
 void process_packet(Packet *pkt_R)
 {
-	lastPacketTime = get_time_us();
 
+	lastPacketTime = get_time_us();
+	//printf("PacketRecived@%ld\n",lastPacketTime);
 	if(CurrentMode.state!=Panic){
 		switch (pkt_R->type)
 		{
@@ -78,6 +77,7 @@ void process_packet(Packet *pkt_R)
 						if(CurrentMode.state != Safe)
 							{
 								CurrentMode = GetMode(M_PANIC);
+								(*CurrentMode.Mode_Initialize)();
 							}
 						else 
 							{
@@ -115,31 +115,6 @@ void process_packet(Packet *pkt_R)
 		}
 	}
 	//printf("FCB\n");
-
-	for (uint32_t j=0x000000; j<0x100000; j++){
-
-	flash_write_byte(j,pkt_R->value[8]);
-	flash_write_byte(j+1,pkt_R->value[9]); //batt volt
-	for(int i=0;i<4;i++){
-		flash_write_byte(j+2,pkt_R->value[2*i]);
-		flash_write_byte(j+3,pkt_R->value[2*i+1]); //motors
-	}
-	flash_write_byte(j+4,pkt_R->value[10]); 
-	flash_write_byte(j+5,pkt_R->value[11]); //phi
-	flash_write_byte(j+6,pkt_R->value[12]); 
-	flash_write_byte(j+7,pkt_R->value[13]); //theta 
-	flash_write_byte(j+8,pkt_R->value[14]); 
-	flash_write_byte(j+9,pkt_R->value[15]); //psi
-	flash_write_byte(j+10,pkt_R->value[16]); 
-	flash_write_byte(j+11,pkt_R->value[17]); //sp
-	flash_write_byte(j+12,pkt_R->value[18]); 
-	flash_write_byte(j+13,pkt_R->value[19]); //sq
-	flash_write_byte(j+14,pkt_R->value[20]); 
-	flash_write_byte(j+15,pkt_R->value[21]); //sq
-	flash_write_byte(j+16,pkt_R->value[22]); //drone msg
-
-	}
-
 
 }
 
@@ -197,12 +172,15 @@ int main(void)
 
 			if(checkGap(lastPacketTime,DISCONNECTED_GAP_US))
 			{
+
 				nrf_gpio_pin_set(RED);
 				nrf_gpio_pin_set(BLUE);
 				nrf_gpio_pin_set(GREEN);
+
 				SetMessage(MSG_DISCONNECTED);	
-				CurrentMode=GetMode(M_PANIC);	
-			
+				CurrentMode=GetMode(M_PANIC);
+				(*CurrentMode.Mode_Initialize)();
+
 					
 
 			}
@@ -218,10 +196,10 @@ int main(void)
 
 
 		//Send Telemetry Packets
-		if(checkGap(lastTelePacketSendTime, TELE_SEND_GAP_MS))
+		if(checkGap(lastTelePacketSendTime, TELE_SEND_GAP_US))
 		{
 
-			SendPacket(Create_Telemetery_Packet(bat_volt, ae, phi, theta, psi, sp, sq, sr,msgCode));
+			SendPacket(Create_Telemetery_Packet(bat_volt, ae, phi, theta, psi, sp, sq, sr,msgCode,GetPArray()));
 			lastTelePacketSendTime=get_time_us();
 		}
 		
@@ -236,8 +214,7 @@ int main(void)
 bool checkGap(uint32_t lastTime, uint32_t readGap)
 {
 	uint32_t currentTime = get_time_us();
-
-	return (currentTime>lastTime?currentTime-lastTime>readGap: (UINT32_MAX-lastTime+currentTime)>readGap);
+	return ((currentTime==lastTime)?0:((currentTime>lastTime)?((currentTime-lastTime)>=readGap): (((lastTime-currentTime)<400)?0:((UINT32_MAX-lastTime+currentTime)>=readGap))));
 
 
 }
@@ -256,7 +233,7 @@ void SendPacket(Packet *packetToSend)
 		unsigned char *dataToSend = Get_Byte_Stream(packetToSend);
 			for(int i =0;i<packetToSend->packetLength+1;i++)
 			{
-				printf("%c",dataToSend[i]);
+				uart_put(dataToSend[i]);
 			}
 	}
 
