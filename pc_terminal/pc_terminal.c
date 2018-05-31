@@ -104,10 +104,7 @@ Packet *pkt_K = NULL;
 int axis[6];
 int button[12];
 
-<<<<<<< HEAD
 FILE *f;
-=======
->>>>>>> master
 unsigned int KBLastReadTimeStamp = 0;
 unsigned int  HBLastSendTimeStamp = 0;
 int CheckReadGap(unsigned int lastSendTime, char times);
@@ -420,13 +417,9 @@ void kb_input_handler(unsigned char c)
 		storeUIMessage("JS SIMULATION TESTING\n");
 		break;*/
 	case 27:
-<<<<<<< HEAD
 	fclose(f);
 	storeUIMessage("Exiting \n" );
 
-=======
-	//storeUIMessage("%i\n",c );
->>>>>>> master
 		if ((c = term_getchar_nb()) != -1)
 		{
 			switch (c = term_getchar_nb()) {
@@ -830,7 +823,6 @@ int main(int argc, char **argv)
 	while ((c = rs232_getchar_nb()) != -1)
 		fputc(c, stderr);
 
-<<<<<<< HEAD
 	//init logging
 	f = fopen("file.txt", "a");
 	if (f == NULL)
@@ -839,8 +831,6 @@ int main(int argc, char **argv)
 		exit(1);
 	}
 
-=======
->>>>>>> master
 	/* joystick initialization
 	*/
 	joystick_init(&fd);
@@ -854,8 +844,7 @@ int main(int argc, char **argv)
 		/* read joystick inputs
 		*/
 		//printf("T1:%d\n",mon_time_ms());
-		/*js_comm = read_js(&fd, axis, button);
-		
+		js_comm = read_js(&fd, axis, button);
 		
 		
 		if (js_comm != NULL) {
@@ -867,7 +856,6 @@ int main(int argc, char **argv)
 			
 				if (pkt != NULL)
 				{
-					//printf("pkt not null\n");
 					//Send Packet bytes through RS232
 					Send_Packet(pkt);
 					//printf("pkt send\n");
@@ -880,7 +868,7 @@ int main(int argc, char **argv)
 				//printf("%d\n",lastJSSendTime);
 			}
 			free(js_comm);
-		}*/
+		}
 		//printf("T2:%d\n",mon_time_ms());
 		if ((c = term_getchar_nb()) != -1)
 		{
@@ -892,13 +880,13 @@ int main(int argc, char **argv)
 				if(CheckReadGap(KBLastReadTimeStamp,1)){
 					//Send Packet bytes through RS232
 					Send_Packet(pkt);
-					/*printf("Testing- Type:%d\n", pkt->type);
-					printf("Testing- lastJSSendTimebyte:%d\n", pkt->lastJSSendTimeByte);
-					printf("Testing- datalength:%d\n", pkt->dataLength);
-					printf("Testing- value length:%d\n", pkt->valueLength);
-					printf("Testing- value:%d\n", *(pkt->value));
-					printf("Testing- CRC0:%d\n", *(pkt->CRC));
-					printf("Testing- CRC1:%d\n", pkt->CRC[1]);*/
+					/*fprintf(f,"Testing- Type:%d\n", pkt->type);
+					//fprintf("Testing- lastJSSendTimebyte:%d\n", pkt->lastJSSendTimeByte);
+					fprintf(f,"Testing- datalength:%d\n", pkt->dataLength);
+					fprintf(f,"Testing- value length:%d\n", pkt->valueLength);
+					fprintf(f,"Testing- value:%d\n", *(pkt->value));
+					fprintf(f,"Testing- CRC0:%d\n", *(pkt->CRC));
+					fprintf(f,"Testing- CRC1:%d\n", pkt->CRC[1]);*/
 					//Destroy_Packet(pkt);
 					//free(value_tag);
 				}
