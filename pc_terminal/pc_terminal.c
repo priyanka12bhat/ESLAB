@@ -104,7 +104,7 @@ Packet *pkt_K = NULL;
 int axis[6];
 int button[12];
 
-FILE *f;
+//FILE *f;
 unsigned int KBLastReadTimeStamp = 0;
 unsigned int  HBLastSendTimeStamp = 0;
 int CheckReadGap(unsigned int lastSendTime, char times);
@@ -417,7 +417,7 @@ void kb_input_handler(unsigned char c)
 		storeUIMessage("JS SIMULATION TESTING\n");
 		break;*/
 	case 27:
-	fclose(f);
+	//fclose(f);
 	storeUIMessage("Exiting \n" );
 
 		if ((c = term_getchar_nb()) != -1)
@@ -1010,27 +1010,5 @@ void process_packet(Packet *pkt_R)
 	//refresh ();
 	printUIMessage();
 	printf("Drone Say's:%s\n",DecodeMessage(pkt_R->value[22]));
-
-	//log to txt
-	fprintf(f,"=========================================================================================================\n");
-	fprintf(f,"Quadruple Control\n");
-	fprintf(f,"=========================================================================================================\n");
-	fprintf(f,"Battery Voltage:\t%d\n",((uint16_t)pkt_R->value[8])<<8|pkt_R->value[9]);
-	for(int i=0;i<4;i++){
-		fprintf(f,"Motor[%d]:\t%d\t",i,((uint16_t)pkt_R->value[2*i])<<8|pkt_R->value[2*i+1]);
-	}
-    fprintf(f,"\n");
-    fprintf(f,"phi:\t%d\t",(int16_t)(((uint16_t)pkt_R->value[10])<<8|pkt_R->value[11]));
-    fprintf(f,"theta:\t%d\t",(int16_t)(((uint16_t)pkt_R->value[12])<<8|pkt_R->value[13]));
-    fprintf(f,"psi:\t%d\n",(int16_t)(((uint16_t)pkt_R->value[14])<<8|pkt_R->value[15]));
-
-    fprintf(f,"sp:\t%d\t",(int16_t)(((uint16_t)pkt_R->value[16])<<8|pkt_R->value[17]));
-    fprintf(f,"sq:\t%d\t",(int16_t)(((uint16_t)pkt_R->value[18])<<8|pkt_R->value[19]));
-    fprintf(f,"sr:\t%d\n",(int16_t)(((uint16_t)pkt_R->value[20])<<8|pkt_R->value[21]));
-
-	//mvprintw (0, 0, "%d", pkt_R->value[0]);     
-	//refresh ();
-	printUIMessage();
-	fprintf(f,"Drone Say's:%s\n",DecodeMessage(pkt_R->value[22]));
 }
 
