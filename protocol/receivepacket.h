@@ -6,11 +6,11 @@
 #include <stdlib.h>
 #include <stdint.h>
 
+
 //Enums with all the possible states and events
 
 enum stateListR	{checkStartByte, getMsgSize, checkMessageType,setupMsg, getMsg, checkCRC0, checkCRC1}	currentStateR, nextState;
 
-enum eventListR	{noEvent, byteReceived, error, timeout} currentEvent;
 
 
 
@@ -37,12 +37,7 @@ void addData(unsigned char *datas, unsigned char length);
 
 
 	
-//Event handling functions
 
-void changeEvent(enum eventListR newEventType);
-enum eventListR getEvent(void);
-
-void clearEvents(void);
 
 void SearchforStartByte(unsigned char CRCPos);
 
