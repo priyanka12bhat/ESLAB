@@ -105,9 +105,6 @@ int axis[6];
 int button[12];
 
 FILE *f;
-
-extern uint32_t JSLastReadTimeStamp = 0;
-extern uint32_t KBLastReadTimeStamp = 0;
 unsigned int KBLastReadTimeStamp = 0;
 unsigned int  HBLastSendTimeStamp = 0;
 int CheckReadGap(unsigned int lastSendTime, char times);
@@ -419,11 +416,6 @@ void kb_input_handler(unsigned char c)
 		pkt = Create_Packet(type_tag, 5, value_tag);
 		storeUIMessage("JS SIMULATION TESTING\n");
 		break;*/
-	/*case 'm':
-		storeUIMessage("Logging stopped");
-		fclose(f);
-	break;*/
-
 	case 27:
 	fclose(f);
 	storeUIMessage("Exiting \n" );
@@ -472,6 +464,7 @@ void kb_input_handler(unsigned char c)
 
 				ExitSafe();
 				break;
+
 			}
 		}
 		break;
@@ -535,7 +528,7 @@ void Send_Packet(Packet *pkt)
 }
 
 /* Joystick Initialization
-
+*/
 void joystick_init(int *fd)
 {
 
@@ -566,7 +559,7 @@ void joystick_init(int *fd)
 
 
 
-}*/
+}
 
 
 /* time
@@ -840,7 +833,7 @@ int main(int argc, char **argv)
 
 	/* joystick initialization
 	*/
-	//joystick_init(&fd);
+	joystick_init(&fd);
 
 	//js_safety_check(&fd,axis,button);
 
@@ -851,8 +844,7 @@ int main(int argc, char **argv)
 		/* read joystick inputs
 		*/
 		//printf("T1:%d\n",mon_time_ms());
-		/*js_comm = read_js(&fd, axis, button);
-		
+		js_comm = read_js(&fd, axis, button);
 		
 		
 		if (js_comm != NULL) {
@@ -864,7 +856,6 @@ int main(int argc, char **argv)
 			
 				if (pkt != NULL)
 				{
-					//printf("pkt not null\n");
 					//Send Packet bytes through RS232
 					Send_Packet(pkt);
 					//printf("pkt send\n");
@@ -877,7 +868,7 @@ int main(int argc, char **argv)
 				//printf("%d\n",lastJSSendTime);
 			}
 			free(js_comm);
-		}*/
+		}
 		//printf("T2:%d\n",mon_time_ms());
 		if ((c = term_getchar_nb()) != -1)
 		{
@@ -928,8 +919,7 @@ int main(int argc, char **argv)
 		}
 
 	}
-	storeUIMessage("\nFCB Exited\n");
-	//fclose(f);
+
 
 	/*for (;;)
 	{
@@ -950,8 +940,7 @@ int main(int argc, char **argv)
 	term_exitio();
 	rs232_close();
 
-	storeUIMessage("Exiting Host Program\n");
-
+	storeUIMessage("Exiting Host Program\n\0");
 	return 0;
 }
 
