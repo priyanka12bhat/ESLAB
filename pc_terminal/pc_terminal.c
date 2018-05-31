@@ -823,7 +823,7 @@ int main(int argc, char **argv)
 		fputc(c, stderr);
 
 	//init logging
-	f = fopen("file.txt", "a");
+	//f = fopen("file.txt", "a");
 	if (f == NULL)
 	{
 		printf("Error opening file!\n");
