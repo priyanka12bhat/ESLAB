@@ -270,15 +270,6 @@ void Panic_Mode_Execute()
 
 			update_motors();
 			}
-flash_read_bytes(0x000000, flashBuffer, 1048576);
-FILE *f;
-f = fopen("file.txt", "a");
-for (int i=0; i<1048577; i++){
-    fprintf(f,"Quadruple Control\n");
-    fprintf(f,"Battery Voltage:\t%d\n",(*(flashBuffer+i))<<(*(flashBuffer+i+1)));
-}
-fclose(f)
-
 
 }
 
