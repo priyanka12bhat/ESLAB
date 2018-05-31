@@ -59,7 +59,7 @@
 
 #define MAX_MSG_SIZE 8
 #define P_SIZE MAX_MSG_SIZE
-#define LP_SIZE 40
+#define LP_SIZE 26
 #define JS_READ_GAP 40
 #define DISCONNECTED_GAP_US JS_READ_GAP*1000*100
 #define TELE_SEND_GAP_MS 100
@@ -83,7 +83,7 @@ Packet *Create_Packet(unsigned char type,unsigned char length, unsigned char *va
 void Destroy_Packet(Packet *pkt);
 void Set_CRCValue(Packet *pkt);
 
-Packet *Create_Telemetery_Packet(uint16_t bat_volt, int16_t *MotorValues, int16_t phi, int16_t theta, int16_t psi, int16_t sp, int16_t sq, int16_t sr, unsigned char _msgCode, int16_t PArray[]);
+Packet *Create_Telemetery_Packet(uint16_t bat_volt, int16_t *MotorValues, int16_t phi, int16_t theta, int16_t psi, int16_t sp, int16_t sq, int16_t sr, unsigned char _msgCode);
 
 Packet *Create_MSG_Packet(char code);
 

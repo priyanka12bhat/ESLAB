@@ -91,8 +91,8 @@ int	term_getchar()
 #include "../protocol/receivepacket.h"
 #include "../messages/messagesdecoder.h"
 
-#define clearUI() printf("\033[H\033[J")
-#define setCursor(x, y) printf("\033[%d;%dH", x, y)
+#define update() printf("\033[H\033[J")
+#define gotoxy(x, y) printf("\033[%d;%dH", x, y)
 int run = 1;
 //unsigned char* value_tag = NULL;
 //unsigned char longValueArray[10];
@@ -223,7 +223,7 @@ void kb_input_handler(unsigned char c)
 		type_tag = T_MODE;
 		pkt = Create_Packet(type_tag, 1, value_tag);
 
-		storeUIMessage("Switching mode to safe mode\n\0");
+		storeUIMessage("Switching mode to safe mode\n");
 		break;
 
 	case ONE:
@@ -232,7 +232,7 @@ void kb_input_handler(unsigned char c)
 		type_tag = T_MODE;
 
 		pkt = Create_Packet(type_tag, 1, value_tag);
-		storeUIMessage("Switching mode to panic mode\n\0");
+		storeUIMessage("Switching mode to panic mode\n");
 		break;
 
 	case TWO:
@@ -243,11 +243,11 @@ void kb_input_handler(unsigned char c)
 		if(((axis[0]==0) && (axis[1]==0) && (axis[2]==0) &&(axis[3]==32767)) || 1 ){
 		pkt = Create_Packet(type_tag, 1, value_tag);
 
-		storeUIMessage("Switching mode to manual mode\n\0");
+		storeUIMessage("Switching mode to manual mode\n");
 		}
 		else
 		{
-			storeUIMessage("Zero Joystick\n\0");
+			storeUIMessage("Zero Joystick\n");
 			//free(value_tag);
 		}
 		break;
@@ -258,7 +258,7 @@ void kb_input_handler(unsigned char c)
 		type_tag = T_MODE;
 
 		pkt = Create_Packet(type_tag, 1, value_tag);
-		storeUIMessage("Requesting calibration mode\n\0");
+		storeUIMessage("Requesting calibration mode\n");
 		break;
 
 	case FOUR:
@@ -267,7 +267,7 @@ void kb_input_handler(unsigned char c)
 		*value_tag = M_YAWCONTROL;
 		type_tag = T_MODE;
 		pkt = Create_Packet(type_tag, 1, value_tag);
-		storeUIMessage("Switching to Yaw Conrolled mode\n\0");
+		storeUIMessage("Switching to Yaw Conrolled mode\n");
 		break;
 
 	case FIVE:
@@ -304,7 +304,7 @@ void kb_input_handler(unsigned char c)
 		*value_tag = C_LIFTUP;
 		type_tag = T_CONTROL;
 		pkt = Create_Packet(type_tag, 1, value_tag);
-		storeUIMessage("lift up\n\0");
+		storeUIMessage("lift up\n");
 		break;
 
 	case 'z'://lift down
@@ -312,7 +312,7 @@ void kb_input_handler(unsigned char c)
 		*value_tag = C_LIFTDOWN;
 		type_tag = T_CONTROL;
 		pkt = Create_Packet(type_tag, 1, value_tag);
-		storeUIMessage("lift down\n\0");
+		storeUIMessage("lift down\n");
 
 		break;
 	case 'q'://Yaw down
@@ -320,7 +320,7 @@ void kb_input_handler(unsigned char c)
 		*value_tag = C_YAWDOWN;
 		type_tag = T_CONTROL;
 		pkt = Create_Packet(type_tag, 1, value_tag);
-		storeUIMessage("Yaw down\n\0");
+		storeUIMessage("Yaw down\n");
 
 		break;
 	case 'w'://Yaw up
@@ -328,7 +328,7 @@ void kb_input_handler(unsigned char c)
 		*value_tag = C_YAWUP;
 		type_tag = T_CONTROL;
 		pkt = Create_Packet(type_tag, 1, value_tag);
-		storeUIMessage("Yaw up\n\0");
+		storeUIMessage("Yaw up\n");
 
 		break;
 
@@ -338,7 +338,7 @@ void kb_input_handler(unsigned char c)
 		*value_tag = C_PUP;
 		type_tag = T_CONTROL;
 		pkt = Create_Packet(type_tag, 1, value_tag);
-		storeUIMessage("Yaw control P up\n\0");
+		storeUIMessage("Yaw control P up\n");
 
 		break;
 
@@ -347,7 +347,7 @@ void kb_input_handler(unsigned char c)
 		*value_tag = C_PDOWN;
 		type_tag = T_CONTROL;
 		pkt = Create_Packet(type_tag, 1, value_tag);
-		storeUIMessage("Yaw control P down\n\0");
+		storeUIMessage("Yaw control P down\n");
 		break;
 
 	case 'i':// P1 up
@@ -355,7 +355,7 @@ void kb_input_handler(unsigned char c)
 		*value_tag = C_P1UP;
 		type_tag = T_CONTROL;
 		pkt = Create_Packet(type_tag, 1, value_tag);
-		storeUIMessage("P1 up\n\0");
+		storeUIMessage("P1 up\n");
 		break;
 
 	case 'k':// P1 down
@@ -363,14 +363,14 @@ void kb_input_handler(unsigned char c)
 		*value_tag = C_P1DOWN;
 		type_tag = T_CONTROL;
 		pkt = Create_Packet(type_tag, 1, value_tag);
-		storeUIMessage("P1 down\n\0");
+		storeUIMessage("P1 down\n");
 		break;
 	case 'o':// P2 up
 		
 		*value_tag = C_P2UP;
 		type_tag = T_CONTROL;
 		pkt = Create_Packet(type_tag, 1, value_tag);
-		storeUIMessage("P2 up\n\0");
+		storeUIMessage("P2 up\n");
 
 		break;
 	case 'l':// P2 down
@@ -378,7 +378,7 @@ void kb_input_handler(unsigned char c)
 		*value_tag = C_P2DOWN;
 		type_tag = T_CONTROL;
 		pkt = Create_Packet(type_tag, 1, value_tag);
-		storeUIMessage("P2 down\n\0");
+		storeUIMessage("P2 down\n");
 
 		break;
 
@@ -428,35 +428,34 @@ void kb_input_handler(unsigned char c)
 				*value_tag = C_ROLLUP;
 				type_tag = T_CONTROL;
 				pkt = Create_Packet(type_tag, 1, value_tag);
-				storeUIMessage("RollUp\n\0");
+				storeUIMessage("RollUp\n");
 				break;
 			case 'C'://Right Arrow - RollDown
 				
 				*value_tag = C_ROLLDOWN;
 				type_tag = T_CONTROL;
 				pkt = Create_Packet(type_tag, 1, value_tag);
-				storeUIMessage("RollDown\n\0");
+				storeUIMessage("RollDown\n");
 				break;
 			case 'A'://Up Arrow - PitchDown
 				
 				*value_tag = C_PITCHDOWN;
 				type_tag = T_CONTROL;
 				pkt = Create_Packet(type_tag, 1, value_tag);
-				storeUIMessage("PitchDown\n\0");
+				storeUIMessage("PitchDown\n");
 				break;
 			case 'B'://Arrow Down - PitchUP
 				
 				*value_tag = C_PITCHUP;
 				type_tag = T_CONTROL;
 				pkt = Create_Packet(type_tag, 1, value_tag);
-				storeUIMessage("PitchUP\n\0");
+				storeUIMessage("PitchUP\n");
 
 
 
 				break;
 			default:
-
-				storeUIMessage("Exiting....\n\0");
+				storeUIMessage("Exiting....\n");
 				
 				*value_tag = M_SAFE;
 				type_tag = T_EXIT;
@@ -472,7 +471,7 @@ void kb_input_handler(unsigned char c)
 		//case 27:
 		//break;
 	default:
-		storeUIMessage("Invalid Control Input\n\0");
+		storeUIMessage("Invalid Control Input\n");
 		//invalid_input=1;
 		break;
 	}
@@ -909,12 +908,12 @@ int main(int argc, char **argv)
 		//if ((c = rs232_getchar_nb()) != -1)
 			//term_putchar(c);
 
-		if((CheckReadGap(lastJSSendTime,1) && CheckReadGap(KBLastReadTimeStamp,1))?CheckReadGap(HBLastSendTimeStamp,2):0)
+		if(CheckReadGap(lastJSSendTime,2))
 		{
 			pkt=Create_HeartBeatPacket();
 			Send_Packet(pkt);
 			pkt=NULL;
-			HBLastSendTimeStamp=mon_time_ms();
+			lastJSSendTime=mon_time_ms();
 
 		}
 
@@ -933,7 +932,7 @@ int main(int argc, char **argv)
 
 	}*/
 
-	//storeUIMessage("\nFCB Exited\n\0");
+	storeUIMessage("\nFCB Exited\n");
 
 
 
@@ -948,8 +947,7 @@ int CheckReadGap(unsigned int lastSendTime,char times)
 {
 	unsigned int currentTime = mon_time_ms();
 
-	return ((currentTime==lastSendTime)?0:((currentTime>lastSendTime)?((currentTime - lastSendTime) >= JS_READ_GAP*times):((UINT_MAX-lastSendTime+currentTime)>=JS_READ_GAP*times)));
-
+	return (currentTime==lastSendTime)?0:((currentTime>lastSendTime)?((currentTime - lastSendTime) >= JS_READ_GAP*times):((UINT_MAX-lastSendTime+currentTime)>=JS_READ_GAP*times));
 
 
 }
@@ -983,16 +981,16 @@ void storeUIMessage(const char msg[])
 
 void printUIMessage()
 {
-	setCursor(15, 0);
+	gotoxy(15, 0);
 	printf("LastAction:%s\n",msgToPrint);
 }
 
 
 void process_packet(Packet *pkt_R)
 {
-	clearUI();
+	update();
 	printf("=========================================================================================================\n");
-	setCursor(2, 45);
+	gotoxy(2, 45);
 	printf("Quadruple Control\n");
 	printf("=========================================================================================================\n");
 	printf("Battery Voltage:\t%d\n",((uint16_t)pkt_R->value[8])<<8|pkt_R->value[9]);
@@ -1007,9 +1005,7 @@ void process_packet(Packet *pkt_R)
     printf("sp:\t%d\t",(int16_t)(((uint16_t)pkt_R->value[16])<<8|pkt_R->value[17]));
     printf("sq:\t%d\t",(int16_t)(((uint16_t)pkt_R->value[18])<<8|pkt_R->value[19]));
     printf("sr:\t%d\n",(int16_t)(((uint16_t)pkt_R->value[20])<<8|pkt_R->value[21]));
-    printf("P:\t%d\t",(((uint16_t)pkt_R->value[23])<<8|pkt_R->value[24]));
-    printf("P1:\t%d\t",(((uint16_t)pkt_R->value[25])<<8|pkt_R->value[26]));
-    printf("P2:\t%d\t",(((uint16_t)pkt_R->value[27])<<8|pkt_R->value[28]));
+
 	//mvprintw (0, 0, "%d", pkt_R->value[0]);     
 	//refresh ();
 	printUIMessage();

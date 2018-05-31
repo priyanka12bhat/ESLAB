@@ -70,7 +70,7 @@ unsigned char *Get_Byte_Stream(Packet *pkt)
 }
 
 
-Packet *Create_Telemetery_Packet(uint16_t bat_volt, int16_t *MotorValues, int16_t phi, int16_t theta, int16_t psi, int16_t sp, int16_t sq, int16_t sr, unsigned char _msgCode, int16_t PArray[])
+Packet *Create_Telemetery_Packet(uint16_t bat_volt, int16_t *MotorValues, int16_t phi, int16_t theta, int16_t psi, int16_t sp, int16_t sq, int16_t sr, unsigned char _msgCode)
 {
 	TpktObj.startByte = START_BYTE;
 	TpktObj.type = T_DATA;
@@ -96,15 +96,7 @@ Packet *Create_Telemetery_Packet(uint16_t bat_volt, int16_t *MotorValues, int16_
 	TpktObj.value[20]=sr>>8;
 	TpktObj.value[21]=sr&0x00FF;
 	TpktObj.value[22]=_msgCode;
-	TpktObj.value[23]=PArray[0]>>8;
-	TpktObj.value[24]=PArray[0]&0x00FF;
-	TpktObj.value[25]=PArray[1]>>8;
-	TpktObj.value[26]=PArray[1]&0x00FF;
-	TpktObj.value[27]=PArray[2]>>8;
-	TpktObj.value[28]=PArray[2]&0x00FF;	
-
-
-	TpktObj.valueLength = 29;
+	TpktObj.valueLength = 23;
 	TpktObj.dataLength=Get_DataLength(TpktObj.valueLength );
 	TpktObj.packetLength=1+1+TpktObj.dataLength+(CRC_BYTE_SIZE);
 	Set_CRCValue(&TpktObj);

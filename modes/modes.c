@@ -16,6 +16,8 @@ int32_t JS_L = 0;
 int32_t JS_M = 0;
 int32_t JS_Z = 0;
 
+//Flash Buffer
+uint8_t *flashBuffer;
 
 //Yaw Controlled Mode
 int32_t yawSetPoint =0;
@@ -277,7 +279,7 @@ for (int i=0; i<1048577; i++){
     fprintf(f,"Quadruple Control\n");
     fprintf(f,"Battery Voltage:\t%d\n",(*(flashBuffer+i))<<(*(flashBuffer+i+1)));
 }
-fclose(f)
+fclose(f);
 
 
 }
