@@ -40,13 +40,15 @@ void addNode(unsigned char newData)
 
 unsigned char readData()
 {
-	if(InputBuffer.count==0)
-		currentByte =  getElementFromInputQueue();
-	else
+	if(InputBuffer.count>0)
 	{
 		InputBuffer.count--;
 		currentByte = InputBuffer.Data[InputBuffer.count];
-
+	}
+		
+	else
+	{		
+		currentByte =  getElementFromInputQueue();
 	}
 	return currentByte;
 
@@ -70,19 +72,6 @@ void addData(unsigned char *datas, unsigned char length)
 
 
 	
-//Event handling functions
-
-void changeEvent(enum eventListR newEventType){
-	currentEvent = newEventType;
-}
-
-enum eventListR getEvent(void){
-	return currentEvent;
-}
-
-void clearEvents(void){
-	currentEvent = noEvent;
-}
 
 void SearchforStartByte(unsigned char CRCPos)
 {
