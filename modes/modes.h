@@ -53,5 +53,7 @@ void Yaw_Controlled_Mode_Input_Handler(unsigned char *Input);
 void Full_Control_Mode_Input_Handler(unsigned char *Input);
 
 int16_t* GetPArray();
+void SendAdditionalMessage( char* msgfmt, ...);
+
 
 #endif

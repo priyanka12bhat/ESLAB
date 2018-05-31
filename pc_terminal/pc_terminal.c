@@ -111,6 +111,7 @@ int serial_device = 0;
 int fd_RS232;
 
 char msgToPrint[512];
+char additionalMessage[16];
 void storeUIMessage(const char msg[]);
 
 
@@ -247,6 +248,7 @@ void kb_input_handler(unsigned char c)
 		else
 		{
 			storeUIMessage("Zero Joystick\n\0");
+			pkt=NULL;
 			//free(value_tag);
 		}
 		break;
@@ -265,15 +267,41 @@ void kb_input_handler(unsigned char c)
 		
 		*value_tag = M_YAWCONTROL;
 		type_tag = T_MODE;
+
+		if(((axis[0]==0) && (axis[1]==0) && (axis[2]==0) &&(axis[3]==32767)) || 1 ){
 		pkt = Create_Packet(type_tag, 1, value_tag);
+
 		storeUIMessage("Switching to Yaw Conrolled mode\n\0");
+		}
+		else
+		{
+			storeUIMessage("Zero Joystick\n\0");
+			pkt=NULL;
+			//free(value_tag);
+		}
+
+
+
+
 		break;
 
 	case FIVE:
 		
 		*value_tag = M_FULLCONTROL;
 		type_tag = T_MODE;
+
+
+		if(((axis[0]==0) && (axis[1]==0) && (axis[2]==0) &&(axis[3]==32767)) || 1 ){
 		pkt = Create_Packet(type_tag, 1, value_tag);
+
+		storeUIMessage("Switching to Full Conrolled mode\n\0");
+		}
+		else
+		{
+			storeUIMessage("Zero Joystick\n\0");
+			pkt=NULL;
+			//free(value_tag);
+		}
 		break;
 
 	case SIX:
@@ -622,6 +650,22 @@ void read_values(int* fd, int axis[], int button[])
 	}
 }
 
+js_command *read_js_simulator()
+{
+	js_command *js_c = NULL;
+	static int value = 0;
+
+
+
+		js_c= (js_command *)malloc(sizeof(js_command));
+		js_c->Type = T_CONTROL;
+		js_c->Roll = 0;
+		js_c->Pitch = 0;
+		js_c->Yaw = 0;
+		js_c->Lift = 226969;
+	return js_c;
+}
+
 js_command *read_js(int* fd, int axis[], int button[])
 {
 	js_command *js_c = NULL;
@@ -833,9 +877,8 @@ int main(int argc, char **argv)
 		/* read joystick inputs
 		*/
 		//printf("T1:%d\n",mon_time_ms());
-		/*js_comm = read_js(&fd, axis, button);
-		
-		
+		//js_comm = read_js(&fd, axis, button);
+		js_comm = read_js_simulator();
 		
 		if (js_comm != NULL) {
 			if(CheckReadGap(lastJSSendTime,1)){
@@ -859,7 +902,7 @@ int main(int argc, char **argv)
 				//printf("%d\n",lastJSSendTime);
 			}
 			free(js_comm);
-		}*/
+		}
 		//printf("T2:%d\n",mon_time_ms());
 		if ((c = term_getchar_nb()) != -1)
 		{
@@ -981,6 +1024,7 @@ void printUIMessage()
 
 void process_packet(Packet *pkt_R)
 {
+	if(pkt_R->type==T_DATA){
 	clearUI();
 	printf("=========================================================================================================\n");
 	setCursor(2, 45);
@@ -1001,9 +1045,22 @@ void process_packet(Packet *pkt_R)
     printf("P:\t%d\t",(((uint16_t)pkt_R->value[23])<<8|pkt_R->value[24]));
     printf("P1:\t%d\t",(((uint16_t)pkt_R->value[25])<<8|pkt_R->value[26]));
     printf("P2:\t%d\t",(((uint16_t)pkt_R->value[27])<<8|pkt_R->value[28]));
+  
+   
+   
+    
+
+
 	//mvprintw (0, 0, "%d", pkt_R->value[0]);     
 	//refresh ();
 	printUIMessage();
 	printf("Drone Say's:%s\n",DecodeMessage(pkt_R->value[22]));
+	printf("\nAdditional Debug Messages:%s\n",additionalMessage);
+	}
+	else
+	{
+		 strncpy(additionalMessage,pkt_R->value,15);
+		 additionalMessage[15]='\0';
+	}
+	
 }
-

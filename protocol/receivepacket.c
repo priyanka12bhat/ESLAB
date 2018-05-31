@@ -141,7 +141,7 @@ void stateHandler(){
 			break;
 		case checkMessageType:
 
-			if((currentByte==T_MODE) || (currentByte==T_CONTROL) || (currentByte==T_DATA)||(currentByte==T_EXIT)||(currentByte==T_MSG)||(currentByte==T_HEARTBEAT))
+			if((currentByte==T_MODE) || (currentByte==T_CONTROL) || (currentByte==T_DATA)||(currentByte==T_EXIT)||(currentByte==T_adMSG)||(currentByte==T_HEARTBEAT))
 			{
 				msgType = currentByte;
 				nextState = setupMsg;

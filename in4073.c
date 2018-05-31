@@ -20,7 +20,7 @@
 #include "protocol/receivepacket.h"
 #include "messages/messages.h"
 #include "modes/modes.h"
-
+#include <stdarg.h>
 
 //#include "keyboard.h"
 //General
@@ -32,10 +32,27 @@ void SetMotorValues_Manual();
 void SendPacket(Packet *packetToSend);
 char msgCode = 0;
 
+
 void SetMessage(unsigned char _msgCode)
 {
 	msgCode=_msgCode;
 }
+
+//ONLY FOR DEBUGGING!. Remove instances after use.
+void SendAdditionalMessage( char* msgfmt, ...)
+{   char additionalMessage[15];
+    va_list vl;
+    va_start(vl, msgfmt);
+
+    vsnprintf( additionalMessage, 15, msgfmt, vl);
+
+    va_end(vl);
+    SendPacket(Create_adMSG_Packet(additionalMessage));
+
+
+}
+
+
 
 //Sending
 Packet *pkt_S=NULL;

@@ -11,7 +11,7 @@
 #define T_DATA 3
 #define T_CONFIG 4
 #define T_EXIT 5
-#define T_MSG 6
+#define T_adMSG 6
 #define T_HEARTBEAT 7 
 
 //Mode Types
@@ -85,7 +85,7 @@ void Set_CRCValue(Packet *pkt);
 
 Packet *Create_Telemetery_Packet(uint16_t bat_volt, int16_t *MotorValues, int16_t phi, int16_t theta, int16_t psi, int16_t sp, int16_t sq, int16_t sr, unsigned char _msgCode, int16_t PArray[]);
 
-Packet *Create_MSG_Packet(char code);
+Packet *Create_adMSG_Packet(char *additionalMessage);
 
 Packet *Create_HeartBeatPacket();
 

@@ -111,17 +111,17 @@ Packet *Create_Telemetery_Packet(uint16_t bat_volt, int16_t *MotorValues, int16_
 	return &TpktObj;
 }
 
-Packet *Create_MSG_Packet(char code)
-{
-	pktObj.startByte = START_BYTE;
-	pktObj.type = T_MSG;
-	pktObj.value[0] = code;
-	pktObj.value[1] = code;
-	pktObj.valueLength = 2;
-	pktObj.dataLength=Get_DataLength(pktObj.valueLength);
-	pktObj.packetLength=1+1+pktObj.dataLength+(CRC_BYTE_SIZE);
-	Set_CRCValue(&pktObj);
-	return &pktObj;
+Packet *Create_adMSG_Packet(char *additionalMessage){
+	TpktObj.startByte = START_BYTE;
+	TpktObj.type = T_adMSG;
+	for(int i =0;i<15;i++){
+			TpktObj.value[i]=additionalMessage[i];
+	}
+	TpktObj.valueLength = 15;
+	TpktObj.dataLength=Get_DataLength(TpktObj.valueLength);
+	TpktObj.packetLength=1+1+TpktObj.dataLength+(CRC_BYTE_SIZE);
+	Set_CRCValue(&TpktObj);
+	return &TpktObj;
 
 }
 

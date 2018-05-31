@@ -3,6 +3,14 @@
 
 
 #include "in4073.h"
+#include <stdarg.h>
+
+#define YAW_SETPOINT_MAX_RANGE 2000
+#define ROLL_SETPOINT_MAX_RANGE 2000
+#define PITCH_SETPOINT_MAX_RANGE 2000
+#define SCALING_ROTATION 0
+
+
 
 
 //Moments
@@ -29,7 +37,7 @@ int16_t pitchSetPoint_J = 0;
 int32_t rollSetPoint =0;
 int16_t rollSetPoint_K = 0;
 int16_t rollSetPoint_J = 0;
-int16_t P[3] = {100,1000,1000};
+int16_t P[3] = {10,100,10};
 
 //Sensor Handling
 // MPU wrapper
@@ -293,10 +301,15 @@ void Yaw_Control_Mode_Execute()
 	{
 		get_dmp_data();
 		//update_offsets();		
-		N = P[0]* (yawSetPoint - sr + sr_offset);
+		N = (P[0]* (yawSetPoint - sr + sr_offset))>>SCALING_ROTATION;
 			//printf("Z:%ld|L:%ld|M:%ld|N:%ld|",Z,L,M,N);
+
 		SetMotorValues();
 		update_motors();
+
+
+		
+
 			//printf("Motor[0]:%d,Motor[1]:%d,Motor[2]:%d,Motor[3]:%d\n",ae[0],ae[1],ae[2],ae[3]);
 	}
 }
@@ -306,9 +319,9 @@ void Full_Control_Mode_Execute()
 		{
 			get_dmp_data();	
 			//update_offsets();	
-			N = P[0]* (yawSetPoint - sr + sr_offset); //Yaw
-			M = P[1]* (pitchSetPoint - phi) - P[2]*(sp + sp_offset); //Pitch
-			L = P[1]* (rollSetPoint - phi) - P[2]*(sq + sq_offset); //Roll
+			N = (P[0]* (yawSetPoint - sr + sr_offset))>>SCALING_ROTATION; //Yaw
+			M = (P[1]* (pitchSetPoint - phi) - P[2]*(sp + sp_offset))>>SCALING_ROTATION; //Pitch
+			L = (P[1]* (rollSetPoint - psi) - P[2]*(sq + sq_offset))>>SCALING_ROTATION; //Roll
 				//printf("Z:%ld|L:%ld|M:%ld|N:%ld|",Z,L,M,N);
 			SetMotorValues();
 			update_motors();
@@ -335,7 +348,7 @@ void Manual_Mode_Input_Handler(unsigned char *Input)
 
 						case C_LIFTUP:
 
-							if((Z+INC_Z)<=MAX_Z){
+							if((JS_Z+Z+INC_Z)<=MAX_Z){
 								Z+=INC_Z;
 							}						
 
@@ -397,99 +410,13 @@ void Manual_Mode_Input_Handler(unsigned char *Input)
 						JS_L = ((int32_t)MAX_L)*((int8_t)Input[1])/JSSCALEMAX;
 						JS_M = ((int32_t)MAX_M)*((int8_t)Input[2])/JSSCALEMAX;
 						JS_N = ((int32_t)MAX_N)*((int8_t)Input[3])/JSSCALEMAX;
-						JS_Z = ((int32_t)MAX_Z)*(JSSCALEMAX+(int8_t)Input[4])/JSSCALEMAX/2;
+						JS_Z = ((int32_t)MAX_Z)*((int8_t)Input[4]+JSSCALEMAX)/JSSCALEMAX/2;
 
 						break;
 						}
 
-}
 
-void Full_Control_Mode_Input_Handler(unsigned char *Input)
-{				
-					
-	switch(Input[0]){
-						case C_LIFTUP:
 
-							if((Z+INC_Z)<=MAX_Z){
-								Z+=INC_Z;
-							}						
-
-							
-						break;
-						case C_LIFTDOWN:
-							if(Z>=INC_Z)
-							{
-								Z-=INC_Z;
-							}
-								
-						break;
-
-						case C_YAWUP:
-							yawSetPoint_K+=10;
-						break;
-
-						case C_YAWDOWN:
-							yawSetPoint_K-=10;
-						break;	
-
-						case C_PITCHUP:
-							pitchSetPoint_K+=10;
-						break;
-
-						case C_PITCHDOWN:
-							pitchSetPoint_K-=10;
-						break;
-
-						case C_ROLLUP:
-							rollSetPoint_K+=10;
-						break;
-
-						case C_ROLLDOWN:
-							rollSetPoint_K-=10;
-						break;					
-
-						case C_JOYSTICK:
-							yawSetPoint_J = ((int16_t)Input[3])*100/JSSCALEMAX;
-							pitchSetPoint_J = ((int16_t)Input[2])*100/JSSCALEMAX;
-							rollSetPoint_J = ((int16_t)Input[1])*100/JSSCALEMAX;
-							JS_Z = ((int32_t)INC_Z)*2*((int8_t)Input[4])/JSSCALEMAX;
-						break;
-
-						case C_PUP:
-							P[0]+=10;
-						break;
-
-						case C_PDOWN:
-							if(P[0]-10>=10){
-								P[0]-=10;
-							}
-						break;
-
-						case C_P1UP:
-							P[1]+=10;
-						break;
-
-						case C_P1DOWN:
-							if(P[1]-10>=10){
-								P[1]-=10;
-							}
-						break;
-
-						case C_P2UP:
-							P[2]+=10;
-						break;
-
-						case C_P2DOWN:
-							if(P[2]-10>=10){
-								P[2]-=10;
-							}
-						break;
-						
-					}
-
-					yawSetPoint = yawSetPoint_K + yawSetPoint_J;
-					pitchSetPoint = pitchSetPoint_K + pitchSetPoint_J;
-					rollSetPoint = rollSetPoint_K + rollSetPoint_J;
 }
 
 
@@ -502,7 +429,7 @@ void Yaw_Controlled_Mode_Input_Handler(unsigned char *Input)
 
 						case C_LIFTUP:
 
-							if((Z+INC_Z)<=MAX_Z){
+							if((JS_Z+Z+INC_Z)<=MAX_Z){
 								Z+=INC_Z;
 							}						
 
@@ -519,17 +446,17 @@ void Yaw_Controlled_Mode_Input_Handler(unsigned char *Input)
 
 						case C_YAWUP:
 
-							yawSetPoint_K+=10;
+							yawSetPoint_K+=100;
 
 						break;
 
 						case C_YAWDOWN:
-							yawSetPoint_K-=10;
+							yawSetPoint_K-=100;
 						break;						
 
 						case C_JOYSTICK:
-							yawSetPoint_J = ((int16_t)Input[3])*100/JSSCALEMAX;
-							JS_Z = ((int32_t)INC_Z)*2*((int8_t)Input[4])/JSSCALEMAX;
+							yawSetPoint_J = ((int32_t)(int8_t)Input[3])*YAW_SETPOINT_MAX_RANGE/JSSCALEMAX;
+							JS_Z = ((int32_t)MAX_Z)*((int8_t)Input[4]+JSSCALEMAX)/JSSCALEMAX/2;
 
 						break;
 
@@ -546,6 +473,101 @@ void Yaw_Controlled_Mode_Input_Handler(unsigned char *Input)
 						
 					}
 					yawSetPoint = yawSetPoint_K + yawSetPoint_J;
+
+
+}
+
+
+
+void Full_Control_Mode_Input_Handler(unsigned char *Input)
+{				
+					
+	switch(Input[0]){
+						case C_LIFTUP:
+
+							if((JS_Z+Z+INC_Z)<=MAX_Z){
+								Z+=INC_Z;
+							}						
+
+							
+						break;
+						case C_LIFTDOWN:
+							if(Z>=INC_Z)
+							{
+								Z-=INC_Z;
+							}
+								
+						break;
+
+						case C_YAWUP:
+							yawSetPoint_K+=100;
+						break;
+
+						case C_YAWDOWN:
+							yawSetPoint_K-=100;
+						break;	
+
+						case C_PITCHUP:
+							pitchSetPoint_K+=100;
+						break;
+
+						case C_PITCHDOWN:
+							pitchSetPoint_K-=100;
+						break;
+
+						case C_ROLLUP:
+							rollSetPoint_K+=100;
+						break;
+
+						case C_ROLLDOWN:
+							rollSetPoint_K-=100;
+						break;					
+
+						case C_JOYSTICK:
+
+							yawSetPoint_J = ((int32_t)(int8_t)Input[3])*YAW_SETPOINT_MAX_RANGE/JSSCALEMAX;
+							pitchSetPoint_J = ((int32_t)(int8_t)Input[2])*PITCH_SETPOINT_MAX_RANGE/JSSCALEMAX;
+							rollSetPoint_J = ((int32_t)(int8_t)Input[1])*ROLL_SETPOINT_MAX_RANGE/JSSCALEMAX;
+							JS_Z = ((int32_t)MAX_Z)*((int8_t)Input[4]+JSSCALEMAX)/JSSCALEMAX/2;
+
+						break;
+
+						case C_PUP:
+							P[0]+=1;
+						break;
+
+						case C_PDOWN:
+							if(P[0]-1>=1){
+								P[0]-=1;
+							}
+						break;
+
+						case C_P1UP:
+							P[1]+=5;
+						break;
+
+						case C_P1DOWN:
+							if(P[1]-5>=5){
+								P[1]-=5;
+							}
+						break;
+
+						case C_P2UP:
+							P[2]+=1;
+						break;
+
+						case C_P2DOWN:
+							if(P[2]-1>=1){
+								P[2]-=1;
+							}
+						break;
+						
+					}
+
+					yawSetPoint = yawSetPoint_K + yawSetPoint_J;
+					pitchSetPoint = pitchSetPoint_K + pitchSetPoint_J;
+					rollSetPoint = rollSetPoint_K + rollSetPoint_J;
+
 
 }
 
@@ -607,7 +629,7 @@ void SetMotorValues_Manual()
 
 void SetMotorValues()
 {
-	if(Z==0)
+	if(Z+JS_Z==0)
 	{
 		//setting mottor values to zero in case of zero lift
 		L=0;
@@ -628,7 +650,7 @@ void SetMotorValues()
 	L=B_DASH(ae1^2-ae3^2)
 	N*D_DASH=(ae0^2-ae1^2+ae2^2-ae3^2)
 	*/
-	int32_t z = Z/B_DASH;
+	int32_t z = (Z+JS_Z)/B_DASH;
 	int32_t l = L/B_DASH;
 	int32_t m = M/B_DASH;
 	int32_t n = N*D_DASH;
