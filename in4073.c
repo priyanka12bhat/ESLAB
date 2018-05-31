@@ -56,7 +56,6 @@ uint16_t getInputQueueCount()
 
 uint32_t lastPacketTime = 0;
 uint32_t lastTelePacketSendTime = 0;
-
 bool checkGap(uint32_t lastTime, uint32_t readGap);
 
 
@@ -66,9 +65,8 @@ bool checkGap(uint32_t lastTime, uint32_t readGap);
  */
 void process_packet(Packet *pkt_R)
 {
-
 	lastPacketTime = get_time_us();
-	//printf("PacketRecived@%ld\n",lastPacketTime);
+
 	if(CurrentMode.state!=Panic){
 		switch (pkt_R->type)
 		{
@@ -77,7 +75,6 @@ void process_packet(Packet *pkt_R)
 						if(CurrentMode.state != Safe)
 							{
 								CurrentMode = GetMode(M_PANIC);
-								(*CurrentMode.Mode_Initialize)();
 							}
 						else 
 							{
@@ -172,15 +169,12 @@ int main(void)
 
 			if(checkGap(lastPacketTime,DISCONNECTED_GAP_US))
 			{
-
 				nrf_gpio_pin_set(RED);
 				nrf_gpio_pin_set(BLUE);
 				nrf_gpio_pin_set(GREEN);
-
 				SetMessage(MSG_DISCONNECTED);	
-				CurrentMode=GetMode(M_PANIC);
-				(*CurrentMode.Mode_Initialize)();
-
+				CurrentMode=GetMode(M_PANIC);	
+			
 					
 
 			}
@@ -196,7 +190,7 @@ int main(void)
 
 
 		//Send Telemetry Packets
-		if(checkGap(lastTelePacketSendTime, TELE_SEND_GAP_US))
+		if(checkGap(lastTelePacketSendTime, TELE_SEND_GAP_MS))
 		{
 
 			SendPacket(Create_Telemetery_Packet(bat_volt, ae, phi, theta, psi, sp, sq, sr,msgCode));
@@ -214,7 +208,8 @@ int main(void)
 bool checkGap(uint32_t lastTime, uint32_t readGap)
 {
 	uint32_t currentTime = get_time_us();
-	return ((currentTime==lastTime)?0:((currentTime>lastTime)?((currentTime-lastTime)>=readGap): (((lastTime-currentTime)<400)?0:((UINT32_MAX-lastTime+currentTime)>=readGap))));
+
+	return (currentTime>lastTime?currentTime-lastTime>readGap: (UINT32_MAX-lastTime+currentTime)>readGap);
 
 
 }
@@ -233,7 +228,7 @@ void SendPacket(Packet *packetToSend)
 		unsigned char *dataToSend = Get_Byte_Stream(packetToSend);
 			for(int i =0;i<packetToSend->packetLength+1;i++)
 			{
-				uart_put(dataToSend[i]);
+				printf("%c",dataToSend[i]);
 			}
 	}
 

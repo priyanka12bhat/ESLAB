@@ -14,7 +14,7 @@ const char MsgTable[255][255]=
 	"Dude, Am done with calibration",//6
 	"K..Let's Try Yaw Control(Yaw Controlled Mode)",//7
 	"DISCONNECTED",//8
-	"Dont over do!..I know it (Invalid Change)"//9
+	"F**k You.. Dont over do!..I know it (Invalid Change)"//9
 	"Full Control Mode" //10
 
 };
