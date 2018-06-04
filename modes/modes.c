@@ -320,8 +320,8 @@ void Full_Control_Mode_Execute()
 			get_dmp_data();	
 			//update_offsets();	
 			N = (P[0]* (yawSetPoint - sr + sr_offset))>>SCALING_ROTATION; //Yaw
-			M = (P[1]* (pitchSetPoint - theta + theta_offset) - P[2]*(sq - sq_offset))>>SCALING_ROTATION; //Pitch
-			L = (P[1]* (rollSetPoint - phi + phi_offset) - P[2]*(sp - sp_offset))>>SCALING_ROTATION; //Roll
+			M = (P[1]* (pitchSetPoint - phi + phi_offset) - P[2]*(sp - sp_offset))>>SCALING_ROTATION; //Pitch
+			L = (P[1]* (rollSetPoint - theta + theta_offset) - P[2]*(sq - sq_offset))>>SCALING_ROTATION; //Roll
 				//printf("Z:%ld|L:%ld|M:%ld|N:%ld|",Z,L,M,N);
 			SetMotorValues();
 			update_motors();
