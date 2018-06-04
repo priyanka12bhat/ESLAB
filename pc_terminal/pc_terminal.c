@@ -653,6 +653,7 @@ void read_values(int* fd, int axis[], int button[])
 js_command *read_js_simulator()
 {
 	js_command *js_c = NULL;
+	static int value = 0;
 
 
 
@@ -922,11 +923,8 @@ int main(int argc, char **argv)
 					printf("Testing- CRC1:%d\n", pkt->CRC[1]);*/
 					//Destroy_Packet(pkt);
 					//free(value_tag);
-					
-					KBLastReadTimeStamp = mon_time_ms();
-
 				}
-				
+				KBLastReadTimeStamp = mon_time_ms();
 				pkt = NULL;
 			}
 		}
@@ -945,13 +943,12 @@ int main(int argc, char **argv)
 		//if ((c = rs232_getchar_nb()) != -1)
 			//term_putchar(c);
 
-		if((CheckReadGap(lastJSSendTime,3) && CheckReadGap(KBLastReadTimeStamp,1))?CheckReadGap(HBLastSendTimeStamp,2):0)
+		if((CheckReadGap(lastJSSendTime,1) && CheckReadGap(KBLastReadTimeStamp,1))?CheckReadGap(HBLastSendTimeStamp,2):0)
 		{
 			pkt=Create_HeartBeatPacket();
 			Send_Packet(pkt);
 			pkt=NULL;
 			HBLastSendTimeStamp=mon_time_ms();
-
 
 		}
 
@@ -1033,33 +1030,8 @@ void process_packet(Packet *pkt_R)
 	setCursor(2, 45);
 	printf("Quadruple Control\n");
 	printf("=========================================================================================================\n");
-	uint16_t * uint16Values =  (uint16_t *)pkt_R->value;
-
-	printf("Battery Voltage:\t%d\n",uint16Values[4]);
-	
-	
-
+	printf("Battery Voltage:\t%d\n",((uint16_t)pkt_R->value[8])<<8|pkt_R->value[9]);
 	for(int i=0;i<4;i++){
-		printf("Motor[%d]:\t%d\t",i,uint16Values[i]);
-	}
-    puts("\n");
-    printf("phi:\t%d\t",(int16_t)uint16Values[5]);
-    printf("theta:\t%d\t",(int16_t)uint16Values[6]);
-    printf("psi:\t%d\n",(int16_t)uint16Values[7]);
-
-    printf("sp:\t%d\t",(int16_t)uint16Values[8]);
-    printf("sq:\t%d\t",(int16_t)uint16Values[9]);
-    printf("sr:\t%d\n",(int16_t)uint16Values[10]);
-    uint16Values =  (uint16_t *)&(pkt_R->value[23]);
-    printf("P:\t%d\t",uint16Values[0]);
-    printf("P1:\t%d\t",uint16Values[1]);
-    printf("P2:\t%d\n",uint16Values[2]);
-
-    uint32_t pressure = (((uint32_t)pkt_R->value[29])<<16)|(((uint32_t)pkt_R->value[30])<<8)|(pkt_R->value[31]);
-    printf("Pressure: \t%d",pressure);
-  
-   
-   	/*for(int i=0;i<4;i++){
 		printf("Motor[%d]:\t%d\t",i,((uint16_t)pkt_R->value[2*i])<<8|pkt_R->value[2*i+1]);
 	}
     puts("\n");
@@ -1072,7 +1044,10 @@ void process_packet(Packet *pkt_R)
     printf("sr:\t%d\n",(int16_t)(((uint16_t)pkt_R->value[20])<<8|pkt_R->value[21]));
     printf("P:\t%d\t",(((uint16_t)pkt_R->value[23])<<8|pkt_R->value[24]));
     printf("P1:\t%d\t",(((uint16_t)pkt_R->value[25])<<8|pkt_R->value[26]));
-    printf("P2:\t%d\t",(((uint16_t)pkt_R->value[27])<<8|pkt_R->value[28]));*/
+    printf("P2:\t%d\t",(((uint16_t)pkt_R->value[27])<<8|pkt_R->value[28]));
+  
+   
+   
     
 
 
@@ -1082,7 +1057,7 @@ void process_packet(Packet *pkt_R)
 	printf("Drone Say's:%s\n",DecodeMessage(pkt_R->value[22]));
 	printf("\nAdditional Debug Messages:%s\n",additionalMessage);
 	}
-	else if(pkt_R->type==T_adMSG)
+	else
 	{
 		 strncpy(additionalMessage,pkt_R->value,15);
 		 additionalMessage[15]='\0';

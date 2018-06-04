@@ -73,9 +73,6 @@ uint16_t getInputQueueCount()
 
 uint32_t lastPacketTime = 0;
 uint32_t lastTelePacketSendTime = 0;
-uint32_t lastBlueLEDBlinkTime = 0;
-uint32_t lastBaroReadTime =0;
-uint32_t currentTime = 0;
 
 bool checkGap(uint32_t lastTime, uint32_t readGap);
 
@@ -121,7 +118,7 @@ void process_packet(Packet *pkt_R)
 
 				break;
 			case T_CONTROL:
-				nrf_gpio_pin_toggle(GREEN);
+				nrf_gpio_pin_toggle(BLUE);
 				if(CurrentMode.Input_Handler!=NULL)
 
 					(*CurrentMode.Input_Handler)(pkt_R->value);
@@ -192,9 +189,16 @@ int main(void)
 
 			if(checkGap(lastPacketTime,DISCONNECTED_GAP_US))
 			{
+
+				nrf_gpio_pin_set(RED);
+				nrf_gpio_pin_set(BLUE);
+				nrf_gpio_pin_set(GREEN);
+
 				SetMessage(MSG_DISCONNECTED);	
 				CurrentMode=GetMode(M_PANIC);
-				(*CurrentMode.Mode_Initialize)();					
+				(*CurrentMode.Mode_Initialize)();
+
+					
 
 			}
 			readCounter=0;
@@ -212,25 +216,8 @@ int main(void)
 		if(checkGap(lastTelePacketSendTime, TELE_SEND_GAP_US))
 		{
 
-			SendPacket(Create_Telemetery_Packet(bat_volt, ae, phi, theta, psi, sp, sq, sr,msgCode,GetPArray(),pressure));
-			lastTelePacketSendTime=currentTime;
-		}
-
-
-		//Blue LED Blink
-				//Send Telemetry Packets
-		if(checkGap(lastBlueLEDBlinkTime, 1000000))
-		{
-
-			nrf_gpio_pin_toggle(BLUE);
-			lastBlueLEDBlinkTime=currentTime;
-		}
-
-
-		if(checkGap(lastBaroReadTime, 50))
-		{
-			read_baro();
-			lastBaroReadTime = currentTime;
+			SendPacket(Create_Telemetery_Packet(bat_volt, ae, phi, theta, psi, sp, sq, sr,msgCode,GetPArray()));
+			lastTelePacketSendTime=get_time_us();
 		}
 		
 	}
@@ -243,7 +230,7 @@ int main(void)
 
 bool checkGap(uint32_t lastTime, uint32_t readGap)
 {
-	 currentTime = get_time_us();
+	uint32_t currentTime = get_time_us();
 	return ((currentTime==lastTime)?0:((currentTime>lastTime)?((currentTime-lastTime)>=readGap): (((lastTime-currentTime)<400)?0:((UINT32_MAX-lastTime+currentTime)>=readGap))));
 
 
