@@ -661,7 +661,7 @@ js_command *read_js_simulator()
 		js_c->Roll = 0;
 		js_c->Pitch = 0;
 		js_c->Yaw = 0;
-		js_c->Lift = 226969;
+		js_c->Lift = 32767;
 	return js_c;
 }
 

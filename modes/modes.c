@@ -151,32 +151,7 @@ void Callibration_Mode_Initialize()
 
 	SetMessage(MSG_ENTERING_CALIBRATION_MODE);
 
-	char count=0;
-	while(check_sensor_int_flag() && count< MAX_SAMPLES) 
-	{
-
-		get_dmp_data();
-
-		phi_offset_sum+=phi;
-		theta_offset_sum+= theta;
-		psi_offset_sum = psi;
-		sp_offset_sum = sp;
-		sq_offset_sum = sq;
-		sr_offset_sum = sr;
-
-	count++;
-	}
-
-	phi_offset=phi_offset_sum>>7;
-	theta_offset=theta_offset_sum>>7;
-	psi_offset=psi_offset_sum>>7;
-	sp_offset=sp_offset_sum>>7;	
-	sq_offset=sq_offset_sum>>7;
-	sr_offset=sr_offset_sum>>7;
-
-
-	SetMessage(MSG_EXITING_CALIBRATION_MODE);
-	CurrentMode = GetMode(M_SAFE);
+	
 
 }
 
@@ -290,7 +265,37 @@ void Manual_Mode_Execute()
 	update_motors();
 
 }
-void Callibration_Mode_Execute(){}
+void Callibration_Mode_Execute(){
+	char count=0;
+	while(count< MAX_SAMPLES) 
+	{
+		if(check_sensor_int_flag()){
+			get_dmp_data();
+
+			phi_offset_sum+=phi;
+			theta_offset_sum+= theta;
+			psi_offset_sum += psi;
+			sp_offset_sum += sp;
+			sq_offset_sum += sq;
+			sr_offset_sum += sr;
+
+			count++;
+
+		}
+	}
+
+	phi_offset=phi_offset_sum>>7;
+	theta_offset=theta_offset_sum>>7;
+	psi_offset=psi_offset_sum>>7;
+	sp_offset=sp_offset_sum>>7;	
+	sq_offset=sq_offset_sum>>7;
+	sr_offset=sr_offset_sum>>7;
+	
+
+	SetMessage(MSG_EXITING_CALIBRATION_MODE);
+	CurrentMode = GetMode(M_SAFE);
+
+}
 
 void SetMotorValues();
 
