@@ -83,7 +83,7 @@ Packet *Create_Packet(unsigned char type,unsigned char length, unsigned char *va
 void Destroy_Packet(Packet *pkt);
 void Set_CRCValue(Packet *pkt);
 
-Packet *Create_Telemetery_Packet(uint16_t bat_volt, int16_t *MotorValues, int16_t phi, int16_t theta, int16_t psi, int16_t sp, int16_t sq, int16_t sr, unsigned char _msgCode, int16_t PArray[]);
+Packet *Create_Telemetery_Packet(uint16_t bat_volt, int16_t *MotorValues, int16_t phi, int16_t theta, int16_t psi, int16_t sp, int16_t sq, int16_t sr, unsigned char _msgCode, int16_t PArray[], uint32_t pressure);
 
 Packet *Create_adMSG_Packet(char *additionalMessage);
 
