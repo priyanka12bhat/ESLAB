@@ -112,6 +112,7 @@ int fd_RS232;
 
 char msgToPrint[512];
 char additionalMessage[16];
+char msgCode = 0;
 void storeUIMessage(const char msg[]);
 
 
@@ -955,6 +956,8 @@ int main(int argc, char **argv)
 
 		}
 
+		printUIMessage();
+
 	}
 
 
@@ -1022,6 +1025,8 @@ void printUIMessage()
 {
 	setCursor(15, 0);
 	printf("LastAction:%s\n",msgToPrint);
+	printf("Drone Say's:%s\n",DecodeMessage(msgCode));
+	printf("\nAdditional Debug Messages:%s\n",additionalMessage);
 }
 
 
@@ -1056,7 +1061,8 @@ void process_packet(Packet *pkt_R)
     printf("P2:\t%d\n",uint16Values[2]);
 
     uint32_t pressure = (((uint32_t)pkt_R->value[29])<<16)|(((uint32_t)pkt_R->value[30])<<8)|(pkt_R->value[31]);
-    printf("Pressure: \t%d",pressure);
+    printf("Pressure: \t%d\n",pressure);
+    printf("Current Drone Mode: \t%d\n",pkt_R->value[32]);
   
    
    	/*for(int i=0;i<4;i++){
@@ -1078,9 +1084,11 @@ void process_packet(Packet *pkt_R)
 
 	//mvprintw (0, 0, "%d", pkt_R->value[0]);     
 	//refresh ();
+	
+	msgCode = pkt_R->value[22];
+
 	printUIMessage();
-	printf("Drone Say's:%s\n",DecodeMessage(pkt_R->value[22]));
-	printf("\nAdditional Debug Messages:%s\n",additionalMessage);
+	
 	}
 	else if(pkt_R->type==T_adMSG)
 	{
