@@ -1,0 +1,59 @@
+#include "fixpoint.h"
+#include "in4073.h"
+#include "filters.h"
+
+// initial values for butterworth filter
+q14 x[3] = {0};
+q14 y[3] = {0};
+
+// initial values and declarations for the kalman filter
+q14 bias_sp, bias_sq= 0;
+q14 kalman_theta, kalman_phi = 0;
+q14 kalman_sp, kalman_sq = 0;
+q14 kalman_sax, kalman_say = 0;
+
+void butterworth()
+{
+	for (int n = 2; n > 0; n--)
+	{
+		x[n] = x[n - 1];
+		y[n] = y[n - 1];
+	}
+
+	x[0] = sr;
+	y[0] = fixmul(BUTTER_A0, x[0]) + fixmul(BUTTER_A1, x[1]) + fixmul(BUTTER_A2, x[2]) - fixmul(BUTTER_B1, y[1]) - fixmul(BUTTER_B2, y[2]);
+	y[0] = fixdivision(y[0], BUTTER_B0);
+
+	//convert Q14 numbers to int16_t
+	sr = fix2normal(y[0]);
+}
+
+
+void kalman()
+{
+	// first convert the sensor values to Q14 so we can multiply them with a fraction
+	kalman_sp = normal2fix(sp);
+	kalman_sq = normal2fix(sq);
+	kalman_sax = normal2fix(sax);
+	kalman_say = normal2fix(say);
+
+	// kalman filtering for theta phi psi
+	kalman_sp = kalman_sp - bias_sp;
+	kalman_phi = kalman_phi + fixmul(kalman_sp, KALMAN_P2PHI_PHI);
+	error_phi = kalman_phi - kalman_say;
+	kalman_phi = kalman_phi - fixdivision(error_phi, KALMAN_C1_PHI);
+	bias_sp = bias_sp + fixdivision(error_phi, KALMAN_C2_PHI);
+
+	kalman_sq = kalman_sq - bias_sq;
+	kalman_theta = kalman_theta + fixmul(kalman_sq, KALMAN_P2PHI_THETA);
+	error_theta = kalman_theta - kalman_sax;
+	kalman_theta = kalman_theta - fixdivision(error_theta, KALMAN_C1_THETA);
+	bias_sq = bias_sq + fixdivision(error_theta, KALMAN_C2_THETA);
+
+
+	// convert the sensor values back to integer so we can use them
+	sp = fix2normal(kalman_sp);
+	sq = fix2normal(kalman_sq);
+	theta = fix2normal(kalman_theta);
+	phi = fix2normal(kalman_phi);
+}
