@@ -115,14 +115,12 @@ inline void clearControlVariables();
 void Manual_Mode_Initialize()
 {
 	SetMessage(MSG_ENTERING_MANUAL_MODE);
-	if(CurrentMode.state!=Manual){
 
 		JS_N = 0;
 		JS_L = 0;
 		JS_M = 0;
 		JS_Z = 0;
 		clearControlVariables();
-	}
 	
 
 }
