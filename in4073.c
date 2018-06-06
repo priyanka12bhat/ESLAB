@@ -212,7 +212,7 @@ int main(void)
 		if(checkGap(lastTelePacketSendTime, TELE_SEND_GAP_US))
 		{
 
-			SendPacket(Create_Telemetery_Packet(bat_volt, ae, phi, theta, psi, sp, sq, sr,msgCode,GetPArray(),pressure));
+			SendPacket(Create_Telemetery_Packet(bat_volt, ae, phi, theta, psi, sp, sq, sr,msgCode,GetPArray(),pressure,CurrentMode.state));
 			lastTelePacketSendTime=currentTime;
 		}
 

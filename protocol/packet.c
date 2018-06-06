@@ -70,7 +70,7 @@ unsigned char *Get_Byte_Stream(Packet *pkt)
 }
 
 
-Packet *Create_Telemetery_Packet(uint16_t bat_volt, int16_t *MotorValues, int16_t phi, int16_t theta, int16_t psi, int16_t sp, int16_t sq, int16_t sr, unsigned char _msgCode, int16_t PArray[], uint32_t pressure)
+Packet *Create_Telemetery_Packet(uint16_t bat_volt, int16_t *MotorValues, int16_t phi, int16_t theta, int16_t psi, int16_t sp, int16_t sq, int16_t sr, unsigned char _msgCode, int16_t PArray[], uint32_t pressure, unsigned char droneMode)
 {
 	TpktObj.startByte = START_BYTE;
 	TpktObj.type = T_DATA;
@@ -107,8 +107,9 @@ Packet *Create_Telemetery_Packet(uint16_t bat_volt, int16_t *MotorValues, int16_
 	TpktObj.value[29]=(pressure>>16)&0xFF;
 	TpktObj.value[30]=(pressure>>8)&0xFF;
 	TpktObj.value[31]=pressure&0xFF;
+	TpktObj.value[32]=droneMode;
 
-	TpktObj.valueLength = 32;
+	TpktObj.valueLength = 33;
 	TpktObj.dataLength=Get_DataLength(TpktObj.valueLength );
 	TpktObj.packetLength=1+1+TpktObj.dataLength+(CRC_BYTE_SIZE);
 	Set_CRCValue(&TpktObj);
