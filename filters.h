@@ -13,5 +13,5 @@
 #define KALMAN_C1_PHI 4194304
 #define KALMAN_C2_PHI 132710400
 
-void butterworth();
+int16_t butterworth(int16_t sample)
 void kalman();

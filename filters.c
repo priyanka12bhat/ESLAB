@@ -12,7 +12,7 @@ q14 kalman_theta, kalman_phi = 0;
 q14 kalman_sp, kalman_sq = 0;
 q14 kalman_sax, kalman_say = 0;
 
-void butterworth()
+int16_t butterworth(int16_t sample)
 {
 	for (int n = 2; n > 0; n--)
 	{
@@ -20,12 +20,12 @@ void butterworth()
 		y[n] = y[n - 1];
 	}
 
-	x[0] = sr;
+	x[0] = sample;
 	y[0] = fixmul(BUTTER_A0, x[0]) + fixmul(BUTTER_A1, x[1]) + fixmul(BUTTER_A2, x[2]) - fixmul(BUTTER_B1, y[1]) - fixmul(BUTTER_B2, y[2]);
 	y[0] = fixdivision(y[0], BUTTER_B0);
 
 	//convert Q14 numbers to int16_t
-	sr = fix2normal(y[0]);
+	return fix2normal(y[0]);
 }
 
 
