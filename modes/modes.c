@@ -9,7 +9,7 @@
 #define ROLL_SETPOINT_MAX_RANGE 2000
 #define PITCH_SETPOINT_MAX_RANGE 2000
 #define SCALING_ROTATION 0
-
+#define SCALING_ROTATION_YAW 0
 
 
 
@@ -44,6 +44,7 @@ int16_t P[3] = {10,100,10};
 int16_t phi_offset=0, theta_offset=0, psi_offset=0;
 int16_t sp_offset=0, sq_offset=0, sr_offset=0;
 int16_t sax_offset=0, say_offset=0, saz_offset=0;
+int32_t pressure_offset = 0;
 
 
 void Modes_Initialize()
@@ -80,6 +81,10 @@ void Modes_Initialize()
 	Modes[M_RAWMODE-1].Mode_Execute=&Raw_Mode_Execute;
 
 
+	Modes[M_HEIGHTCONTROL-1].state=HeightControl;
+	Modes[M_HEIGHTCONTROL-1].Mode_Initialize=&Height_Control_Mode_Initialize;
+	Modes[M_HEIGHTCONTROL-1].Mode_Execute=&Height_Control_Mode_Execute;
+	Modes[M_HEIGHTCONTROL-1].Input_Handler=&Height_Control_Mode_Input_Handler;	
 
 	CurrentMode = GetMode(M_SAFE);
 
@@ -197,7 +202,11 @@ void Full_Control_Mode_Initialize(){
 	SetMessage(MSG_ENTERING_FULLCONTROL_MODE);
 }
 void Raw_Mode_Initialize(){}
-void Height_Control_Mode_Initialize(){}
+void Height_Control_Mode_Initialize()
+{
+	SetMessage(MSG_ENTERING_HEIGHTCONTROL_MODE);
+	pressure_offset = pressure;
+}
 void Wireless_Control_Mode_Initialize(){}
 
 
@@ -245,6 +254,7 @@ void Panic_Mode_Execute()
 			{
 				
 				EnterSafeMode();
+				PrevMode = CurrentMode;
 				CurrentMode = GetMode(M_SAFE);		
 
 			}
@@ -291,6 +301,7 @@ void Callibration_Mode_Execute(){
 	
 
 	SetMessage(MSG_EXITING_CALIBRATION_MODE);
+	PrevMode = CurrentMode;
 	CurrentMode = GetMode(M_SAFE);
 
 }
@@ -332,7 +343,11 @@ void Full_Control_Mode_Execute()
 		}
 }
 void Raw_Mode_Execute(){}
-void Height_Control_Mode_Execute(){}
+void Height_Control_Mode_Execute()
+{
+	Z=Z;
+	(*PrevMode.Mode_Execute)();
+}
 void Wireless_Control_Mode_Execute(){}
 
 
@@ -574,7 +589,22 @@ void Full_Control_Mode_Input_Handler(unsigned char *Input)
 
 }
 
+void Height_Control_Mode_Input_Handler(unsigned char *Input)
+{
+	int32_t old_JS_Z = JS_Z;
+	if(PrevMode.Input_Handler!=NULL)
+		(*PrevMode.Input_Handler)(Input);
 
+
+
+	if(old_JS_Z!=JS_Z)
+	{	
+
+		CurrentMode = GetPrevMode();
+		PrevMode =GetMode(M_HEIGHTCONTROL);
+	}
+
+}
 
 void SetMotorValues_Manual()
 {

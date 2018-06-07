@@ -877,8 +877,8 @@ int main(int argc, char **argv)
 		/* read joystick inputs
 		*/
 		//printf("T1:%d\n",mon_time_ms());
-		//js_comm = read_js(&fd, axis, button);
-		js_comm = read_js_simulator();
+		js_comm = read_js(&fd, axis, button);
+		//js_comm = read_js_simulator();
 		
 		if (js_comm != NULL) {
 			if(CheckReadGap(lastJSSendTime,1)){

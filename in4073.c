@@ -96,6 +96,7 @@ void process_packet(Packet *pkt_R)
 						msgCode=MSG_EXITING;
 						if(CurrentMode.state != Safe)
 							{
+								PrevMode = CurrentMode;
 								CurrentMode = GetMode(M_PANIC);
 								(*CurrentMode.Mode_Initialize)();
 							}
@@ -109,8 +110,9 @@ void process_packet(Packet *pkt_R)
 			case T_MODE:
 				nrf_gpio_pin_toggle(YELLOW);
 
-				if(pkt_R->value[0]==M_SAFE || pkt_R->value[0]==M_PANIC || CurrentMode.state==Safe)
+				if(pkt_R->value[0]==M_SAFE || pkt_R->value[0]==M_PANIC || CurrentMode.state==Safe || (CurrentMode.state>Callibration && pkt_R->value[0]==M_HEIGHTCONTROL)  )
 				{
+					PrevMode = CurrentMode;
 					CurrentMode=GetMode(pkt_R->value[0]);
 					(*CurrentMode.Mode_Initialize)();
 				}
@@ -123,7 +125,6 @@ void process_packet(Packet *pkt_R)
 			case T_CONTROL:
 				nrf_gpio_pin_toggle(GREEN);
 				if(CurrentMode.Input_Handler!=NULL)
-
 					(*CurrentMode.Input_Handler)(pkt_R->value);
 
 				
@@ -192,7 +193,8 @@ int main(void)
 
 			if(checkGap(lastPacketTime,DISCONNECTED_GAP_US))
 			{
-				SetMessage(MSG_DISCONNECTED);	
+				SetMessage(MSG_DISCONNECTED);
+				PrevMode = CurrentMode;
 				CurrentMode=GetMode(M_PANIC);
 				(*CurrentMode.Mode_Initialize)();					
 
@@ -202,6 +204,7 @@ int main(void)
 
 		if(bat_volt <= 1050 && bat_volt>0 )
 		{	
+			//PrevMode = CurrentMode;
 			//CurrentMode=GetMode(M_PANIC);
 		}
 		
