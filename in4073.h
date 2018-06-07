@@ -115,7 +115,7 @@ void ble_send(void);
 #define D_DASH 4
 
 
-#define MAX_SPEED 400
+#define MAX_SPEED 600
 #define MIN_SPEED_ONFLY 200
 #define SPEED_SCALE 1
 #define MAX_SPEED_SCALED MAX_SPEED/SPEED_SCALE

@@ -5,9 +5,9 @@
 #include "in4073.h"
 #include <stdarg.h>
 
-#define YAW_SETPOINT_MAX_RANGE 2000
-#define ROLL_SETPOINT_MAX_RANGE 2000
-#define PITCH_SETPOINT_MAX_RANGE 2000
+#define YAW_SETPOINT_MAX_RANGE 10000
+#define ROLL_SETPOINT_MAX_RANGE 5000
+#define PITCH_SETPOINT_MAX_RANGE 5000
 #define SCALING_ROTATION 0
 #define SCALING_ROTATION_YAW 0
 
@@ -250,8 +250,7 @@ void Panic_Mode_Execute()
 			}
 
 			us_TimeStamp = us_currentTime;
-			if(ae[0]<=10 && ae[1]<=10 && ae[2]<=10 && ae[3]<=10)
-			{
+			if(ae[0]<=400 && ae[1]<=400 && ae[2]<=400 && ae[3]<=400){
 				
 				EnterSafeMode();
 				PrevMode = CurrentMode;
@@ -334,7 +333,7 @@ void Full_Control_Mode_Execute()
 			get_dmp_data();	
 			//update_offsets();	
 			N = (P[0]* (yawSetPoint - sr + sr_offset))>>SCALING_ROTATION; //Yaw
-			M = (P[1]* (pitchSetPoint - theta + theta_offset) - P[2]*(sq - sq_offset))>>SCALING_ROTATION; //Pitch
+			M = (P[1]* (pitchSetPoint - theta + theta_offset) - P[2]*(-sq - sq_offset))>>SCALING_ROTATION; //Pitch
 			L = (P[1]* (rollSetPoint - phi + phi_offset) - P[2]*(sp - sp_offset))>>SCALING_ROTATION; //Roll
 				//printf("Z:%ld|L:%ld|M:%ld|N:%ld|",Z,L,M,N);
 			SetMotorValues();
@@ -491,6 +490,7 @@ void Yaw_Controlled_Mode_Input_Handler(unsigned char *Input)
 						
 					}
 					yawSetPoint = yawSetPoint_K + yawSetPoint_J;
+					//SendAdditionalMessage("ys:%ld",yawSetPoint);
 
 
 }
@@ -561,12 +561,12 @@ void Full_Control_Mode_Input_Handler(unsigned char *Input)
 						break;
 
 						case C_P1UP:
-							P[1]+=5;
+							P[1]+=1;
 						break;
 
 						case C_P1DOWN:
-							if(P[1]-5>=5){
-								P[1]-=5;
+							if(P[1]-1>=1){
+								P[1]-=1;
 							}
 						break;
 
@@ -585,6 +585,7 @@ void Full_Control_Mode_Input_Handler(unsigned char *Input)
 					yawSetPoint = yawSetPoint_K + yawSetPoint_J;
 					pitchSetPoint = pitchSetPoint_K + pitchSetPoint_J;
 					rollSetPoint = rollSetPoint_K + rollSetPoint_J;
+					//SendAdditionalMessage("ys:%ld",yawSetPoint);
 
 
 }
@@ -635,10 +636,10 @@ void SetMotorValues_Manual()
 	int32_t m = (M+JS_M)/B_DASH;
 	int32_t n = (N+JS_N)*D_DASH;
 
-	int32_t ae0_2 = (m-(n>>1)+(z>>1))>>1;
-	int32_t ae1_2 = ((n>>1)-l+(z>>1))>>1;
-	int32_t ae2_2 = ((z>>1)-(n>>1)-m)>>1;
-	int32_t ae3_2 = (l+(n>>1)+(z>>1))>>1;
+	int32_t ae0_2 = (m+(n>>1)+(z>>1))>>1;
+	int32_t ae1_2 = (-(n>>1)-l+(z>>1))>>1;
+	int32_t ae2_2 = ((z>>1)+(n>>1)-m)>>1;
+	int32_t ae3_2 = (l-(n>>1)+(z>>1))>>1;
 
 	//For negative values, seting minimum as zero
 	ae[0]=(uint16_t)sqrt(ae0_2<0?0:ae0_2);
@@ -688,10 +689,10 @@ void SetMotorValues()
 	int32_t m = M/B_DASH;
 	int32_t n = N*D_DASH;
 
-	int32_t ae0_2 = (m-(n>>1)+(z>>1))>>1;
-	int32_t ae1_2 = ((n>>1)-l+(z>>1))>>1;
-	int32_t ae2_2 = ((z>>1)-(n>>1)-m)>>1;
-	int32_t ae3_2 = (l+(n>>1)+(z>>1))>>1;
+	int32_t ae0_2 = (m+(n>>1)+(z>>1))>>1;
+	int32_t ae1_2 = (-(n>>1)-l+(z>>1))>>1;
+	int32_t ae2_2 = ((z>>1)+(n>>1)-m)>>1;
+	int32_t ae3_2 = (l-(n>>1)+(z>>1))>>1;
 
 	//For negative values, seting minimum as zero
 	ae[0]=(uint16_t)sqrt(ae0_2<0?0:ae0_2);

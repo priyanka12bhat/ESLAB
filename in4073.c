@@ -86,9 +86,10 @@ bool checkGap(uint32_t lastTime, uint32_t readGap);
  */
 void process_packet(Packet *pkt_R)
 {
-
+	SendAdditionalMessage("T:%ld",get_time_us()-lastPacketTime);
 	lastPacketTime = get_time_us();
 	//printf("PacketRecived@%ld\n",lastPacketTime);
+
 	if(CurrentMode.state!=Panic){
 		switch (pkt_R->type)
 		{
@@ -204,8 +205,9 @@ int main(void)
 
 		if(bat_volt <= 1050 && bat_volt>0 )
 		{	
-			//PrevMode = CurrentMode;
-			//CurrentMode=GetMode(M_PANIC);
+			PrevMode = CurrentMode;
+			CurrentMode=GetMode(M_PANIC);
+			(*CurrentMode.Mode_Initialize)();	
 		}
 		
 		readCounter++;
