@@ -5,13 +5,13 @@
 #define BUTTER_B1 31			
 #define BUTTER_B2 15		
 
-#define KALMAN_P2PHI_THETA 132
+#define KALMAN_P2PHI_THETA 262
 #define KALMAN_C1_THETA 4194304
-#define KALMAN_C2_THETA 132710400
+#define KALMAN_C2_THETA 262144000
 
-#define KALMAN_P2PHI_PHI 132
+#define KALMAN_P2PHI_PHI 262
 #define KALMAN_C1_PHI 4194304
-#define KALMAN_C2_PHI 132710400
+#define KALMAN_C2_PHI 262144000
 
 int16_t butterworth(int16_t sample)
 void kalman();
