@@ -1,5 +1,5 @@
 #include "fixpoint.h"
-//#include "in4073.h"
+#include "in4073.h"
 #include "filters.h"
 
 // initial values for butterworth filter
@@ -12,7 +12,6 @@ q14 kalman_theta, kalman_phi = 0;
 q14 kalman_sp, kalman_sq = 0;
 q14 kalman_sax, kalman_say = 0;
 q14 error_phi, error_theta = 0;
-int16_t phi;
 
 int16_t butterworth(int16_t sample)
 {
