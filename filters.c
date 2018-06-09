@@ -23,8 +23,7 @@ int16_t butterworth(int16_t sample)
 
 	x[0] = normal2fix(sample);
 	y[0] = fixmul((q14)BUTTER_A0, x[0]) + fixmul((q14)BUTTER_A1, x[1]) + fixmul((q14)BUTTER_A2, x[2]) - fixmul((q14)BUTTER_B1, y[1]) - fixmul((q14)BUTTER_B2, y[2]);
-	y[0] = fixmul((q14)BUTTER_B0, y[0]);
-	printf("Butterworth say: %d\n", fix2normal(y[0]));
+	//printf("Butterworth say: %d\n", fix2normal(y[0]));
 	//convert Q14 numbers to int16_t
 	return fix2normal(y[0]);
 }
