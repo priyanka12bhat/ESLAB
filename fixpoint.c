@@ -20,7 +20,7 @@ double fix2float(q14 x)
 q14 normal2fix(int16_t x)
 {
 	q14 y;
-	y = x << Q;
+	y = (q14)(x) * (1 << Q);
 	return y;
 }
 
