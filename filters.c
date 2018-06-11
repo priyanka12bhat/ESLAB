@@ -55,5 +55,4 @@ void kalman()
 	sq = fix2normal(kalman_sq);
 	theta = fix2normal(kalman_theta);
 	phi = fix2normal(kalman_phi);
-	return phi;
 }
