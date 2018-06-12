@@ -111,10 +111,10 @@ int serial_device = 0;
 int fd_RS232;
 
 char msgToPrint[512];
-char additionalMessage[16];
+char additionalMessage[16+5];
 char msgCode = 0;
 void storeUIMessage(const char msg[]);
-
+void printUIMessage();
 
 void rs232_open(void)
 {
@@ -212,6 +212,7 @@ void ExitSafe(void)
 	
 }
 
+void CreatePacketWithSafetyCheck(const char* switchMessage,unsigned char type_tag,unsigned char length, unsigned char *value_tag);
 void kb_input_handler(unsigned char c)
 {
 	unsigned char value_tag[1];
@@ -239,19 +240,9 @@ void kb_input_handler(unsigned char c)
 	case TWO:
 		
 		*value_tag = M_MANUAL;
-		type_tag = T_MODE;
-		
-		if(((axis[0]==0) && (axis[1]==0) && (axis[2]==0) &&(axis[3]==32767)) || 1 ){
-		pkt = Create_Packet(type_tag, 1, value_tag);
+		type_tag = T_MODE;		
 
-		storeUIMessage("Switching mode to manual mode\n\0");
-		}
-		else
-		{
-			storeUIMessage("Zero Joystick\n\0");
-			pkt=NULL;
-			//free(value_tag);
-		}
+		CreatePacketWithSafetyCheck("Switching mode to manual mode\n\0",type_tag,1,value_tag);
 		break;
 
 	case THREE:
@@ -269,17 +260,9 @@ void kb_input_handler(unsigned char c)
 		*value_tag = M_YAWCONTROL;
 		type_tag = T_MODE;
 
-		if(((axis[0]==0) && (axis[1]==0) && (axis[2]==0) &&(axis[3]==32767)) || 1 ){
-		pkt = Create_Packet(type_tag, 1, value_tag);
 
-		storeUIMessage("Switching to Yaw Conrolled mode\n\0");
-		}
-		else
-		{
-			storeUIMessage("Zero Joystick\n\0");
-			pkt=NULL;
-			//free(value_tag);
-		}
+
+		CreatePacketWithSafetyCheck("Switching to Yaw Conrolled mode\n\0",type_tag,1,value_tag);
 
 
 
@@ -291,32 +274,22 @@ void kb_input_handler(unsigned char c)
 		*value_tag = M_FULLCONTROL;
 		type_tag = T_MODE;
 
-
-		if(((axis[0]==0) && (axis[1]==0) && (axis[2]==0) &&(axis[3]==32767)) || 1 ){
-		pkt = Create_Packet(type_tag, 1, value_tag);
-
-		storeUIMessage("Switching to Full Conrolled mode\n\0");
-		}
-		else
-		{
-			storeUIMessage("Zero Joystick\n\0");
-			pkt=NULL;
-			//free(value_tag);
-		}
+		CreatePacketWithSafetyCheck("Switching to Full Conrolled mode\n\0",type_tag,1,value_tag);
+		
 		break;
 
 	case SIX:
 		
 		*value_tag = M_RAWMODE;
 		type_tag = T_MODE;
-		pkt = Create_Packet(type_tag, 1, value_tag);
+		CreatePacketWithSafetyCheck("Switching to RAW mode\n\0",type_tag,1,value_tag);
 		break;
 
 	case SEVEN:
 		
 		*value_tag = M_HEIGHTCONTROL;
 		type_tag = T_MODE;
-		pkt = Create_Packet(type_tag, 1, value_tag);
+		CreatePacketWithSafetyCheck("Toggling Height Controlled mode\n\0",type_tag,1,value_tag);
 		break;
 
 	case EIGHT:
@@ -504,6 +477,23 @@ void kb_input_handler(unsigned char c)
 	}
 }
 
+void CreatePacketWithSafetyCheck(const char* switchMessage,unsigned char type_tag,unsigned char length, unsigned char *value_tag)
+{
+
+		if(((axis[0]==0) && (axis[1]==0) && (axis[2]==0) &&(axis[3]==32767)) || 1 ){
+		pkt = Create_Packet(type_tag, 1, value_tag);
+
+		storeUIMessage(switchMessage);
+		}
+		else
+		{
+			storeUIMessage("Zero Joystick\n\0");
+			pkt=NULL;
+			//free(value_tag);
+		}
+
+}
+
 void Send_Packet(Packet *pkt)
 {
 	unsigned char *packetByteStream = Get_Byte_Stream(pkt);
@@ -662,9 +652,11 @@ js_command *read_js_simulator()
 		js_c->Roll = 0;
 		js_c->Pitch = 0;
 		js_c->Yaw = 0;
-		js_c->Lift = 32767;
+		js_c->Lift = 22767;
 	return js_c;
 }
+
+js_command js_command_obj;
 
 js_command *read_js(int* fd, int axis[], int button[])
 {
@@ -744,7 +736,7 @@ js_command *read_js(int* fd, int axis[], int button[])
 		}*/
 
 	
-		js_c= (js_command *)malloc(sizeof(js_command));
+		js_c= &js_command_obj;
 		js_c->Type = T_CONTROL;
 		js_c->Roll = axis[0];
 		js_c->Pitch = axis[1];
@@ -934,12 +926,10 @@ int main(int argc, char **argv)
 		//printf("T3:%d\n",mon_time_ms());
 
 		if (checkCount()){  //continuously check for new elements in the UART queue
-			readData();
-			//printf("State:%d\n",(int)currentStateR);
-			//printf("FCB: %d\n",currentByte);
-			stateHandler();
-			//printf("State:%d\n",(int)currentStateR);
 
+			unsigned char currentByte = readData();
+
+			stateHandler(currentByte);
 		}
 		//printf("T4:%d\n",mon_time_ms());
 
