@@ -206,6 +206,7 @@ int main(void)
 		{	
 			//PrevMode = CurrentMode;
 			//CurrentMode=GetMode(M_PANIC);
+			//(*CurrentMode.Mode_Initialize)();
 		}
 		
 		readCounter++;

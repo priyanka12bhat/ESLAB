@@ -51,14 +51,15 @@ int16_t sp_offset=0, sq_offset=0, sr_offset=0;
 int16_t sax_offset=0, say_offset=0, saz_offset=0;
 int32_t pressure_offset = 0;
 
-//Hieght control mode
-static int16_t bsaz = 0;
+//Hieght control mode 
+int16_t bsaz = 0;
 int16_t az = 0;
 int32_t h =0; 
 int32_t e = 0;
 int32_t vel = 0;
 int32_t Z_initial =0; 
-char P_h =0;
+int32_t pressure_initial;
+uint16_t P_h =10;
 //int16_t C[2]= {10,100}; 
 
 void Modes_Initialize()
@@ -370,10 +371,10 @@ void Height_Control_Mode_Execute()
 	vel = vel+(az*A2D);
 	h = h + (vel * A2D);
 	e = h-pressure_initial+pressure;
-	h= h- (e/C0);
-	bsaz= bsaz+ ((e/(A2D*A2D))/C1);
+	h= h- (e/C1);
+	bsaz= bsaz+ ((e/(A2D*A2D))/C2);
 	
-	Z = Z_intial + P_h * h;
+	Z = Z_initial + (P_h * h)>>8;
 	SetMotorValues();
 	update_motors();
 	

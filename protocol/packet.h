@@ -40,16 +40,9 @@
 #define C_P1DOWN 21
 #define C_P2UP 22
 #define C_P2DOWN 23
-
-//Control Joystick Types
-//#define CJ_LIFT 24
-
-//#define CJ_ROLL 26
-
-//#define CJ_PITCH 28
-
-//#define CJ_YAW 30
 #define C_JOYSTICK 24
+#define C_PHUP 25
+#define C_PHDOWN 26
 
 #define JSSCALEMAX 100
 
