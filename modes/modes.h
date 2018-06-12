@@ -1,8 +1,9 @@
 #ifndef modes_drones_
 #define modes_drones_
-
+#include "in4073.h"
 #include "../protocol/packet.h"
 #define GetMode(x) Modes[x-1]
+#define GetPrevMode() Modes[PrevMode.state]
 
 
 typedef enum _DroneState {Safe=M_SAFE-1,Panic=M_PANIC-1,Manual=M_MANUAL-1,Callibration=M_CALIBRATION-1, YawControlled=M_YAWCONTROL-1, FullControl=M_FULLCONTROL-1, RawMode=M_RAWMODE-1, HeightControl=M_HEIGHTCONTROL-1,Wireless=M_WIRELESS-1,Exiting=10-1} DroneState;
@@ -18,7 +19,7 @@ typedef struct droneMode
 
 Mode Modes[9];
 
-Mode CurrentMode;
+Mode CurrentMode,PrevMode;
 
 
 
@@ -52,8 +53,14 @@ void Manual_Mode_Input_Handler(unsigned char *Input);
 void Yaw_Controlled_Mode_Input_Handler(unsigned char *Input);
 void Full_Control_Mode_Input_Handler(unsigned char *Input);
 
+void Height_Control_Mode_Input_Handler(unsigned char *Input);
+
 int16_t* GetPArray();
 void SendAdditionalMessage( char* msgfmt, ...);
+char additionalMessage[15];
+void SetAdditionalMessage( char* msgfmt, ...);
+
+bool checkGap(uint32_t lastTime, uint32_t readGap);
 
 
 #endif
