@@ -68,8 +68,6 @@ void SetAdditionalMessage( char* msgfmt, ...)
 
 
 
-
-
 //Sending
 Packet *pkt_S=NULL;
 
@@ -102,10 +100,9 @@ uint32_t lastBaroReadTime =0;
  */
 void process_packet(Packet *pkt_R)
 {
-	//SendAdditionalMessage("T:%ld",get_time_us()-lastPacketTime);
+
 	lastPacketTime = get_time_us();
 	//printf("PacketRecived@%ld\n",lastPacketTime);
-
 	if(CurrentMode.state!=Panic){
 		switch (pkt_R->type)
 		{
@@ -127,7 +124,7 @@ void process_packet(Packet *pkt_R)
 			case T_MODE:
 				nrf_gpio_pin_toggle(YELLOW);
 
-				if(pkt_R->value[0]==M_SAFE || pkt_R->value[0]==M_PANIC || CurrentMode.state==Safe || (CurrentMode.state>Callibration && CurrentMode.state!=HeightControl   && pkt_R->value[0]==M_HEIGHTCONTROL)  )
+				if(pkt_R->value[0]==M_SAFE || pkt_R->value[0]==M_PANIC || (CurrentMode.state==Safe && pkt_R->value[0]!=M_HEIGHTCONTROL)  || (CurrentMode.state>Callibration && CurrentMode.state!=HeightControl   && pkt_R->value[0]==M_HEIGHTCONTROL)  )
 				{
 					PrevMode = CurrentMode;
 					CurrentMode=GetMode(pkt_R->value[0]);
@@ -157,8 +154,6 @@ void process_packet(Packet *pkt_R)
 
 		}
 	}
-
-
 	//printf("FCB\n");
 
 }
@@ -244,6 +239,7 @@ int main(void)
 		{
 
 			SendPacket(Create_Telemetery_Packet(bat_volt, ae, phi, theta, psi, sp, sq, sr,msgCode,GetPArray(),pressure,CurrentMode.state));
+			//SendAdditionalMessage(additionalMessage);
 			lastTelePacketSendTime=currentTime;
 		}
 

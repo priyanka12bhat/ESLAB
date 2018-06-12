@@ -104,8 +104,6 @@ Packet *pkt_K = NULL;
 int axis[6];
 int button[12];
 
-FILE *timeLog;
-
 unsigned int KBLastReadTimeStamp = 0;
 unsigned int  HBLastSendTimeStamp = 0;
 int CheckReadGap(unsigned int lastSendTime, char times);
@@ -265,6 +263,8 @@ void kb_input_handler(unsigned char c)
 
 
 		CreatePacketWithSafetyCheck("Switching to Yaw Conrolled mode\n\0",type_tag,1,value_tag);
+
+
 
 
 		break;
@@ -831,8 +831,6 @@ void Create_jsPacket(js_command* js_comm)
  */
 int main(int argc, char **argv)
 {
-
-	timeLog = fopen("timeLog","w+");
 	
 	int fd = 0;
 	int c = 0;
@@ -967,7 +965,7 @@ int main(int argc, char **argv)
 
 	//storeUIMessage("\nFCB Exited\n\0");
 
-	fclose(timeLog);
+
 
 	term_exitio();
 	rs232_close();
@@ -1085,10 +1083,7 @@ void process_packet(Packet *pkt_R)
 	else if(pkt_R->type==T_adMSG)
 	{
 		 strncpy(additionalMessage,pkt_R->value,15);
-
 		 additionalMessage[15]='\0';
-		 //fprintf(timeLog,"%s\n",additionalMessage);
-
 	}
 	
 }

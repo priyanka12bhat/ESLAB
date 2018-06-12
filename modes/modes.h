@@ -62,5 +62,4 @@ void SetAdditionalMessage( char* msgfmt, ...);
 
 bool checkGap(uint32_t lastTime, uint32_t readGap);
 
-
 #endif

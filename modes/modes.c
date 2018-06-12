@@ -1,6 +1,6 @@
 #include "modes.h"
 #include "../messages/messages.h"
-
+#include "../filters.h"
 
 #include "in4073.h"
 #include <stdarg.h>
@@ -49,7 +49,7 @@ int16_t pitchSetPoint_J = 0;
 int32_t rollSetPoint =0;
 int16_t rollSetPoint_K = 0;
 int16_t rollSetPoint_J = 0;
-int16_t P[3] = {10,100,10};
+int16_t P[3] = {1,1,1};
 
 //Sensor Handling
 // MPU wrapper
@@ -101,7 +101,7 @@ void Modes_Initialize()
 	Modes[M_RAWMODE-1].state=RawMode;
 	Modes[M_RAWMODE-1].Mode_Initialize=&Raw_Mode_Initialize;
 	Modes[M_RAWMODE-1].Mode_Execute=&Raw_Mode_Execute;
-
+	Modes[M_RAWMODE - 1].Input_Handler = &Full_Control_Mode_Input_Handler;
 
 	Modes[M_HEIGHTCONTROL-1].state=HeightControl;
 	Modes[M_HEIGHTCONTROL-1].Mode_Initialize=&Height_Control_Mode_Initialize;
@@ -157,6 +157,8 @@ void Callibration_Mode_Initialize(){
 	
 
 	SetMessage(MSG_ENTERING_CALIBRATION_MODE);
+	while(!check_sensor_int_flag());
+	imu_init(true, 100);
 
 	
 
@@ -173,6 +175,8 @@ void Yaw_Control_Mode_Initialize()
 	yawSetPoint_J = 0;
 	clearControlVariables();
 	SetMessage(MSG_ENTERING_YAWCONTROL_MODE);
+	//while(!check_sensor_int_flag());
+	//imu_init(true, 100);
 }
 void Full_Control_Mode_Initialize(){
 	yawSetPoint = 0;
@@ -186,8 +190,25 @@ void Full_Control_Mode_Initialize(){
 	rollSetPoint_J = 0;
 	clearControlVariables();
 	SetMessage(MSG_ENTERING_FULLCONTROL_MODE);
+	//while(!check_sensor_int_flag());
+	//imu_init(true, 100);
 }
-void Raw_Mode_Initialize(){}
+void Raw_Mode_Initialize()
+{
+	yawSetPoint = 0;
+	yawSetPoint_K = 0;
+	yawSetPoint_J = 0;
+	pitchSetPoint = 0;
+	pitchSetPoint_K = 0;
+	pitchSetPoint_J = 0;
+	rollSetPoint = 0;
+	rollSetPoint_K = 0;
+	rollSetPoint_J = 0;
+	clearControlVariables();
+	SetMessage(MSG_ENTERING_RAWCONTROL_MODE);
+	while(!check_sensor_int_flag());
+	imu_init(false, 300);
+}
 void Height_Control_Mode_Initialize()
 {
 	SetMessage(MSG_ENTERING_HEIGHTCONTROL_MODE);
@@ -336,7 +357,29 @@ void Full_Control_Mode_Execute()
 				//printf("Motor[0]:%d,Motor[1]:%d,Motor[2]:%d,Motor[3]:%d\n",ae[0],ae[1],ae[2],ae[3]);
 		}
 }
-void Raw_Mode_Execute(){}
+void Raw_Mode_Execute()
+{
+	if (check_sensor_int_flag())
+	{
+		get_raw_sensor_data();
+
+		sr = butterworth(sr - sr_offset);
+		sp = butterworth(sp - sp_offset);
+		sq = butterworth(sq - sq_offset);
+		sax = butterworth(sax - sax_offset);
+		say = butterworth(say - say_offset);
+
+		kalman();
+
+		N = (P[0] * (yawSetPoint - sr)) >> SCALING_ROTATION; //Yaw
+		M = (P[1] * (pitchSetPoint - theta) - P[2] * sq) >> SCALING_ROTATION; //Pitch
+		L = (P[1] * (rollSetPoint - phi) - P[2] * sp) >> SCALING_ROTATION; //Roll
+																									  //printf("Z:%ld|L:%ld|M:%ld|N:%ld|",Z,L,M,N);
+		SetMotorValues();
+		update_motors();
+		//printf("Motor[0]:%d,Motor[1]:%d,Motor[2]:%d,Motor[3]:%d\n",ae[0],ae[1],ae[2],ae[3]);
+	}
+}
 void Height_Control_Mode_Execute()
 {
 	Execute_Control_Action = false; 

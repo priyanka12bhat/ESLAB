@@ -3,7 +3,7 @@
 #include "messages.h"
 
 //Msgs
-const char MsgTable[255][255]=
+const char MsgTable[20][255]=
 {
 	"Hi, Whatup?", //dont use this
 	"I Quit!(Exit)",//1
@@ -16,7 +16,8 @@ const char MsgTable[255][255]=
 	"DISCONNECTED",//8
 	"Dont over do!..I know it (Invalid Change)",//9
 	"Full Control Mode", //10
-	"Height Control Mode"
+	"Height Control Mode",
+	"Entering Raw Mode"
 };
 
 
