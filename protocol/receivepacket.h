@@ -39,10 +39,11 @@ void addData(unsigned char *datas, unsigned char length);
 	
 
 
-void SearchforStartByte(unsigned char CRCPos);
+void SearchforStartByte(unsigned char CRCPos, Packet *pkt_R);
 
-void storeValues();
-void stateHandler();
+
+void storeValues(unsigned char ptr[],unsigned char msgSize, unsigned char currentByte);
+void stateHandler(unsigned char currentByte);
 void Reception_Init(char _maxMsgSize);
 
 

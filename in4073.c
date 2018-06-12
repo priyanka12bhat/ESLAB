@@ -40,17 +40,33 @@ void SetMessage(unsigned char _msgCode)
 
 //ONLY FOR DEBUGGING!. Remove instances after use.
 void SendAdditionalMessage( char* msgfmt, ...)
-{   char additionalMessage[15];
+{   
+	char additionalMessage2[15];
+    va_list vl;
+    va_start(vl, msgfmt);
+
+    vsnprintf( additionalMessage2, 15, msgfmt, vl);
+
+    va_end(vl);
+    SendPacket(Create_adMSG_Packet(additionalMessage2));
+
+
+}
+
+void SetAdditionalMessage( char* msgfmt, ...)
+{   
     va_list vl;
     va_start(vl, msgfmt);
 
     vsnprintf( additionalMessage, 15, msgfmt, vl);
 
     va_end(vl);
-    SendPacket(Create_adMSG_Packet(additionalMessage));
+    
 
 
 }
+
+
 
 
 
@@ -75,9 +91,9 @@ uint32_t lastPacketTime = 0;
 uint32_t lastTelePacketSendTime = 0;
 uint32_t lastBlueLEDBlinkTime = 0;
 uint32_t lastBaroReadTime =0;
-uint32_t currentTime = 0;
 
-bool checkGap(uint32_t lastTime, uint32_t readGap);
+
+
 
 
 /*------------------------------------------------------------------
@@ -86,7 +102,7 @@ bool checkGap(uint32_t lastTime, uint32_t readGap);
  */
 void process_packet(Packet *pkt_R)
 {
-	SendAdditionalMessage("T:%ld",get_time_us()-lastPacketTime);
+	//SendAdditionalMessage("T:%ld",get_time_us()-lastPacketTime);
 	lastPacketTime = get_time_us();
 	//printf("PacketRecived@%ld\n",lastPacketTime);
 
@@ -111,11 +127,16 @@ void process_packet(Packet *pkt_R)
 			case T_MODE:
 				nrf_gpio_pin_toggle(YELLOW);
 
-				if(pkt_R->value[0]==M_SAFE || pkt_R->value[0]==M_PANIC || CurrentMode.state==Safe || (CurrentMode.state>Callibration && pkt_R->value[0]==M_HEIGHTCONTROL)  )
+				if(pkt_R->value[0]==M_SAFE || pkt_R->value[0]==M_PANIC || CurrentMode.state==Safe || (CurrentMode.state>Callibration && CurrentMode.state!=HeightControl   && pkt_R->value[0]==M_HEIGHTCONTROL)  )
 				{
 					PrevMode = CurrentMode;
 					CurrentMode=GetMode(pkt_R->value[0]);
 					(*CurrentMode.Mode_Initialize)();
+				}else if(CurrentMode.state==HeightControl && ((PrevMode.state==(pkt_R->value[0]-1))||(pkt_R->value[0]==M_HEIGHTCONTROL)))
+				{
+					Mode temp = PrevMode;
+					PrevMode = CurrentMode;
+					CurrentMode=temp;
 				}
 				else
 				{
@@ -136,6 +157,8 @@ void process_packet(Packet *pkt_R)
 
 		}
 	}
+
+
 	//printf("FCB\n");
 
 }
@@ -149,7 +172,7 @@ void process_packet(Packet *pkt_R)
  */
 int main(void)
 {
-	
+
 
 	uart_init();
 	gpio_init();
@@ -173,22 +196,25 @@ int main(void)
 
 	while(demo_done) {
 
-		//Execute Mode Specific Function
 
-		(*CurrentMode.Mode_Execute)();
 
 		//Recieve Packets
 		if (checkCount()){  //continuously check for new elements in the UART queue
 
-			readData();
+			unsigned char currentByte = readData();
 
-			stateHandler();
+			stateHandler(currentByte);
 		}
+
+
+
+		//Execute Mode Specific Function
+		(*CurrentMode.Mode_Execute)();
 
 		
 
 		//Check for Disconnection and Battery ADC Invoke
-		if (readCounter%10 == 0){
+		if (readCounter%100 == 0){
 			adc_request_sample();
 			//printf("%ld\n",currentTime);
 
@@ -207,7 +233,7 @@ int main(void)
 		{	
 			//PrevMode = CurrentMode;
 			//CurrentMode=GetMode(M_PANIC);
-			//(*CurrentMode.Mode_Initialize)();
+			//(*CurrentMode.Mode_Initialize)();	
 		}
 		
 		readCounter++;
@@ -248,7 +274,7 @@ int main(void)
 
 bool checkGap(uint32_t lastTime, uint32_t readGap)
 {
-	 currentTime = get_time_us();
+	currentTime = get_time_us();
 	return ((currentTime==lastTime)?0:((currentTime>lastTime)?((currentTime-lastTime)>=readGap): (((lastTime-currentTime)<400)?0:((UINT32_MAX-lastTime+currentTime)>=readGap))));
 
 

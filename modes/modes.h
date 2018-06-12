@@ -1,6 +1,6 @@
 #ifndef modes_drones_
 #define modes_drones_
-
+#include "in4073.h"
 #include "../protocol/packet.h"
 #define GetMode(x) Modes[x-1]
 #define GetPrevMode() Modes[PrevMode.state]
@@ -57,6 +57,10 @@ void Height_Control_Mode_Input_Handler(unsigned char *Input);
 
 int16_t* GetPArray();
 void SendAdditionalMessage( char* msgfmt, ...);
+char additionalMessage[15];
+void SetAdditionalMessage( char* msgfmt, ...);
+
+bool checkGap(uint32_t lastTime, uint32_t readGap);
 
 
 #endif

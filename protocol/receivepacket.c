@@ -3,12 +3,9 @@
 #include "receivepacket.h"
 
 //Packet Reception
-unsigned char currentByte;
-unsigned char msgSize;
-unsigned char msgType;
 
-unsigned counter = 0;
-Packet *pkt_R=NULL;
+
+
 
 #define BUFFER_QUEUE_SIZE 255+50
 typedef struct {
@@ -40,6 +37,7 @@ void addNode(unsigned char newData)
 
 unsigned char readData()
 {
+	unsigned char currentByte = 0;
 	if(InputBuffer.count>0)
 	{
 		InputBuffer.count--;
@@ -73,7 +71,7 @@ void addData(unsigned char *datas, unsigned char length)
 
 	
 
-void SearchforStartByte(unsigned char CRCPos)
+void SearchforStartByte(unsigned char CRCPos, Packet *pkt_R)
 {
 	unsigned char *serialPacket = Get_Byte_Stream(pkt_R);
 	unsigned char byteLength=pkt_R->packetLength-(1-CRCPos);
@@ -91,24 +89,27 @@ void SearchforStartByte(unsigned char CRCPos)
 }
 
 
-void storeValues(unsigned char ptr[])
-{
-
+void storeValues(unsigned char ptr[],unsigned char msgSize, unsigned char currentByte)
+{			
+			static unsigned char counter = 0;
 			ptr[counter] = currentByte;
 
 
 			counter++;
 			if (counter >= msgSize-1) {
 				nextState = checkCRC0;
+				counter = 0;
 			} else {
 				nextState = getMsg;
 			}
 
 }
 
-void stateHandler(){
+void stateHandler(unsigned char currentByte){
 	static unsigned char ptr[LP_SIZE+20];
-
+	static unsigned char msgSize;
+	static Packet *pkt_R = NULL;
+	static unsigned char msgType;
 	switch(currentStateR){
 		case checkStartByte:
 			if(currentByte != START_BYTE){
@@ -169,19 +170,19 @@ void stateHandler(){
 			break;
 
 		case setupMsg:
-			counter=0;
 
-			storeValues(ptr);
+
+			storeValues(ptr,msgSize,currentByte);
 
 		break;
 
 		case getMsg:
 
-			storeValues(ptr);
+			storeValues(ptr,msgSize,currentByte);
 
 			break;
 		case checkCRC0:
-			counter=0;
+
 
 			pkt_R = Create_Packet(msgType,msgSize-1, ptr);
 
@@ -200,7 +201,7 @@ void stateHandler(){
 			else
 			{
 				pkt_R->CRC[0]=currentByte;
-				SearchforStartByte(0);
+				SearchforStartByte(0,pkt_R);
 			}
 
 
@@ -214,7 +215,7 @@ void stateHandler(){
 			}
 			else{
 				pkt_R->CRC[1]=currentByte;
-				SearchforStartByte(1);
+				SearchforStartByte(1,pkt_R);
 			}
 
 		break;		

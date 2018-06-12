@@ -111,8 +111,8 @@ void ble_send(void);
 
 
 
-#define B_DASH 1
-#define D_DASH 4
+#define B_DASH_ROTATION 0
+#define D_DASH_ROTATION 2
 
 
 #define MAX_SPEED 600
@@ -133,7 +133,7 @@ void ble_send(void);
 #define INC_N MAX_N/100*INCREMENT_PERCENT
 
 
-
+uint32_t currentTime;
 
 
 #endif // IN4073_H__

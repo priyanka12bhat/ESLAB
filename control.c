@@ -11,10 +11,9 @@
  */
 
 #include "in4073.h"
-
+#define aeMax MAX_SPEED
 void update_motors(void)
 {					
-	int aeMax=600;
 	motor[0] = (ae[0]<aeMax)?ae[0]:motor[0];
 	motor[1] = (ae[1]<aeMax)?ae[1]:motor[1];
 	motor[2] = (ae[2]<aeMax)?ae[2]:motor[2];

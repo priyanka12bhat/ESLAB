@@ -5,24 +5,31 @@
 #include "in4073.h"
 #include <stdarg.h>
 
-#define YAW_SETPOINT_MAX_RANGE 10000
+#define YAW_SETPOINT_MAX_RANGE 4000
 #define ROLL_SETPOINT_MAX_RANGE 5000
 #define PITCH_SETPOINT_MAX_RANGE 5000
 #define SCALING_ROTATION 0
 #define SCALING_ROTATION_YAW 0
 
 // defining A2D for height control mode
-#define A2D 20000 
+#define A2D 5000 
 #define C1 10
 #define C2 1000*C1
 
-bool Check_bit_height = true; 
+bool Execute_Control_Action = true; 
 
 //Moments
 uint32_t Z=0;
 int32_t L=0;
 int32_t M=0;
 int32_t N=0;
+
+
+
+uint32_t KB_Z=0;
+int32_t KB_L=0;
+int32_t KB_M=0;
+int32_t KB_N=0;
 
 int32_t JS_N = 0;
 int32_t JS_L = 0;
@@ -136,10 +143,7 @@ void Manual_Mode_Initialize()
 {
 	SetMessage(MSG_ENTERING_MANUAL_MODE);
 
-		JS_N = 0;
-		JS_L = 0;
-		JS_M = 0;
-		JS_Z = 0;
+
 		clearControlVariables();
 	
 
@@ -148,24 +152,9 @@ void Manual_Mode_Initialize()
 
 #define MAX_SAMPLES 128
 
+void Callibration_Mode_Initialize(){
 
-
-	int32_t phi_offset_sum=0;
-	int32_t theta_offset_sum=0;
-	int32_t psi_offset_sum=0;
-	int32_t sp_offset_sum=0;
-	int32_t sq_offset_sum=0;
-	int32_t sr_offset_sum=0;
-
-void Callibration_Mode_Initialize()
-{
-
-	phi_offset_sum=0;
-	theta_offset_sum=0;
-	psi_offset_sum=0;
-	sp_offset_sum=0;
-	sq_offset_sum=0;
-	sr_offset_sum=0;
+	
 
 	SetMessage(MSG_ENTERING_CALIBRATION_MODE);
 
@@ -173,24 +162,6 @@ void Callibration_Mode_Initialize()
 
 }
 
-void update_offsets()
-{
-	//call only after get_dmp_data()
-	phi_offset_sum = phi_offset_sum-phi_offset+phi;
-	theta_offset_sum = theta_offset_sum-theta_offset+theta;
-	psi_offset_sum = psi_offset_sum-psi_offset+psi;
-	sp_offset_sum = sp_offset_sum-sp_offset+sp;
-	sq_offset_sum = sq_offset_sum-sq_offset+sq;
-	sr_offset_sum = sr_offset_sum-sr_offset+sr;
-
-	phi_offset=phi_offset_sum>>7;
-	theta_offset=theta_offset_sum>>7;
-	psi_offset=psi_offset_sum>>7;
-	sp_offset=sp_offset_sum>>7;	
-	sq_offset=sq_offset_sum>>7;
-	sr_offset=sr_offset_sum>>7;
-
-}
 
 
 
@@ -280,16 +251,22 @@ void Panic_Mode_Execute()
 
 }
 
-void SetMotorValues_Manual();
+void SetMotorValues();
 
 void Manual_Mode_Execute()
 {
-	SetMotorValues_Manual();
+	SetMotorValues();
 
 	update_motors();
 
 }
 void Callibration_Mode_Execute(){
+	int32_t phi_offset_sum=0;
+	int32_t theta_offset_sum=0;
+	int32_t psi_offset_sum=0;
+	int32_t sp_offset_sum=0;
+	int32_t sq_offset_sum=0;
+	int32_t sr_offset_sum=0;
 	char count=0;
 	while(count< MAX_SAMPLES) 
 	{
@@ -322,7 +299,6 @@ void Callibration_Mode_Execute(){
 
 }
 
-void SetMotorValues();
 
 
 void Yaw_Control_Mode_Execute()
@@ -334,7 +310,7 @@ void Yaw_Control_Mode_Execute()
 		N = (P[0]* (yawSetPoint - sr + sr_offset))>>SCALING_ROTATION;
 			//printf("Z:%ld|L:%ld|M:%ld|N:%ld|",Z,L,M,N);
 
- 	if (Check_bit_height){
+ 	if (Execute_Control_Action){
 		SetMotorValues();
 		update_motors();
 		}
@@ -350,10 +326,10 @@ void Full_Control_Mode_Execute()
 			get_dmp_data();	
 			//update_offsets();	
 			N = (P[0]* (yawSetPoint - sr + sr_offset))>>SCALING_ROTATION; //Yaw
-			M = (P[1]* (pitchSetPoint - theta + theta_offset) - P[2]*(-sq - sq_offset))>>SCALING_ROTATION; //Pitch
+			M = (P[1]* (pitchSetPoint - theta + theta_offset) - P[2]*(-sq + sq_offset))>>SCALING_ROTATION; //Pitch
 			L = (P[1]* (rollSetPoint - phi + phi_offset) - P[2]*(sp - sp_offset))>>SCALING_ROTATION; //Roll
 				//printf("Z:%ld|L:%ld|M:%ld|N:%ld|",Z,L,M,N);
-			if  (Check_bit_height){	 
+			if  (Execute_Control_Action){	 
 				SetMotorValues();
 				update_motors();
 			}
@@ -363,17 +339,24 @@ void Full_Control_Mode_Execute()
 void Raw_Mode_Execute(){}
 void Height_Control_Mode_Execute()
 {
-	Check_bit_height = false; 
+	Execute_Control_Action = false; 
 	(*PrevMode.Mode_Execute)();
-	Check_bit_height = true; 
-	az= saz-bsaz; 
-	vel = vel+(az*A2D);
-	h = h + (vel * A2D);
-	e = h-pressure_initial+pressure;
-	h= h- (e/C1);
-	bsaz= bsaz+ ((e/(A2D*A2D))/C2);
-	
-	Z = Z_initial + (P_h * h)>>8;
+
+	static uint32_t lastControlTime = 0;
+
+	Execute_Control_Action = true; 
+		if(checkGap(lastControlTime,A2D)){
+		az= saz-sax_offset-bsaz; 
+		vel = vel+(az*A2D);
+		h = h + (vel * A2D);
+		e = h-pressure_initial+pressure;
+		h= h- (e/C1);
+		bsaz= bsaz+ ((e/(A2D*A2D))/C2);
+		
+		Z = Z_initial - ((P_h * h)>>18);
+		lastControlTime = currentTime;
+	}
+
 	SetMotorValues();
 	update_motors();
 	
@@ -396,60 +379,60 @@ void Manual_Mode_Input_Handler(unsigned char *Input)
 
 						case C_LIFTUP:
 
-							if((JS_Z+Z+INC_Z)<=MAX_Z){
-								Z+=INC_Z;
+							if((JS_Z+KB_Z+INC_Z)<=MAX_Z){
+								KB_Z+=INC_Z;
 							}						
 
 							
 						break;
 						case C_LIFTDOWN:
-							if(Z>=INC_Z)
+							if(KB_Z>=INC_Z)
 							{
-								Z-=INC_Z;
+								KB_Z-=INC_Z;
 							}
 								
 
 						break;
 
 						case C_ROLLUP:
-							if((L+INC_L)<=MAX_L){
-								L+=INC_L;
+							if((KB_L+INC_L)<=MAX_L){
+								KB_L+=INC_L;
 							}						
 
 						break;
 
 						case C_ROLLDOWN:
-							if((L-INC_L)>=(-1*MAX_L))
+							if((KB_L-INC_L)>=(-1*MAX_L))
 							{
 								
-								L-=INC_L;
+								KB_L-=INC_L;
 							}
 								
 						break;
 
 						case C_PITCHUP:
-							if((M+INC_M)<=MAX_M){
-								M+=INC_M;
+							if((KB_M+INC_M)<=MAX_M){
+								KB_M+=INC_M;
 							}
 						break;
 
 						case C_PITCHDOWN:
-							if((M-INC_M)>=(-1*MAX_M))
+							if((KB_M-INC_M)>=(-1*MAX_M))
 							{
-								M-=INC_M;
+								KB_M-=INC_M;
 							}
 						break;
 
 						case C_YAWUP:
-							if((N+INC_N)<=MAX_N){
-								N+=INC_N;
+							if((KB_N+INC_N)<=MAX_N){
+								KB_N+=INC_N;
 							}		
 						break;
 
 						case C_YAWDOWN:
-							if((N-INC_N)>=(-1*MAX_N))
+							if((KB_N-INC_N)>=(-1*MAX_N))
 							{
-								N-=INC_N;
+								KB_N-=INC_N;
 							}
 						break;						
 
@@ -462,8 +445,10 @@ void Manual_Mode_Input_Handler(unsigned char *Input)
 
 						break;
 						}
-
-
+						Z=KB_Z+JS_Z;
+						L=KB_L+JS_L;
+						M=KB_M+JS_M;
+						N=KB_N+JS_N;	
 
 }
 
@@ -477,16 +462,16 @@ void Yaw_Controlled_Mode_Input_Handler(unsigned char *Input)
 
 						case C_LIFTUP:
 
-							if((JS_Z+Z+INC_Z)<=MAX_Z){
-								Z+=INC_Z;
+							if((JS_Z+KB_Z+INC_Z)<=MAX_Z){
+								KB_Z+=INC_Z;
 							}						
 
 							
 						break;
 						case C_LIFTDOWN:
-							if(Z>=INC_Z)
+							if(KB_Z>=INC_Z)
 							{
-								Z-=INC_Z;
+								KB_Z-=INC_Z;
 							}
 								
 
@@ -522,7 +507,7 @@ void Yaw_Controlled_Mode_Input_Handler(unsigned char *Input)
 					}
 					yawSetPoint = yawSetPoint_K + yawSetPoint_J;
 					//SendAdditionalMessage("ys:%ld",yawSetPoint);
-
+					Z=KB_Z+JS_Z;					
 
 }
 
@@ -534,16 +519,16 @@ void Full_Control_Mode_Input_Handler(unsigned char *Input)
 	switch(Input[0]){
 						case C_LIFTUP:
 
-							if((JS_Z+Z+INC_Z)<=MAX_Z){
-								Z+=INC_Z;
+							if((JS_Z+KB_Z+INC_Z)<=MAX_Z){
+								KB_Z+=INC_Z;
 							}						
 
 							
 						break;
 						case C_LIFTDOWN:
-							if(Z>=INC_Z)
+							if(KB_Z>=INC_Z)
 							{
-								Z-=INC_Z;
+								KB_Z-=INC_Z;
 							}
 								
 						break;
@@ -617,7 +602,7 @@ void Full_Control_Mode_Input_Handler(unsigned char *Input)
 					pitchSetPoint = pitchSetPoint_K + pitchSetPoint_J;
 					rollSetPoint = rollSetPoint_K + rollSetPoint_J;
 					//SendAdditionalMessage("ys:%ld",yawSetPoint);
-
+					Z=KB_Z+JS_Z;
 
 }
 
@@ -648,68 +633,14 @@ void Height_Control_Mode_Input_Handler(unsigned char *Input)
 	}
 }
 
-void SetMotorValues_Manual()
-{
 
-	if(Z+JS_Z==0)
-	{
-		//setting mottor values to zero in case of zero lift
-		L=0;
-		M=0;
-		N=0;
-		ae[0]=0;
-		ae[1]=0;
-		ae[2]=0;
-		ae[3]=0;
-	}
-	else{
-
-	/*
-	Solving System of Equation
-
-	Z=B_DASH(ae0^2+ae1^2+ae2^2+ae3^2)
-	L=B_DASH(ae0^2-ae2^2)
-	L=B_DASH(ae1^2-ae3^2)
-	N*D_DASH=(ae0^2-ae1^2+ae2^2-ae3^2)
-	*/
-	int32_t z = (Z+JS_Z)/B_DASH;
-	int32_t l = (L+JS_L)/B_DASH;
-	int32_t m = (M+JS_M)/B_DASH;
-	int32_t n = (N+JS_N)*D_DASH;
-
-	int32_t ae0_2 = (m+(n>>1)+(z>>1))>>1;
-	int32_t ae1_2 = (-(n>>1)-l+(z>>1))>>1;
-	int32_t ae2_2 = ((z>>1)+(n>>1)-m)>>1;
-	int32_t ae3_2 = (l-(n>>1)+(z>>1))>>1;
-
-	//For negative values, seting minimum as zero
-	ae[0]=(uint16_t)sqrt(ae0_2<0?0:ae0_2);
-	ae[1]=(uint16_t)sqrt(ae1_2<0?0:ae1_2);
-	ae[2]=(uint16_t)sqrt(ae2_2<0?0:ae2_2);
-	ae[3]=(uint16_t)sqrt(ae3_2<0?0:ae3_2);
-
-	//Calculating the speed for current lift applied alone
-	uint16_t minSpeed = (uint16_t)sqrt(z>>2);
-	//Ensuring lift wont go below MIN_SPEED_ONFLY limit, for YAWING, ROLLING, PITCHING with higher lifts
-	minSpeed = (minSpeed<MIN_SPEED_ONFLY)?minSpeed:MIN_SPEED_ONFLY;
-
-	//Confirm Motor Values considering all limits
-	ae[0]=(ae[0]<MIN_SPEED_ONFLY)?minSpeed:ae[0];
-	ae[1]=(ae[1]<MIN_SPEED_ONFLY)?minSpeed:ae[1];
-	ae[2]=(ae[2]<MIN_SPEED_ONFLY)?minSpeed:ae[2];
-	ae[3]=(ae[3]<MIN_SPEED_ONFLY)?minSpeed:ae[3];
-	}
-
-}
 
 void SetMotorValues()
 {
-	if(Z+JS_Z==0)
+	if(JS_Z==0)
 	{
 		//setting mottor values to zero in case of zero lift
-		L=0;
-		M=0;
-		N=0;
+
 		ae[0]=0;
 		ae[1]=0;
 		ae[2]=0;
@@ -725,10 +656,10 @@ void SetMotorValues()
 	L=B_DASH(ae1^2-ae3^2)
 	N*D_DASH=(ae0^2-ae1^2+ae2^2-ae3^2)
 	*/
-	int32_t z = (Z+JS_Z)/B_DASH;
-	int32_t l = L/B_DASH;
-	int32_t m = M/B_DASH;
-	int32_t n = N*D_DASH;
+	int32_t z = Z>>B_DASH_ROTATION;
+	int32_t l = L>>B_DASH_ROTATION;
+	int32_t m = M>>B_DASH_ROTATION;
+	int32_t n = N<<D_DASH_ROTATION;
 
 	int32_t ae0_2 = (m+(n>>1)+(z>>1))>>1;
 	int32_t ae1_2 = (-(n>>1)-l+(z>>1))>>1;
@@ -758,7 +689,7 @@ void SetMotorValues()
 }
 
 
-inline void EnterSafeMode()
+void EnterSafeMode()
 {
 	SetMessage(MSG_ENTERING_SAFE_MODE);
 	ae[0] = 0;
@@ -769,8 +700,16 @@ inline void EnterSafeMode()
 }
 
 
-inline void clearControlVariables()
+void clearControlVariables()
 {
+	KB_Z=0;
+	KB_L=0;
+	KB_M=0;
+	KB_N=0;
+	JS_Z=0;
+	JS_L=0;
+	JS_M=0;
+	JS_N=0;
 	Z=0;
 	L=0;
 	M=0;
