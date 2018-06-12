@@ -239,6 +239,7 @@ int main(void)
 		{
 
 			SendPacket(Create_Telemetery_Packet(bat_volt, ae, phi, theta, psi, sp, sq, sr,msgCode,GetPArray(),pressure,CurrentMode.state));
+			//SendAdditionalMessage(additionalMessage);
 			lastTelePacketSendTime=currentTime;
 		}
 

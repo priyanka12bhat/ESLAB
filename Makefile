@@ -43,6 +43,8 @@ $(abspath ./protocol/crc16.c) \
 $(abspath ./protocol/packet.c) \
 $(abspath ./protocol/receivepacket.c) \
 $(abspath ./modes/modes.c) \
+$(abspath ./filters.c) \
+$(abspath ./fixpoint.c) \
 $(abspath ./in4073.c) \
 $(abspath ./control.c) \
 $(abspath ./drivers/gpio.c) \
