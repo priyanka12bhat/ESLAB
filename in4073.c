@@ -205,9 +205,9 @@ int main(void)
 
 		if(bat_volt <= 1050 && bat_volt>0 )
 		{	
-			PrevMode = CurrentMode;
-			CurrentMode=GetMode(M_PANIC);
-			(*CurrentMode.Mode_Initialize)();	
+			//PrevMode = CurrentMode;
+			//CurrentMode=GetMode(M_PANIC);
+			//(*CurrentMode.Mode_Initialize)();
 		}
 		
 		readCounter++;

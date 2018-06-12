@@ -11,7 +11,12 @@
 #define SCALING_ROTATION 0
 #define SCALING_ROTATION_YAW 0
 
+// defining A2D for height control mode
+#define A2D 20000 
+#define C1 10
+#define C2 1000*C1
 
+bool Check_bit_height = true; 
 
 //Moments
 uint32_t Z=0;
@@ -46,6 +51,16 @@ int16_t sp_offset=0, sq_offset=0, sr_offset=0;
 int16_t sax_offset=0, say_offset=0, saz_offset=0;
 int32_t pressure_offset = 0;
 
+//Hieght control mode 
+int16_t bsaz = 0;
+int16_t az = 0;
+int32_t h =0; 
+int32_t e = 0;
+int32_t vel = 0;
+int32_t Z_initial =0; 
+int32_t pressure_initial;
+uint16_t P_h =10;
+//int16_t C[2]= {10,100}; 
 
 void Modes_Initialize()
 {
@@ -205,7 +220,9 @@ void Raw_Mode_Initialize(){}
 void Height_Control_Mode_Initialize()
 {
 	SetMessage(MSG_ENTERING_HEIGHTCONTROL_MODE);
-	pressure_offset = pressure;
+	pressure_initial = pressure;
+	bsaz = 0; 
+	Z_initial= Z;
 }
 void Wireless_Control_Mode_Initialize(){}
 
@@ -317,10 +334,10 @@ void Yaw_Control_Mode_Execute()
 		N = (P[0]* (yawSetPoint - sr + sr_offset))>>SCALING_ROTATION;
 			//printf("Z:%ld|L:%ld|M:%ld|N:%ld|",Z,L,M,N);
 
+ 	if (Check_bit_height){
 		SetMotorValues();
 		update_motors();
-
-
+		}
 		
 
 			//printf("Motor[0]:%d,Motor[1]:%d,Motor[2]:%d,Motor[3]:%d\n",ae[0],ae[1],ae[2],ae[3]);
@@ -336,16 +353,30 @@ void Full_Control_Mode_Execute()
 			M = (P[1]* (pitchSetPoint - theta + theta_offset) - P[2]*(-sq - sq_offset))>>SCALING_ROTATION; //Pitch
 			L = (P[1]* (rollSetPoint - phi + phi_offset) - P[2]*(sp - sp_offset))>>SCALING_ROTATION; //Roll
 				//printf("Z:%ld|L:%ld|M:%ld|N:%ld|",Z,L,M,N);
-			SetMotorValues();
-			update_motors();
+			if  (Check_bit_height){	 
+				SetMotorValues();
+				update_motors();
+			}
 				//printf("Motor[0]:%d,Motor[1]:%d,Motor[2]:%d,Motor[3]:%d\n",ae[0],ae[1],ae[2],ae[3]);
 		}
 }
 void Raw_Mode_Execute(){}
 void Height_Control_Mode_Execute()
 {
-	Z=Z;
+	Check_bit_height = false; 
 	(*PrevMode.Mode_Execute)();
+	Check_bit_height = true; 
+	az= saz-bsaz; 
+	vel = vel+(az*A2D);
+	h = h + (vel * A2D);
+	e = h-pressure_initial+pressure;
+	h= h- (e/C1);
+	bsaz= bsaz+ ((e/(A2D*A2D))/C2);
+	
+	Z = Z_initial + (P_h * h)>>8;
+	SetMotorValues();
+	update_motors();
+	
 }
 void Wireless_Control_Mode_Execute(){}
 
@@ -604,7 +635,17 @@ void Height_Control_Mode_Input_Handler(unsigned char *Input)
 		CurrentMode = GetPrevMode();
 		PrevMode =GetMode(M_HEIGHTCONTROL);
 	}
+	
+		switch(Input[0]){
+			case C_PHUP:
+				P_h+=1;
+				break;
+				
+			case C_PHDOWN:
+				P_h-=1;
+				break;
 
+	}
 }
 
 void SetMotorValues_Manual()
