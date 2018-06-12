@@ -21,7 +21,7 @@ int16_t butterworth(int16_t sample)
 		y[n] = y[n - 1];
 	}
 
-	x[0] = normal2fix(sample);
+	x[0] = normal2fixM(sample);
 	y[0] = fixmul((q14)BUTTER_A0, x[0]) + fixmul((q14)BUTTER_A1, x[1]) + fixmul((q14)BUTTER_A2, x[2]) - fixmul((q14)BUTTER_B1, y[1]) - fixmul((q14)BUTTER_B2, y[2]);
 	//printf("Butterworth say: %d\n", fix2normal(y[0]));
 	//convert Q14 numbers to int16_t
@@ -32,10 +32,10 @@ int16_t butterworth(int16_t sample)
 void kalman()
 {
 	// first convert the sensor values to Q14 so we can multiply them with a fraction
-	kalman_sp = normal2fix(sp);
-	kalman_sq = normal2fix(sq);
-	kalman_sax = normal2fix(sax);
-	kalman_say = normal2fix(say);
+	kalman_sp = normal2fixM(sp);
+	kalman_sq = normal2fixM(sq);
+	kalman_sax = normal2fixM(sax);
+	kalman_say = normal2fixM(say);
 
 	// kalman filtering for theta phi psi
 	kalman_sp = kalman_sp - bias_sp;
@@ -51,8 +51,8 @@ void kalman()
 	bias_sq = bias_sq + fixdivision(error_theta, KALMAN_C2_THETA);
 
 	// convert the sensor values back to integer so we can use them
-	sp = fix2normal(kalman_sp);
-	sq = fix2normal(kalman_sq);
-	theta = fix2normal(kalman_theta);
-	phi = fix2normal(kalman_phi);
+	sp = fix2normalM(kalman_sp);
+	sq = fix2normalM(kalman_sq);
+	theta = fix2normalM(kalman_theta);
+	phi = fix2normalM(kalman_phi);
 }
