@@ -893,7 +893,7 @@ int main(int argc, char **argv)
 				lastJSSendTime = mon_time_ms();
 				//printf("%d\n",lastJSSendTime);
 			}
-			free(js_comm);
+			//free(js_comm);
 		}
 		//printf("T2:%d\n",mon_time_ms());
 		if ((c = term_getchar_nb()) != -1)
