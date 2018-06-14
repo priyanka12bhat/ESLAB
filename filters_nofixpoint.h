@@ -16,5 +16,5 @@
 #define normal2fixM(x)((q14)(x)*(1<<Q));
 #define fix2normalM(x)(x/(1<<Q));
 
-int16_t butterworth(int16_t sample);
+void butterworth();
 void kalman();
