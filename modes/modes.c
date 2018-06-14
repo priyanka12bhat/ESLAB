@@ -370,8 +370,10 @@ void Raw_Mode_Execute()
 		M = (P[1] * (pitchSetPoint - theta + theta_offset) - P[2] * (-sq + sq_offset)) >> SCALING_ROTATION; //Pitch
 		L = (P[1] * (rollSetPoint - phi + phi_offset) - P[2] * (sp - sp_offset)) >> SCALING_ROTATION; //Roll
 																									  //printf("Z:%ld|L:%ld|M:%ld|N:%ld|",Z,L,M,N);
-		SetMotorValues();
-		update_motors();
+		if  (Execute_Control_Action){	 
+			SetMotorValues();
+			update_motors();
+		}
 		//printf("Motor[0]:%d,Motor[1]:%d,Motor[2]:%d,Motor[3]:%d\n",ae[0],ae[1],ae[2],ae[3]);
 	}
 }
