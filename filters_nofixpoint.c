@@ -53,9 +53,9 @@ void kalman()
 
 	// kalman filtering for theta phi psi
 	kalman_sp = kalman_sp - bias_sp;
-	kalman_phi = kalman_phi + kalman_sp * KALMAN_P2PHI_PHI);
+	kalman_phi = kalman_phi + kalman_sp * KALMAN_P2PHI_PHI;
 	error_phi = kalman_phi - kalman_say;
-	kalman_phi = kalman_phi - error_phi / KALMAN_C1_PHI);
+	kalman_phi = kalman_phi - error_phi / KALMAN_C1_PHI;
 	bias_sp = bias_sp + error_phi / (KALMAN_P2PHI_PHI * KALMAN_C2_PHI);
 
 	kalman_sq = kalman_sq - bias_sq;
