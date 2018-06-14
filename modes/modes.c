@@ -363,12 +363,7 @@ void Raw_Mode_Execute()
 	{
 		get_raw_sensor_data();
 
-		sr = butterworth(sr - sr_offset);
-		sp = butterworth(sp - sp_offset);
-		sq = butterworth(sq - sq_offset);
-		sax = butterworth(sax - sax_offset);
-		say = butterworth(say - say_offset);
-
+		butterworth();
 		kalman();
 
 		N = (P[0] * (yawSetPoint - sr)) >> SCALING_ROTATION; //Yaw
