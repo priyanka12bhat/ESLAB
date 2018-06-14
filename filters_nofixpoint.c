@@ -1,6 +1,6 @@
 #include "fixpoint.h"
 #include "in4073.h"
-#include "filters.h"
+#include "filters_nofixpoint.h"
 #include <inttypes.h>
 
 // initial values for butterworth filter
@@ -50,12 +50,11 @@ void butterworth()
 	y[5][0] = fixmul((q14)BUTTER_B0, y[5][0]);
 	//convert Q14 numbers to int16_t
 
-	//sp = fix2normalM(y[0][0]);
-	//sq = fix2normalM(y[1][0]);
+
 	sr = fix2normalM(y[2][0]);
 	sax = fix2normalM(y[3][0]);
 	say = fix2normalM(y[4][0]);
-	//saz = fix2normalM(y[5][0]);
+
 }
 
 
