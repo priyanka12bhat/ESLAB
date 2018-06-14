@@ -1,6 +1,6 @@
 #include "modes.h"
 #include "../messages/messages.h"
-#include "../filters.h"
+#include "../filters_nofixpoint.h"
 
 #include "in4073.h"
 #include <stdarg.h>
