@@ -13,6 +13,7 @@
 #define T_EXIT 5
 #define T_adMSG 6
 #define T_HEARTBEAT 7 
+#define T_FLASHMEM 8
 
 //Mode Types
 #define M_SAFE 1

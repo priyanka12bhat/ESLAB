@@ -3,6 +3,7 @@
 #include "../filters_nofixpoint.h"
 
 #include "in4073.h"
+#include "protocol/packet.h"
 #include <stdarg.h>
 
 #define YAW_SETPOINT_MAX_RANGE 4000
@@ -58,7 +59,7 @@ int16_t sp_offset=0, sq_offset=0, sr_offset=0;
 int16_t sax_offset=0, say_offset=0, saz_offset=0;
 int32_t pressure_offset = 0;
 
-//Hieght control mode 
+//Height control mode 
 int16_t bsaz = 0;
 int16_t az = 0;
 int32_t h =0; 
@@ -67,7 +68,74 @@ int32_t vel = 0;
 int32_t Z_initial =0; 
 int32_t pressure_initial;
 uint16_t P_h =10;
-//int16_t C[2]= {10,100}; 
+//int16_t C[2]= {10,100};
+
+//Logging 
+uint32_t flashCount = 0x00000000;
+uint8_t *data;
+uint8_t *flashBuffer;
+uint8_t flashValues[23];
+uint8_t dataValues[23];
+uint32_t readCount = 0x00000000;
+int sendPacketCounter = 0;
+#define maxPacketCounter 127995
+
+void logData()
+{
+	if (flashCount < maxPacketCounter){
+
+	/*for(int i=0;i<4;i++){
+		*(data + 2*i) = ae[i]>>8;
+		*(data + 2*i+1) = ae[i]&0x00FF;
+	}*/
+	*(data + 0) = (uint8_t)(sax>>8);
+	*(data + 1) = (uint8_t)(sax&0xFF);
+	*(data + 2) = (uint8_t)(say>>8);
+	*(data + 3) = (uint8_t)(say&0xFF);
+	*(data + 4) = (uint8_t)(saz>>8);
+	*(data + 5) = (uint8_t)(saz&0xFF);
+	for (int i=6;i<8;i++){
+		*(data + i) = 0;
+	}
+	*(data + 8) = (uint8_t)bat_volt>>8;
+	*(data + 9) = (uint8_t)bat_volt&0x00FF;
+	uint32_t us_loggingTime = get_time_us();
+	*(data + 10) = (uint8_t)((us_loggingTime)&0xFF);
+	*(data + 11) = (uint8_t)((us_loggingTime>>8)&0xFF);
+	*(data + 12) = (uint8_t)((us_loggingTime>>16)&0xFF);
+	*(data + 13) = (uint8_t)(us_loggingTime>>24);
+	for (int i=14;i<16;i++){
+		*(data + i) = 0;
+	}
+	
+	*(data + 16) = (uint8_t)(sp>>8);
+	*(data + 17) = (uint8_t)(sp&0xFF);
+	*(data + 18) = (uint8_t)(sq>>8);
+	*(data + 19) = (uint8_t)(sq&0xFF);
+	*(data + 20) = (uint8_t)(sr>>8);
+	*(data + 21) = (uint8_t)(sr&0xFF);
+	*(data + 22) = (uint8_t)MSG_ENTERING_RAWCONTROL_MODE;
+	
+	flash_write_bytes(flashCount,data,(uint32_t)23);
+	flashCount = flashCount + 23;
+	}
+} 
+
+void readData()
+{
+	flashBuffer = flashValues; //allocate space for the 23 values
+	if (sendPacketCounter == 50 && readCount < flashCount){
+		sendPacketCounter = 0; //Only read the flash memory 1 every 50 iterations
+		flash_read_bytes(readCount, flashBuffer, (uint32_t)23);
+		readCount = readCount + 23;
+		if (readCount == flashCount){
+			*(flashBuffer + 22) = 11; //If this is the last package, logging done
+		}
+
+		SendPacket(Create_Flash_Data_Packet(flashBuffer));
+	}
+	sendPacketCounter++;
+}
 
 void Modes_Initialize()
 {
@@ -175,8 +243,8 @@ void Yaw_Control_Mode_Initialize()
 	yawSetPoint_J = 0;
 	clearControlVariables();
 	SetMessage(MSG_ENTERING_YAWCONTROL_MODE);
-	//while(!check_sensor_int_flag());
-	//imu_init(true, 100);
+	//while(!check_sensor_int_flag());  Not really necessary
+	imu_init(true, 100);
 }
 void Full_Control_Mode_Initialize(){
 	yawSetPoint = 0;
@@ -191,8 +259,9 @@ void Full_Control_Mode_Initialize(){
 	clearControlVariables();
 	SetMessage(MSG_ENTERING_FULLCONTROL_MODE);
 	//while(!check_sensor_int_flag());
-	//imu_init(true, 100);
+	imu_init(true, 100);
 }
+
 void Raw_Mode_Initialize()
 {
 	yawSetPoint = 0;
@@ -206,7 +275,6 @@ void Raw_Mode_Initialize()
 	rollSetPoint_J = 0;
 	clearControlVariables();
 	SetMessage(MSG_ENTERING_RAWCONTROL_MODE);
-	while(!check_sensor_int_flag());
 	imu_init(false, 300);
 }
 void Height_Control_Mode_Initialize()
@@ -228,14 +296,13 @@ MODE SPECIFIC EXECUTION FUNCTION GOES HERE
 
 void Safe_Mode_Execute(){}
 
-
-
-
 void Panic_Mode_Execute()
 {
 	static 	uint32_t us_TimeStamp = 0;
 	
 			uint32_t us_currentTime = get_time_us();
+
+			readData();
 
 			if(us_currentTime>us_TimeStamp?us_currentTime-us_TimeStamp>500000: (UINT32_MAX-us_TimeStamp+us_currentTime)>500000){
 			//printf("%10ld | ", us_currentTime);
@@ -359,9 +426,16 @@ void Full_Control_Mode_Execute()
 }
 void Raw_Mode_Execute()
 {
+	static uint32_t lastReadTime = 0;
+
 	if (check_sensor_int_flag())
 	{
 		get_raw_sensor_data();
+
+		if (checkGap(lastReadTime,5000)){
+			lastReadTime = currentTime;
+			logData();
+		}
 		
 		butterworth();
 		kalman();

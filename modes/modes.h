@@ -46,8 +46,7 @@ void Raw_Mode_Execute();
 void Height_Control_Mode_Execute();
 void Wireless_Control_Mode_Execute();
 
-
-
+void SendPacket(Packet *packetToSend);
 
 void Manual_Mode_Input_Handler(unsigned char *Input);
 void Yaw_Controlled_Mode_Input_Handler(unsigned char *Input);

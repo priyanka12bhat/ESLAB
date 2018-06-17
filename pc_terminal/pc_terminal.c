@@ -1021,7 +1021,24 @@ void printUIMessage()
 
 
 void process_packet(Packet *pkt_R)
-{
+{	
+	if (pkt_R->type == T_FLASHMEM)
+	{	if (f == NULL) {
+		f = fopen("file.txt", "a");
+		}
+	    fprintf(f,"\t%ld\t",(((uint32_t)pkt_R->value[13])<<24|((uint32_t)pkt_R->value[12])<<16|((uint32_t)pkt_R->value[11])<<8|(uint32_t)pkt_R->value[10]));
+	    fprintf(f,"\t%d\t",(int16_t)(((uint16_t)pkt_R->value[0])<<8|pkt_R->value[1]));
+	    fprintf(f,"\t%d\t",(int16_t)(((uint16_t)pkt_R->value[2])<<8|pkt_R->value[3]));
+	    fprintf(f,"\t%d\t",(int16_t)(((uint16_t)pkt_R->value[4])<<8|pkt_R->value[5]));
+	    fprintf(f,"\t%d\t",(int16_t)(((uint16_t)pkt_R->value[16])<<8|pkt_R->value[17]));
+	    fprintf(f,"\t%d\t",(int16_t)(((uint16_t)pkt_R->value[18])<<8|pkt_R->value[19]));
+	    fprintf(f,"\t%d\n",(int16_t)(((uint16_t)pkt_R->value[20])<<8|pkt_R->value[21]));
+	    if (pkt_R->value[22]==11){
+	    	fclose(f);
+	    	f = NULL;
+	    }
+	}
+
 	if(pkt_R->type==T_DATA){
 	clearUI();
 	printf("=========================================================================================================\n");
@@ -1038,10 +1055,17 @@ void process_packet(Packet *pkt_R)
 		printf("Motor[%d]:\t%d\t",i,uint16Values[i]);
 	}
     puts("\n");
-    printf("phi:\t%d\t",(int16_t)uint16Values[5]);
-    printf("theta:\t%d\t",(int16_t)uint16Values[6]);
-    printf("psi:\t%d\n",(int16_t)uint16Values[7]);
-
+    if (pkt_R->value[22] == MSG_LOGGING){
+		printf("ax:\t%d\t",(((uint16_t)pkt_R->value[0])<<8|pkt_R->value[1]));
+    	printf("ay:\t%d\t",(((uint16_t)pkt_R->value[2])<<8|pkt_R->value[3]));
+    	printf("az:\t%d\t",(((uint16_t)pkt_R->value[4])<<8|pkt_R->value[5]));
+    }
+    else {
+    	printf("phi:\t%d\t",(int16_t)uint16Values[5]);
+   		printf("theta:\t%d\t",(int16_t)uint16Values[6]);
+    	printf("psi:\t%d\n",(int16_t)uint16Values[7]);
+    }
+    
     printf("sp:\t%d\t",(int16_t)uint16Values[8]);
     printf("sq:\t%d\t",(int16_t)uint16Values[9]);
     printf("sr:\t%d\n",(int16_t)uint16Values[10]);
@@ -1069,16 +1093,14 @@ void process_packet(Packet *pkt_R)
     printf("P:\t%d\t",(((uint16_t)pkt_R->value[23])<<8|pkt_R->value[24]));
     printf("P1:\t%d\t",(((uint16_t)pkt_R->value[25])<<8|pkt_R->value[26]));
     printf("P2:\t%d\t",(((uint16_t)pkt_R->value[27])<<8|pkt_R->value[28]));*/
-    
-
-
 	//mvprintw (0, 0, "%d", pkt_R->value[0]);     
 	//refresh ();
-	
-	msgCode = pkt_R->value[22];
+
+	msgCode = pkt_R->value[22]; 
 
 	printUIMessage();
-	
+
+
 	}
 	else if(pkt_R->type==T_adMSG)
 	{
