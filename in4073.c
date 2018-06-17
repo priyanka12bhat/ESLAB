@@ -29,7 +29,7 @@ bool ExitFlag = 0;
 
 void GetMotorValues();
 void SetMotorValues_Manual();
-void SendPacket(Packet *packetToSend);
+
 char msgCode = 0;
 
 
@@ -70,6 +70,20 @@ void SetAdditionalMessage( char* msgfmt, ...)
 
 //Sending
 Packet *pkt_S=NULL;
+
+void SendPacket(Packet *packetToSend)
+{
+
+	if(packetToSend!=NULL)
+	{
+		unsigned char *dataToSend = Get_Byte_Stream(packetToSend);
+			for(int i =0;i<packetToSend->packetLength+1;i++)
+			{
+				uart_put(dataToSend[i]);
+			}
+	}
+
+}
 
 
 //Functions for Package Reception
@@ -193,7 +207,7 @@ int main(void)
 
 
 
-		//Recieve Packets
+		//Receive Packets
 		if (checkCount()){  //continuously check for new elements in the UART queue
 
 			unsigned char currentByte = readData();
@@ -277,22 +291,4 @@ bool checkGap(uint32_t lastTime, uint32_t readGap)
 }
 
 
-//State machine for all the states
-
-
-
-
-void SendPacket(Packet *packetToSend)
-{
-
-	if(packetToSend!=NULL)
-	{
-		unsigned char *dataToSend = Get_Byte_Stream(packetToSend);
-			for(int i =0;i<packetToSend->packetLength+1;i++)
-			{
-				uart_put(dataToSend[i]);
-			}
-	}
-
-}
 

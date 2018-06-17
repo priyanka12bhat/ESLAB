@@ -101,7 +101,7 @@ Packet *Create_Flash_Data_Packet(uint8_t *flashBuffer)
 	fpktObj.value[22]=*(flashBuffer + 22);
 
 	fpktObj.valueLength = 23;
-	fpktObj.dataLength=Get_DataLength(fpktObj.valueLength );
+	fpktObj.dataLength=Get_DataLength(fpktObj.valueLength);
 	fpktObj.packetLength=1+1+fpktObj.dataLength+(CRC_BYTE_SIZE);
 	Set_CRCValue(&fpktObj);
 	return &fpktObj;

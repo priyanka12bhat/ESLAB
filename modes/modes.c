@@ -3,7 +3,6 @@
 #include "../filters_nofixpoint.h"
 
 #include "in4073.h"
-#include "protocol/packet.h"
 #include <stdarg.h>
 
 #define YAW_SETPOINT_MAX_RANGE 4000
@@ -36,7 +35,6 @@ int32_t JS_N = 0;
 int32_t JS_L = 0;
 int32_t JS_M = 0;
 int32_t JS_Z = 0;
-
 
 //Yaw Controlled Mode
 int32_t yawSetPoint =0;
@@ -74,14 +72,14 @@ uint16_t P_h =10;
 uint32_t flashCount = 0x00000000;
 uint8_t *data;
 uint8_t *flashBuffer;
-uint8_t flashValues[23];
-uint8_t dataValues[23];
 uint32_t readCount = 0x00000000;
 int sendPacketCounter = 0;
 #define maxPacketCounter 127995
 
 void logData()
-{
+{	
+	uint8_t dataValues[23];
+	data = dataValues;
 	if (flashCount < maxPacketCounter){
 
 	/*for(int i=0;i<4;i++){
@@ -114,14 +112,14 @@ void logData()
 	*(data + 19) = (uint8_t)(sq&0xFF);
 	*(data + 20) = (uint8_t)(sr>>8);
 	*(data + 21) = (uint8_t)(sr&0xFF);
-	*(data + 22) = (uint8_t)MSG_ENTERING_RAWCONTROL_MODE;
+	*(data + 22) = (uint8_t)MSG_LOGGING;
 	
 	flash_write_bytes(flashCount,data,(uint32_t)23);
 	flashCount = flashCount + 23;
 	}
 } 
 
-void readData()
+/*void readFlashMem()
 {
 	flashBuffer = flashValues; //allocate space for the 23 values
 	if (sendPacketCounter == 50 && readCount < flashCount){
@@ -135,7 +133,7 @@ void readData()
 		SendPacket(Create_Flash_Data_Packet(flashBuffer));
 	}
 	sendPacketCounter++;
-}
+}*/
 
 void Modes_Initialize()
 {
@@ -221,9 +219,7 @@ void Manual_Mode_Initialize()
 #define MAX_SAMPLES 128
 
 void Callibration_Mode_Initialize(){
-
 	
-
 	SetMessage(MSG_ENTERING_CALIBRATION_MODE);
 	while(!check_sensor_int_flag());
 	imu_init(true, 100);
@@ -297,12 +293,28 @@ MODE SPECIFIC EXECUTION FUNCTION GOES HERE
 void Safe_Mode_Execute(){}
 
 void Panic_Mode_Execute()
-{
-	static 	uint32_t us_TimeStamp = 0;
+{	static 	uint32_t us_TimeStamp = 0;
 	
 			uint32_t us_currentTime = get_time_us();
 
-			readData();
+			uint8_t flashValues[23];
+
+			//readFlashMem();
+
+			flashBuffer = flashValues;
+			if ((sendPacketCounter == 50) && (readCount <= flashCount)){
+				sendPacketCounter = 0;
+				flash_read_bytes(readCount, flashBuffer, (uint32_t)23);
+				readCount = readCount + 23;
+				if (readCount == flashCount){
+					*(flashBuffer + 22) = 11; //If this is the last package, logging done
+					SendAdditionalMessage("Last Package");
+				}
+				SendAdditionalMessage("Reading Flash");
+				SendPacket(Create_Flash_Data_Packet(flashBuffer));
+			}
+			sendPacketCounter++;
+
 
 			if(us_currentTime>us_TimeStamp?us_currentTime-us_TimeStamp>500000: (UINT32_MAX-us_TimeStamp+us_currentTime)>500000){
 			//printf("%10ld | ", us_currentTime);
@@ -326,7 +338,7 @@ void Panic_Mode_Execute()
 			}
 
 			us_TimeStamp = us_currentTime;
-			if(ae[0]<=400 && ae[1]<=400 && ae[2]<=400 && ae[3]<=400){
+			if(ae[0]<=400 && ae[1]<=400 && ae[2]<=400 && ae[3]<=400 && readCount >= flashCount){
 				
 				EnterSafeMode();
 				PrevMode = CurrentMode;

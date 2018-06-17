@@ -83,6 +83,6 @@ Packet *Create_adMSG_Packet(char *additionalMessage);
 
 Packet *Create_HeartBeatPacket();
 
-
+Packet *Create_Flash_Data_Packet(uint8_t *flashBuffer);
 
 #endif
