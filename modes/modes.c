@@ -1,6 +1,6 @@
 #include "modes.h"
 #include "../messages/messages.h"
-#include "../filters.h"
+#include "../filters_nofixpoint.h"
 
 #include "in4073.h"
 #include <stdarg.h>
@@ -362,21 +362,18 @@ void Raw_Mode_Execute()
 	if (check_sensor_int_flag())
 	{
 		get_raw_sensor_data();
-
-		sr = butterworth(sr - sr_offset);
-		sp = butterworth(sp - sp_offset);
-		sq = butterworth(sq - sq_offset);
-		sax = butterworth(sax - sax_offset);
-		say = butterworth(say - say_offset);
-
+		
+		butterworth();
 		kalman();
 
-		N = (P[0] * (yawSetPoint - sr)) >> SCALING_ROTATION; //Yaw
-		M = (P[1] * (pitchSetPoint - theta) - P[2] * sq) >> SCALING_ROTATION; //Pitch
-		L = (P[1] * (rollSetPoint - phi) - P[2] * sp) >> SCALING_ROTATION; //Roll
+		N = (P[0] * (yawSetPoint - sr + sr_offset)) >> SCALING_ROTATION; //Yaw
+		M = (P[1] * (pitchSetPoint - theta + theta_offset) - P[2] * (-sq + sq_offset)) >> SCALING_ROTATION; //Pitch
+		L = (P[1] * (rollSetPoint - phi + phi_offset) - P[2] * (sp - sp_offset)) >> SCALING_ROTATION; //Roll
 																									  //printf("Z:%ld|L:%ld|M:%ld|N:%ld|",Z,L,M,N);
-		SetMotorValues();
-		update_motors();
+		if  (Execute_Control_Action){	 
+			SetMotorValues();
+			update_motors();
+		}
 		//printf("Motor[0]:%d,Motor[1]:%d,Motor[2]:%d,Motor[3]:%d\n",ae[0],ae[1],ae[2],ae[3]);
 	}
 }
