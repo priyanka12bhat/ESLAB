@@ -877,7 +877,7 @@ int main(int argc, char **argv)
 		*/
 		//printf("T1:%d\n",mon_time_ms());
 		//js_comm = read_js(&fd, axis, button);
-		/*js_comm = read_js_simulator();
+		js_comm = read_js_simulator();
 		
 		if (js_comm != NULL) {
 			if(CheckReadGap(lastJSSendTime,1)){
@@ -901,7 +901,7 @@ int main(int argc, char **argv)
 				//printf("%d\n",lastJSSendTime);
 			}
 			//free(js_comm);
-		}*/
+		}
 		//printf("T2:%d\n",mon_time_ms());
 		if ((c = term_getchar_nb()) != -1)
 		{
@@ -1081,9 +1081,9 @@ void process_packet(Packet *pkt_R)
 	    printf("P1:\t%d\t",uint16Values[1]);
 	    printf("P2:\t%d\n",uint16Values[2]);
 
-	    uint32_t pressure = (((uint32_t)pkt_R->value[29])<<16)|(((uint32_t)pkt_R->value[30])<<8)|(pkt_R->value[31]);
+	    uint32_t pressure = (((uint32_t)pkt_R->value[31])<<16)|(((uint32_t)pkt_R->value[32])<<8)|(pkt_R->value[33]);
 	    printf("Pressure: \t%d\n",pressure);
-	    printf("Current Drone Mode: \t%d\n",pkt_R->value[32]);
+	    printf("Current Drone Mode: \t%d\n",pkt_R->value[34]);
 	  
 	   
 	   	/*for(int i=0;i<4;i++){
