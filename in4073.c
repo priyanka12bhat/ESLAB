@@ -29,7 +29,7 @@ bool ExitFlag = 0;
 
 void GetMotorValues();
 void SetMotorValues_Manual();
-
+void SendPacket(Packet *packetToSend);
 char msgCode = 0;
 
 
@@ -191,7 +191,7 @@ int main(void)
 	timers_init();
 	adc_init();
 	twi_init();
-	//imu_init(true, 100);	
+	imu_init(true, 100);	
 	baro_init();
 	spi_flash_init();
 	Reception_Init(MAX_MSG_SIZE);

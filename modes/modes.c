@@ -47,7 +47,7 @@ int16_t pitchSetPoint_J = 0;
 int32_t rollSetPoint =0;
 int16_t rollSetPoint_K = 0;
 int16_t rollSetPoint_J = 0;
-int16_t P[3] = {1,1,1};
+int16_t P[4] = {1,1,1,1};
 
 //Sensor Handling
 // MPU wrapper
@@ -64,8 +64,8 @@ int32_t e = 0;
 int32_t vel = 0;
 int32_t Z_initial =0; 
 int32_t pressure_initial;
-uint16_t P_h =10;
-//int16_t C[2]= {10,100};
+
+//int16_t C[2]= {10,100}; 
 
 //Logging 
 uint32_t flashCount = 0x00000000;
@@ -258,8 +258,8 @@ void Yaw_Control_Mode_Initialize()
 	yawSetPoint_J = 0;
 	clearControlVariables();
 	SetMessage(MSG_ENTERING_YAWCONTROL_MODE);
-	//while(!check_sensor_int_flag());  Not really necessary
-	imu_init(true, 100);
+	//while(!check_sensor_int_flag());
+	//imu_init(true, 100);
 }
 void Full_Control_Mode_Initialize(){
 	yawSetPoint = 0;
@@ -274,7 +274,7 @@ void Full_Control_Mode_Initialize(){
 	clearControlVariables();
 	SetMessage(MSG_ENTERING_FULLCONTROL_MODE);
 	//while(!check_sensor_int_flag());
-	imu_init(true, 100);
+	//imu_init(true, 100);
 }
 
 void Raw_Mode_Initialize()
@@ -305,7 +305,6 @@ void Wireless_Control_Mode_Initialize(){
 	//SWI1_IRQHandler();
 
 }
-
 
 
 /***********************************************************************
@@ -540,14 +539,14 @@ void Height_Control_Mode_Execute()
 
 	Execute_Control_Action = true; 
 		if(checkGap(lastControlTime,A2D)){
-		az= saz-sax_offset-bsaz; 
-		vel = vel+(az*A2D);
-		h = h + (vel * A2D);
-		e = h-pressure_initial+pressure;
-		h= h- (e/C1);
-		bsaz= bsaz+ ((e/(A2D*A2D))/C2);
+		//az= saz-sax_offset-bsaz; 
+		//vel = vel+(az*A2D);
+		//h = h + (vel * A2D);
+		h = -(int64_t)pressure_initial+pressure;
+		//h= h- (e/C1);
+		//bsaz= bsaz+ ((e/(A2D*A2D))/C2);
 		
-		Z = Z_initial - ((P_h * h)>>18);
+		Z = Z_initial - ((P[3] * h)>>18);
 		lastControlTime = currentTime;
 	}
 
@@ -651,13 +650,12 @@ void Manual_Mode_Input_Handler(unsigned char *Input)
 
 						case C_JOYSTICK:
 
-						JS_L = ((int32_t)MAX_L)*((int8_t)Input[1])/JSSCALEMAX;
-						JS_M = ((int32_t)MAX_M)*((int8_t)Input[2])/JSSCALEMAX;
+						JS_L = ((int32_t)INC_L*4)*((int8_t)Input[1])/JSSCALEMAX;
+						JS_M = ((int32_t)INC_M*4)*((int8_t)Input[2])/JSSCALEMAX;
 						JS_N = ((int32_t)MAX_N)*((int8_t)Input[3])/JSSCALEMAX;
 						JS_Z = ((int32_t)MAX_Z)*((int8_t)Input[4]+JSSCALEMAX)/JSSCALEMAX/2;
 
 						break;
-
 						}
 						Z=KB_Z+JS_Z;
 						L=KB_L+JS_L;
@@ -693,12 +691,12 @@ void Yaw_Controlled_Mode_Input_Handler(unsigned char *Input)
 
 						case C_YAWUP:
 
-							yawSetPoint_K+=100;
+							yawSetPoint_K+=10;
 
 						break;
 
 						case C_YAWDOWN:
-							yawSetPoint_K-=100;
+							yawSetPoint_K-=10;
 						break;						
 
 						case C_JOYSTICK:
@@ -748,27 +746,27 @@ void Full_Control_Mode_Input_Handler(unsigned char *Input)
 						break;
 
 						case C_YAWUP:
-							yawSetPoint_K+=100;
+							yawSetPoint_K+=10;
 						break;
 
 						case C_YAWDOWN:
-							yawSetPoint_K-=100;
+							yawSetPoint_K-=10;
 						break;	
 
 						case C_PITCHUP:
-							pitchSetPoint_K+=100;
+							pitchSetPoint_K+=10;
 						break;
 
 						case C_PITCHDOWN:
-							pitchSetPoint_K-=100;
+							pitchSetPoint_K-=10;
 						break;
 
 						case C_ROLLUP:
-							rollSetPoint_K+=100;
+							rollSetPoint_K+=10;
 						break;
 
 						case C_ROLLDOWN:
-							rollSetPoint_K-=100;
+							rollSetPoint_K-=10;
 						break;					
 
 						case C_JOYSTICK:
@@ -837,11 +835,11 @@ void Height_Control_Mode_Input_Handler(unsigned char *Input)
 	
 		switch(Input[0]){
 			case C_PHUP:
-				P_h+=1;
+				P[3]+=1;
 				break;
 				
 			case C_PHDOWN:
-				P_h-=1;
+				P[3]=P[3]>1?(P[3]-1):P[3];
 				break;
 
 	}
@@ -887,15 +885,23 @@ void SetMotorValues()
 	ae[3]=(uint16_t)sqrt(ae3_2<0?0:ae3_2);
 
 	//Calculating the speed for current lift applied alone
-	uint16_t minSpeed = (uint16_t)sqrt(z>>2);
+	//uint16_t minSpeed = (uint16_t)sqrt(z>>2);
 	//Ensuring lift wont go below MIN_SPEED_ONFLY limit, for YAWING, ROLLING, PITCHING with higher lifts
-	minSpeed = (minSpeed<MIN_SPEED_ONFLY)?minSpeed:MIN_SPEED_ONFLY;
+	//minSpeed = (minSpeed<MIN_SPEED_ONFLY)?minSpeed:MIN_SPEED_ONFLY;
 
 	//Confirm Motor Values considering all limits
-	ae[0]=(ae[0]<MIN_SPEED_ONFLY)?minSpeed:ae[0];
-	ae[1]=(ae[1]<MIN_SPEED_ONFLY)?minSpeed:ae[1];
-	ae[2]=(ae[2]<MIN_SPEED_ONFLY)?minSpeed:ae[2];
-	ae[3]=(ae[3]<MIN_SPEED_ONFLY)?minSpeed:ae[3];
+	ae[0]=(ae[0]<MIN_SPEED_ONFLY)?MIN_SPEED_ONFLY:ae[0];
+	ae[1]=(ae[1]<MIN_SPEED_ONFLY)?MIN_SPEED_ONFLY:ae[1];
+	ae[2]=(ae[2]<MIN_SPEED_ONFLY)?MIN_SPEED_ONFLY:ae[2];
+	ae[3]=(ae[3]<MIN_SPEED_ONFLY)?MIN_SPEED_ONFLY:ae[3];
+
+	//Confirm Motor Values considering all limits
+	ae[0]=(ae[0]>MAX_SPEED)?MAX_SPEED:ae[0];
+	ae[1]=(ae[1]>MAX_SPEED)?MAX_SPEED:ae[1];
+	ae[2]=(ae[2]>MAX_SPEED)?MAX_SPEED:ae[2];
+	ae[3]=(ae[3]>MAX_SPEED)?MAX_SPEED:ae[3];
+
+
 	}
 
 
