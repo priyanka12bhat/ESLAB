@@ -99,6 +99,7 @@ int run = 1;
 //unsigned char shortValueArray[1];
 
 unsigned char type_tag = 0;
+FILE *f = NULL;
 Packet *pkt = NULL;
 Packet *pkt_K = NULL;
 int axis[6];
@@ -383,6 +384,12 @@ void kb_input_handler(unsigned char c)
 
 		break;
 
+	case 'm': //logging enable
+
+		*value_tag = C_LOGGING;
+		type_tag = T_CONFIG;
+		CreatePacketWithSafetyCheck("Toggling Logging\n\0",type_tag,1,value_tag);
+		break;
 		/*case 't':// P2 down
 				*value_tag = C_P2DOWN;
 		type_tag = T_CONTROL;
@@ -858,7 +865,7 @@ int main(int argc, char **argv)
 
 	/* joystick initialization
 	*/
-	joystick_init(&fd);
+	//joystick_init(&fd);
 
 	//js_safety_check(&fd,axis,button);
 
@@ -980,8 +987,6 @@ int CheckReadGap(unsigned int lastSendTime,char times)
 
 	return ((currentTime==lastSendTime)?0:((currentTime>lastSendTime)?((currentTime - lastSendTime) >= JS_READ_GAP*times):((UINT_MAX-lastSendTime+currentTime)>=JS_READ_GAP*times)));
 
-
-
 }
 
 char getElementFromInputQueue()
@@ -1021,64 +1026,88 @@ void printUIMessage()
 
 
 void process_packet(Packet *pkt_R)
-{
-	if(pkt_R->type==T_DATA){
+{	
+	if (pkt_R->type == T_FLASHMEM){
 	clearUI();
-	printf("=========================================================================================================\n");
-	setCursor(2, 45);
-	printf("Quadruple Control\n");
-	printf("=========================================================================================================\n");
-	uint16_t * uint16Values =  (uint16_t *)pkt_R->value;
-
-	printf("Battery Voltage:\t%d\n",uint16Values[4]);
-	
-	
-
-	for(int i=0;i<4;i++){
-		printf("Motor[%d]:\t%d\t",i,uint16Values[i]);
+	printf("Saving flash memory to file, goodbye");
+	if (f == NULL) {
+		f = fopen("file.txt", "a");
 	}
-    puts("\n");
-    printf("phi:\t%d\t",(int16_t)uint16Values[5]);
-    printf("theta:\t%d\t",(int16_t)uint16Values[6]);
-    printf("psi:\t%d\n",(int16_t)uint16Values[7]);
-
-    printf("sp:\t%d\t",(int16_t)uint16Values[8]);
-    printf("sq:\t%d\t",(int16_t)uint16Values[9]);
-    printf("sr:\t%d\n",(int16_t)uint16Values[10]);
-    uint16Values =  (uint16_t *)&(pkt_R->value[23]);
-    printf("P:\t%d\t",uint16Values[0]);
-    printf("P1:\t%d\t",uint16Values[1]);
-    printf("P2:\t%d\n",uint16Values[2]);
-
-    uint32_t pressure = (((uint32_t)pkt_R->value[29])<<16)|(((uint32_t)pkt_R->value[30])<<8)|(pkt_R->value[31]);
-    printf("Pressure: \t%d\n",pressure);
-    printf("Current Drone Mode: \t%d\n",pkt_R->value[32]);
-  
-   
-   	/*for(int i=0;i<4;i++){
-		printf("Motor[%d]:\t%d\t",i,((uint16_t)pkt_R->value[2*i])<<8|pkt_R->value[2*i+1]);
+	    fprintf(f,"\t%ld\t",(((uint32_t)pkt_R->value[9])<<24|((uint32_t)pkt_R->value[8])<<16|((uint32_t)pkt_R->value[7])<<8|(uint32_t)pkt_R->value[6]));
+	    fprintf(f,"\t%d\t",(int16_t)(((uint16_t)pkt_R->value[0])<<8|pkt_R->value[1]));
+	    fprintf(f,"\t%d\t",(int16_t)(((uint16_t)pkt_R->value[2])<<8|pkt_R->value[3]));
+	    fprintf(f,"\t%d\t",(int16_t)(((uint16_t)pkt_R->value[4])<<8|pkt_R->value[5]));
+	    fprintf(f,"\t%d\t",(int16_t)(((uint16_t)pkt_R->value[10])<<8|pkt_R->value[11]));
+	    fprintf(f,"\t%d\t",(int16_t)(((uint16_t)pkt_R->value[12])<<8|pkt_R->value[13]));
+	    fprintf(f,"\t%d\n",(int16_t)(((uint16_t)pkt_R->value[14])<<8|pkt_R->value[15]));
+	    if (pkt_R->value[22]==11){
+	    	fclose(f);
+	    	f = NULL;
+	    }
 	}
-    puts("\n");
-    printf("phi:\t%d\t",(int16_t)(((uint16_t)pkt_R->value[10])<<8|pkt_R->value[11]));
-    printf("theta:\t%d\t",(int16_t)(((uint16_t)pkt_R->value[12])<<8|pkt_R->value[13]));
-    printf("psi:\t%d\n",(int16_t)(((uint16_t)pkt_R->value[14])<<8|pkt_R->value[15]));
 
-    printf("sp:\t%d\t",(int16_t)(((uint16_t)pkt_R->value[16])<<8|pkt_R->value[17]));
-    printf("sq:\t%d\t",(int16_t)(((uint16_t)pkt_R->value[18])<<8|pkt_R->value[19]));
-    printf("sr:\t%d\n",(int16_t)(((uint16_t)pkt_R->value[20])<<8|pkt_R->value[21]));
-    printf("P:\t%d\t",(((uint16_t)pkt_R->value[23])<<8|pkt_R->value[24]));
-    printf("P1:\t%d\t",(((uint16_t)pkt_R->value[25])<<8|pkt_R->value[26]));
-    printf("P2:\t%d\t",(((uint16_t)pkt_R->value[27])<<8|pkt_R->value[28]));*/
-    
+	if(pkt_R->type==T_DATA){
+		clearUI();
+		printf("=========================================================================================================\n");
+		setCursor(2, 45);
+		printf("Quadruple Control\n");
+		printf("=========================================================================================================\n");
+		uint16_t * uint16Values =  (uint16_t *)pkt_R->value;
+
+		printf("Battery Voltage:\t%d\n",uint16Values[4]);
+		
+		
+
+		for(int i=0;i<4;i++){
+			printf("Motor[%d]:\t%d\t",i,uint16Values[i]);
+		}
+	    puts("\n");
+	    if (pkt_R->value[22] == MSG_ENTERING_RAWCONTROL_MODE){
+			printf("ax:\t%d\t",(((uint16_t)pkt_R->value[0])<<8|pkt_R->value[1]));
+	    	printf("ay:\t%d\t",(((uint16_t)pkt_R->value[2])<<8|pkt_R->value[3]));
+	    	printf("az:\t%d\t",(((uint16_t)pkt_R->value[4])<<8|pkt_R->value[5]));
+	    }
+	    else {
+	    	printf("phi:\t%d\t",(int16_t)uint16Values[5]);
+	   		printf("theta:\t%d\t",(int16_t)uint16Values[6]);
+	    	printf("psi:\t%d\n",(int16_t)uint16Values[7]);
+	    }
+	    
+	    printf("sp:\t%d\t",(int16_t)uint16Values[8]);
+	    printf("sq:\t%d\t",(int16_t)uint16Values[9]);
+	    printf("sr:\t%d\n",(int16_t)uint16Values[10]);
+	    uint16Values =  (uint16_t *)&(pkt_R->value[23]);
+	    printf("P:\t%d\t",uint16Values[0]);
+	    printf("P1:\t%d\t",uint16Values[1]);
+	    printf("P2:\t%d\n",uint16Values[2]);
+
+	    uint32_t pressure = (((uint32_t)pkt_R->value[31])<<16)|(((uint32_t)pkt_R->value[32])<<8)|(pkt_R->value[33]);
+	    printf("Pressure: \t%d\n",pressure);
+	    printf("Current Drone Mode: \t%d\n",pkt_R->value[34]);
+	  
+	   
+	   	/*for(int i=0;i<4;i++){
+			printf("Motor[%d]:\t%d\t",i,((uint16_t)pkt_R->value[2*i])<<8|pkt_R->value[2*i+1]);
+		}
+	    puts("\n");
+	    printf("phi:\t%d\t",(int16_t)(((uint16_t)pkt_R->value[10])<<8|pkt_R->value[11]));
+	    printf("theta:\t%d\t",(int16_t)(((uint16_t)pkt_R->value[12])<<8|pkt_R->value[13]));
+	    printf("psi:\t%d\n",(int16_t)(((uint16_t)pkt_R->value[14])<<8|pkt_R->value[15]));
+
+	    printf("sp:\t%d\t",(int16_t)(((uint16_t)pkt_R->value[16])<<8|pkt_R->value[17]));
+	    printf("sq:\t%d\t",(int16_t)(((uint16_t)pkt_R->value[18])<<8|pkt_R->value[19]));
+	    printf("sr:\t%d\n",(int16_t)(((uint16_t)pkt_R->value[20])<<8|pkt_R->value[21]));
+	    printf("P:\t%d\t",(((uint16_t)pkt_R->value[23])<<8|pkt_R->value[24]));
+	    printf("P1:\t%d\t",(((uint16_t)pkt_R->value[25])<<8|pkt_R->value[26]));
+	    printf("P2:\t%d\t",(((uint16_t)pkt_R->value[27])<<8|pkt_R->value[28]));*/
+		//mvprintw (0, 0, "%d", pkt_R->value[0]);     
+		//refresh ();
+
+		msgCode = pkt_R->value[22]; 
+
+		printUIMessage();
 
 
-	//mvprintw (0, 0, "%d", pkt_R->value[0]);     
-	//refresh ();
-	
-	msgCode = pkt_R->value[22];
-
-	printUIMessage();
-	
 	}
 	else if(pkt_R->type==T_adMSG)
 	{
