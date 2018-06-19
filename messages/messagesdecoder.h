@@ -18,7 +18,8 @@ const char MsgTable[20][255]=
 	"Full Control Mode", //10
 	"Height Control Mode",
 	"Entering Raw Mode",
-	"Logging Mode",
+	"Logging Mode Enabled",
+	"Logging Mode Disabled",
 	"Wireless Mode"
 };
 

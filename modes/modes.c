@@ -130,7 +130,7 @@ void readFlashMem()
 	}
 	sendPacketCounter++;
 }
-
+void SetMessage(unsigned char _msgCode);
 void Modes_Initialize()
 {
 	Modes[M_SAFE-1].state=Safe;
@@ -185,12 +185,14 @@ void Modes_ToggleLogging()
 		loggingEnabled = 1;
 		Modes[M_PANIC-1].Mode_Execute=&Panic_Mode_Execute_With_Logging;
 		Modes[M_RAWMODE-1].Mode_Execute=&Raw_Mode_Execute_With_Logging;
+		SetMessage(MSG_LOGGING_ENABLED);
 	}
 	else
 	{
 		loggingEnabled = 0;
 		Modes[M_PANIC-1].Mode_Execute=&Panic_Mode_Execute;
 		Modes[M_RAWMODE-1].Mode_Execute=&Raw_Mode_Execute;
+		SetMessage(MSG_LOGGING_DISABLED);
 	}
 	
 }
@@ -202,7 +204,7 @@ MODE SPECIFIC INTILIALIZATION FUNCTION GOES HERE
 
 void EnterSafeMode();
 void update_motors();
-void SetMessage(unsigned char _msgCode);
+
 
 void Safe_Mode_Initialize()
 {
