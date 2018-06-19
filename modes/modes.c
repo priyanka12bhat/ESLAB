@@ -4,6 +4,7 @@
 
 #include "in4073.h"
 #include <stdarg.h>
+#include <stdio.h>
 
 #define YAW_SETPOINT_MAX_RANGE 4000
 #define ROLL_SETPOINT_MAX_RANGE 5000
@@ -23,8 +24,6 @@ uint32_t Z=0;
 int32_t L=0;
 int32_t M=0;
 int32_t N=0;
-
-
 
 uint32_t KB_Z=0;
 int32_t KB_L=0;
@@ -74,66 +73,63 @@ uint8_t *data;
 uint8_t *flashBuffer;
 uint32_t readCount = 0x00000000;
 int sendPacketCounter = 0;
-#define maxPacketCounter 127995
+#define maxPacketCounter 127993
+
+//Wireless
+int wirelessCounter = 0;
 
 void logData()
 {	
-	uint8_t dataValues[23];
+	uint8_t dataValues[17];
 	data = dataValues;
 	if (flashCount < maxPacketCounter){
 
-	/*for(int i=0;i<4;i++){
-		*(data + 2*i) = ae[i]>>8;
-		*(data + 2*i+1) = ae[i]&0x00FF;
-	}*/
 	*(data + 0) = (uint8_t)(sax>>8);
 	*(data + 1) = (uint8_t)(sax&0xFF);
 	*(data + 2) = (uint8_t)(say>>8);
 	*(data + 3) = (uint8_t)(say&0xFF);
 	*(data + 4) = (uint8_t)(saz>>8);
 	*(data + 5) = (uint8_t)(saz&0xFF);
-	for (int i=6;i<8;i++){
-		*(data + i) = 0;
-	}
-	*(data + 8) = (uint8_t)bat_volt>>8;
-	*(data + 9) = (uint8_t)bat_volt&0x00FF;
 	uint32_t us_loggingTime = get_time_us();
-	*(data + 10) = (uint8_t)((us_loggingTime)&0xFF);
-	*(data + 11) = (uint8_t)((us_loggingTime>>8)&0xFF);
-	*(data + 12) = (uint8_t)((us_loggingTime>>16)&0xFF);
-	*(data + 13) = (uint8_t)(us_loggingTime>>24);
-	for (int i=14;i<16;i++){
-		*(data + i) = 0;
+	*(data + 6) = (uint8_t)((us_loggingTime)&0xFF);
+	*(data + 7) = (uint8_t)((us_loggingTime>>8)&0xFF);
+	*(data + 8) = (uint8_t)((us_loggingTime>>16)&0xFF);
+	*(data + 9) = (uint8_t)(us_loggingTime>>24);
+	*(data + 10) = (uint8_t)(sp>>8);
+	*(data + 11) = (uint8_t)(sp&0xFF);
+	*(data + 12) = (uint8_t)(sq>>8);
+	*(data + 13) = (uint8_t)(sq&0xFF);
+	*(data + 14) = (uint8_t)(sr>>8);
+	*(data + 15) = (uint8_t)(sr&0xFF);
+	*(data + 16) = (uint8_t)MSG_ENTERING_RAWCONTROL_MODE;
+
+	flash_write_bytes(flashCount,data,(uint32_t)17);
+	flashCount = flashCount + 17;
 	}
-	
-	*(data + 16) = (uint8_t)(sp>>8);
-	*(data + 17) = (uint8_t)(sp&0xFF);
-	*(data + 18) = (uint8_t)(sq>>8);
-	*(data + 19) = (uint8_t)(sq&0xFF);
-	*(data + 20) = (uint8_t)(sr>>8);
-	*(data + 21) = (uint8_t)(sr&0xFF);
-	*(data + 22) = (uint8_t)MSG_LOGGING;
-	
-	flash_write_bytes(flashCount,data,(uint32_t)23);
-	flashCount = flashCount + 23;
+
+	for (int i = 0; i<17; i++){
+		*(data+i) = 0;
 	}
 } 
 
-/*void readFlashMem()
-{
-	flashBuffer = flashValues; //allocate space for the 23 values
+void readFlashMem()
+{	uint8_t flashValues[23];
+	flashBuffer = flashValues;
 	if (sendPacketCounter == 50 && readCount < flashCount){
-		sendPacketCounter = 0; //Only read the flash memory 1 every 50 iterations
-		flash_read_bytes(readCount, flashBuffer, (uint32_t)23);
-		readCount = readCount + 23;
+		sendPacketCounter = 0;
+		flash_read_bytes(readCount, flashBuffer, (uint32_t)17);
+		readCount = readCount + 17;
 		if (readCount == flashCount){
-			*(flashBuffer + 22) = 11; //If this is the last package, logging done
+			*(flashBuffer + 16) = 11; //If this is the last package, logging done
 		}
 
 		SendPacket(Create_Flash_Data_Packet(flashBuffer));
+		for (int i = 0; i<23; i++){
+			*(flashBuffer + i) = 0;
+		}
 	}
 	sendPacketCounter++;
-}*/
+}
 
 void Modes_Initialize()
 {
@@ -174,8 +170,29 @@ void Modes_Initialize()
 	Modes[M_HEIGHTCONTROL-1].Mode_Execute=&Height_Control_Mode_Execute;
 	Modes[M_HEIGHTCONTROL-1].Input_Handler=&Height_Control_Mode_Input_Handler;	
 
+	Modes[M_WIRELESS-1].state=Wireless;
+	Modes[M_WIRELESS-1].Mode_Initialize=&Wireless_Control_Mode_Initialize;
+	Modes[M_WIRELESS-1].Mode_Execute=&Wireless_Control_Mode_Execute;
+
 	CurrentMode = GetMode(M_SAFE);
 
+}
+
+void Modes_ToggleLogging()
+{
+	static bool loggingEnabled = 0;
+	if(!loggingEnabled){
+		loggingEnabled = 1;
+		Modes[M_PANIC-1].Mode_Execute=&Panic_Mode_Execute_With_Logging;
+		Modes[M_RAWMODE-1].Mode_Execute=&Raw_Mode_Execute_With_Logging;
+	}
+	else
+	{
+		loggingEnabled = 0;
+		Modes[M_PANIC-1].Mode_Execute=&Panic_Mode_Execute;
+		Modes[M_RAWMODE-1].Mode_Execute=&Raw_Mode_Execute;
+	}
+	
 }
 
 /***********************************************************************
@@ -280,7 +297,12 @@ void Height_Control_Mode_Initialize()
 	bsaz = 0; 
 	Z_initial= Z;
 }
-void Wireless_Control_Mode_Initialize(){}
+void Wireless_Control_Mode_Initialize(){
+	clearControlVariables();
+	SetMessage(MSG_ENTERING_WIRELESS);
+	//SWI1_IRQHandler();
+
+}
 
 
 
@@ -292,29 +314,49 @@ MODE SPECIFIC EXECUTION FUNCTION GOES HERE
 
 void Safe_Mode_Execute(){}
 
-void Panic_Mode_Execute()
+void Panic_Mode_Execute(){
+	static 	uint32_t us_TimeStamp = 0;
+	
+			uint32_t us_currentTime = get_time_us();
+
+			if(us_currentTime>us_TimeStamp?us_currentTime-us_TimeStamp>500000: (UINT32_MAX-us_TimeStamp+us_currentTime)>500000){
+			//printf("%10ld | ", us_currentTime);
+			//printf("%10ld | \n", us_TimeStamp);
+			
+			if(ae[0]>10)
+			{
+				ae[0]-=10;
+			}
+			if(ae[1]>10)
+			{
+				ae[1]-=10;
+			}
+			if(ae[2]>10)
+			{
+				ae[2]-=10;
+			}
+			if(ae[3]>10)
+			{
+				ae[3]-=10;
+			}
+
+			us_TimeStamp = us_currentTime;
+			if(ae[0]<=400 && ae[1]<=400 && ae[2]<=400 && ae[3]<=400){
+				EnterSafeMode();
+				PrevMode = CurrentMode;
+				CurrentMode = GetMode(M_SAFE);	
+			}
+
+			update_motors();
+			}
+}
+
+void Panic_Mode_Execute_With_Logging()
 {	static 	uint32_t us_TimeStamp = 0;
 	
 			uint32_t us_currentTime = get_time_us();
 
-			uint8_t flashValues[23];
-
-			//readFlashMem();
-
-			flashBuffer = flashValues;
-			if ((sendPacketCounter == 50) && (readCount <= flashCount)){
-				sendPacketCounter = 0;
-				flash_read_bytes(readCount, flashBuffer, (uint32_t)23);
-				readCount = readCount + 23;
-				if (readCount == flashCount){
-					*(flashBuffer + 22) = 11; //If this is the last package, logging done
-					SendAdditionalMessage("Last Package");
-				}
-				SendAdditionalMessage("Reading Flash");
-				SendPacket(Create_Flash_Data_Packet(flashBuffer));
-			}
-			sendPacketCounter++;
-
+			readFlashMem();
 
 			if(us_currentTime>us_TimeStamp?us_currentTime-us_TimeStamp>500000: (UINT32_MAX-us_TimeStamp+us_currentTime)>500000){
 			//printf("%10ld | ", us_currentTime);
@@ -339,11 +381,12 @@ void Panic_Mode_Execute()
 
 			us_TimeStamp = us_currentTime;
 			if(ae[0]<=400 && ae[1]<=400 && ae[2]<=400 && ae[3]<=400 && readCount >= flashCount){
-				
+				readCount = 0;
+				flashCount = 0;
+				sendPacketCounter = 0;
 				EnterSafeMode();
 				PrevMode = CurrentMode;
-				CurrentMode = GetMode(M_SAFE);		
-
+				CurrentMode = GetMode(M_SAFE);	
 			}
 
 			update_motors();
@@ -436,7 +479,29 @@ void Full_Control_Mode_Execute()
 				//printf("Motor[0]:%d,Motor[1]:%d,Motor[2]:%d,Motor[3]:%d\n",ae[0],ae[1],ae[2],ae[3]);
 		}
 }
-void Raw_Mode_Execute()
+
+void Raw_Mode_Execute(){
+
+	if (check_sensor_int_flag())
+	{
+		get_raw_sensor_data();
+		
+		butterworth();
+		kalman();
+
+		N = (P[0] * (yawSetPoint - sr + sr_offset)) >> SCALING_ROTATION; //Yaw
+		M = (P[1] * (pitchSetPoint - theta + theta_offset) - P[2] * (-sq + sq_offset)) >> SCALING_ROTATION; //Pitch
+		L = (P[1] * (rollSetPoint - phi + phi_offset) - P[2] * (sp - sp_offset)) >> SCALING_ROTATION; //Roll
+																									  //printf("Z:%ld|L:%ld|M:%ld|N:%ld|",Z,L,M,N);
+		if  (Execute_Control_Action){	 
+			SetMotorValues();
+			update_motors();
+		}
+		//printf("Motor[0]:%d,Motor[1]:%d,Motor[2]:%d,Motor[3]:%d\n",ae[0],ae[1],ae[2],ae[3]);
+	}
+}
+
+void Raw_Mode_Execute_With_Logging()
 {
 	static uint32_t lastReadTime = 0;
 
@@ -447,6 +512,7 @@ void Raw_Mode_Execute()
 		if (checkGap(lastReadTime,5000)){
 			lastReadTime = currentTime;
 			logData();
+			//SendAdditionalMessage("LoggingData");
 		}
 		
 		butterworth();
@@ -487,7 +553,21 @@ void Height_Control_Mode_Execute()
 	update_motors();
 	
 }
-void Wireless_Control_Mode_Execute(){}
+void Wireless_Control_Mode_Execute(){
+
+	if (wirelessCounter == 100){
+		wirelessCounter = 0;
+		enqueue(&ble_tx_queue, (char)5);
+		SendAdditionalMessage("%d",ble_tx_queue.count);
+		ble_send();
+		//SWI1_IRQHandler();
+	}
+	wirelessCounter++;
+	if (ble_rx_queue.count){
+		SendAdditionalMessage("%d",(uint8_t)dequeue(&ble_rx_queue));
+	}
+
+}
 
 
 
@@ -570,6 +650,7 @@ void Manual_Mode_Input_Handler(unsigned char *Input)
 						JS_Z = ((int32_t)MAX_Z)*((int8_t)Input[4]+JSSCALEMAX)/JSSCALEMAX/2;
 
 						break;
+
 						}
 						Z=KB_Z+JS_Z;
 						L=KB_L+JS_L;

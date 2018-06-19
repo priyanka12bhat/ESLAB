@@ -108,6 +108,7 @@ queue ble_tx_queue;
 volatile bool radio_active;
 void ble_init(void);
 void ble_send(void);
+void SWI1_IRQHandler(void);
 
 
 

@@ -81,27 +81,23 @@ Packet *Create_Flash_Data_Packet(uint8_t *flashBuffer)
 	fpktObj.value[3]=*(flashBuffer + 3);
 	fpktObj.value[4]=*(flashBuffer + 4);
 	fpktObj.value[5]=*(flashBuffer + 5);
-	fpktObj.value[6]=0;
-	fpktObj.value[7]=0;
+	fpktObj.value[6]=*(flashBuffer + 6);
+	fpktObj.value[7]=*(flashBuffer + 7);
 	fpktObj.value[8]=*(flashBuffer + 8);
 	fpktObj.value[9]=*(flashBuffer + 9);
-
 	fpktObj.value[10]=*(flashBuffer + 10);
 	fpktObj.value[11]=*(flashBuffer + 11);
 	fpktObj.value[12]=*(flashBuffer + 12);
 	fpktObj.value[13]=*(flashBuffer + 13);
 	fpktObj.value[14]=*(flashBuffer + 14);
 	fpktObj.value[15]=*(flashBuffer + 15);
-	fpktObj.value[16]=*(flashBuffer + 16);
-	fpktObj.value[17]=*(flashBuffer + 17);
-	fpktObj.value[18]=*(flashBuffer + 18);
-	fpktObj.value[19]=*(flashBuffer + 19);
-	fpktObj.value[20]=*(flashBuffer + 20);
-	fpktObj.value[21]=*(flashBuffer + 21);
-	fpktObj.value[22]=*(flashBuffer + 22);
+	for (int i = 16; i<22; i++){
+		fpktObj.value[i] = 0;
+	}
+	fpktObj.value[22]=*(flashBuffer + 16);
 
 	fpktObj.valueLength = 23;
-	fpktObj.dataLength=Get_DataLength(fpktObj.valueLength);
+	fpktObj.dataLength=Get_DataLength(fpktObj.valueLength );
 	fpktObj.packetLength=1+1+fpktObj.dataLength+(CRC_BYTE_SIZE);
 	Set_CRCValue(&fpktObj);
 	return &fpktObj;

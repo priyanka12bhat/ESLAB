@@ -160,7 +160,9 @@ void process_packet(Packet *pkt_R)
 				if(CurrentMode.Input_Handler!=NULL)
 					(*CurrentMode.Input_Handler)(pkt_R->value);
 
-				
+				if (*(pkt_R->value) == C_LOGGING){
+					Modes_ToggleLogging();
+				} 
 				break;
 			default:
 				nrf_gpio_pin_toggle(RED);
@@ -192,7 +194,7 @@ int main(void)
 	baro_init();
 	spi_flash_init();
 	Reception_Init(MAX_MSG_SIZE);
-	//ble_init();
+	ble_init();
 
 
 	Modes_Initialize();
@@ -290,5 +292,17 @@ bool checkGap(uint32_t lastTime, uint32_t readGap)
 
 }
 
+void SendBluetoothPacket(Packet *packetToSend)
+{
 
+	if(packetToSend!=NULL)
+	{
+		unsigned char *dataToSend = Get_Byte_Stream(packetToSend);
+			for(int i =0;i<packetToSend->packetLength+1;i++)
+			{
+				enqueue(&ble_tx_queue, (char)dataToSend[i]);
+			}
+	}
+
+}
 

@@ -21,9 +21,8 @@ Mode Modes[9];
 
 Mode CurrentMode,PrevMode;
 
-
-
 void Modes_Initialize();
+void Modes_ToggleLogging();
 
 void Safe_Mode_Initialize();
 void Panic_Mode_Initialize();
@@ -35,14 +34,15 @@ void Raw_Mode_Initialize();
 void Height_Control_Mode_Initialize();
 void Wireless_Control_Mode_Initialize();
 
-
 void Safe_Mode_Execute();
 void Panic_Mode_Execute();
+void Panic_Mode_Execute_With_Logging();
 void Manual_Mode_Execute();
 void Callibration_Mode_Execute();
 void Yaw_Control_Mode_Execute();
 void Full_Control_Mode_Execute();
 void Raw_Mode_Execute();
+void Raw_Mode_Execute_With_Logging();
 void Height_Control_Mode_Execute();
 void Wireless_Control_Mode_Execute();
 

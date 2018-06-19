@@ -44,6 +44,7 @@
 #define C_JOYSTICK 24
 #define C_PHUP 25
 #define C_PHDOWN 26
+#define C_LOGGING 27
 
 #define JSSCALEMAX 100
 

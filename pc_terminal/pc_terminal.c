@@ -12,6 +12,8 @@ Steps:
 #include <inttypes.h>
 #include <limits.h>
 
+int toggleLoggingCounter = 0;
+
 //#include "joystick.h"
 
 uint32_t packetCount=0;
@@ -384,6 +386,20 @@ void kb_input_handler(unsigned char c)
 
 		break;
 
+	case 'm': //logging enable
+		toggleLoggingCounter++;
+		*value_tag = C_LOGGING;
+		type_tag = T_CONTROL;
+		pkt = Create_Packet(type_tag, 1, value_tag);
+		if (toggleLoggingCounter == 2){
+			storeUIMessage("Logging OFF");
+			toggleLoggingCounter = 0;
+		}
+		else {
+			storeUIMessage("Logging ON");
+		}
+
+		break;
 		/*case 't':// P2 down
 				*value_tag = C_P2DOWN;
 		type_tag = T_CONTROL;
@@ -991,8 +1007,6 @@ int CheckReadGap(unsigned int lastSendTime,char times)
 
 	return ((currentTime==lastSendTime)?0:((currentTime>lastSendTime)?((currentTime - lastSendTime) >= JS_READ_GAP*times):((UINT_MAX-lastSendTime+currentTime)>=JS_READ_GAP*times)));
 
-
-
 }
 
 char getElementFromInputQueue()
@@ -1039,13 +1053,13 @@ void process_packet(Packet *pkt_R)
 	if (f == NULL) {
 		f = fopen("file.txt", "a");
 	}
-	    fprintf(f,"\t%ld\t",(((uint32_t)pkt_R->value[13])<<24|((uint32_t)pkt_R->value[12])<<16|((uint32_t)pkt_R->value[11])<<8|(uint32_t)pkt_R->value[10]));
+	    fprintf(f,"\t%ld\t",(((uint32_t)pkt_R->value[9])<<24|((uint32_t)pkt_R->value[8])<<16|((uint32_t)pkt_R->value[7])<<8|(uint32_t)pkt_R->value[6]));
 	    fprintf(f,"\t%d\t",(int16_t)(((uint16_t)pkt_R->value[0])<<8|pkt_R->value[1]));
 	    fprintf(f,"\t%d\t",(int16_t)(((uint16_t)pkt_R->value[2])<<8|pkt_R->value[3]));
 	    fprintf(f,"\t%d\t",(int16_t)(((uint16_t)pkt_R->value[4])<<8|pkt_R->value[5]));
-	    fprintf(f,"\t%d\t",(int16_t)(((uint16_t)pkt_R->value[16])<<8|pkt_R->value[17]));
-	    fprintf(f,"\t%d\t",(int16_t)(((uint16_t)pkt_R->value[18])<<8|pkt_R->value[19]));
-	    fprintf(f,"\t%d\n",(int16_t)(((uint16_t)pkt_R->value[20])<<8|pkt_R->value[21]));
+	    fprintf(f,"\t%d\t",(int16_t)(((uint16_t)pkt_R->value[10])<<8|pkt_R->value[11]));
+	    fprintf(f,"\t%d\t",(int16_t)(((uint16_t)pkt_R->value[12])<<8|pkt_R->value[13]));
+	    fprintf(f,"\t%d\n",(int16_t)(((uint16_t)pkt_R->value[14])<<8|pkt_R->value[15]));
 	    if (pkt_R->value[22]==11){
 	    	fclose(f);
 	    	f = NULL;

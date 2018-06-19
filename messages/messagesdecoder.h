@@ -17,7 +17,9 @@ const char MsgTable[20][255]=
 	"Dont over do!..I know it (Invalid Change)",//9
 	"Full Control Mode", //10
 	"Height Control Mode",
-	"Entering Raw Mode"
+	"Entering Raw Mode",
+	"Logging Mode",
+	"Wireless Mode"
 };
 
 
