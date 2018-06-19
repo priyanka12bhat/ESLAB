@@ -160,9 +160,10 @@ void process_packet(Packet *pkt_R)
 				if(CurrentMode.Input_Handler!=NULL)
 					(*CurrentMode.Input_Handler)(pkt_R->value);
 
-				if (*(pkt_R->value) == C_LOGGING){
-					Modes_ToggleLogging();
-				} 
+				break;
+			case T_CONFIG:
+				nrf_gpio_pin_toggle(GREEN);
+				Modes_ToggleLogging();
 				break;
 			default:
 				nrf_gpio_pin_toggle(RED);

@@ -389,7 +389,7 @@ void kb_input_handler(unsigned char c)
 	case 'm': //logging enable
 		toggleLoggingCounter++;
 		*value_tag = C_LOGGING;
-		type_tag = T_CONTROL;
+		type_tag = T_CONFIG;
 		pkt = Create_Packet(type_tag, 1, value_tag);
 		if (toggleLoggingCounter == 2){
 			storeUIMessage("Logging OFF");
