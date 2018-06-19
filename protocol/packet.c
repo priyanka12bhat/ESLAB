@@ -99,17 +99,17 @@ Packet *Create_Telemetery_Packet(uint16_t bat_volt, int16_t *MotorValues, int16_
 	TpktObj.value[20]=sr&0x00FF;
 	TpktObj.value[22]=_msgCode;
 	charTemp = (unsigned char* )PArray;
-	for(uint8_t i =0;i<6;i++)
+	for(uint8_t i =0;i<8;i++)
 	{
 		TpktObj.value[23+i]=charTemp[i];
 		
 	}
-	TpktObj.value[29]=(pressure>>16)&0xFF;
-	TpktObj.value[30]=(pressure>>8)&0xFF;
-	TpktObj.value[31]=pressure&0xFF;
-	TpktObj.value[32]=droneMode;
+	TpktObj.value[31]=(pressure>>16)&0xFF;
+	TpktObj.value[32]=(pressure>>8)&0xFF;
+	TpktObj.value[33]=pressure&0xFF;
+	TpktObj.value[34]=droneMode;
 
-	TpktObj.valueLength = 33;
+	TpktObj.valueLength = 35;
 	TpktObj.dataLength=Get_DataLength(TpktObj.valueLength );
 	TpktObj.packetLength=1+1+TpktObj.dataLength+(CRC_BYTE_SIZE);
 	Set_CRCValue(&TpktObj);

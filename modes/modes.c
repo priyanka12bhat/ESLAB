@@ -49,7 +49,7 @@ int16_t pitchSetPoint_J = 0;
 int32_t rollSetPoint =0;
 int16_t rollSetPoint_K = 0;
 int16_t rollSetPoint_J = 0;
-int16_t P[3] = {1,1,1};
+int16_t P[4] = {1,1,1,1};
 
 //Sensor Handling
 // MPU wrapper
@@ -66,7 +66,7 @@ int32_t e = 0;
 int32_t vel = 0;
 int32_t Z_initial =0; 
 int32_t pressure_initial;
-uint16_t P_h =10;
+
 //int16_t C[2]= {10,100}; 
 
 void Modes_Initialize()
@@ -386,14 +386,14 @@ void Height_Control_Mode_Execute()
 
 	Execute_Control_Action = true; 
 		if(checkGap(lastControlTime,A2D)){
-		az= saz-sax_offset-bsaz; 
-		vel = vel+(az*A2D);
-		h = h + (vel * A2D);
-		e = h-pressure_initial+pressure;
-		h= h- (e/C1);
-		bsaz= bsaz+ ((e/(A2D*A2D))/C2);
+		//az= saz-sax_offset-bsaz; 
+		//vel = vel+(az*A2D);
+		//h = h + (vel * A2D);
+		h = -(int64_t)pressure_initial+pressure;
+		//h= h- (e/C1);
+		//bsaz= bsaz+ ((e/(A2D*A2D))/C2);
 		
-		Z = Z_initial - ((P_h * h)>>18);
+		Z = Z_initial - ((P[3] * h)>>18);
 		lastControlTime = currentTime;
 	}
 
@@ -663,11 +663,11 @@ void Height_Control_Mode_Input_Handler(unsigned char *Input)
 	
 		switch(Input[0]){
 			case C_PHUP:
-				P_h+=1;
+				P[3]+=1;
 				break;
 				
 			case C_PHDOWN:
-				P_h-=1;
+				P[3]=P[3]>1?(P[3]-1):P[3];
 				break;
 
 	}
