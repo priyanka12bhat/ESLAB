@@ -557,7 +557,12 @@ void Height_Control_Mode_Execute()
 }
 void Wireless_Control_Mode_Execute(){
 
-	if (wirelessCounter == 100){
+	static uint32_t lasttime = 0;
+	if (checkGap(lasttime, A2D*2)) {
+		SendAdditionalMessage("%ld", lasttime- currentTime);
+		lasttime = currentTime;
+	}
+	/*if (wirelessCounter == 100){
 		wirelessCounter = 0;
 		enqueue(&ble_tx_queue, (char)5);
 		SendAdditionalMessage("%d",ble_tx_queue.count);
@@ -567,7 +572,7 @@ void Wireless_Control_Mode_Execute(){
 	wirelessCounter++;
 	if (ble_rx_queue.count){
 		SendAdditionalMessage("%d",(uint8_t)dequeue(&ble_rx_queue));
-	}
+	}*/
 
 }
 
