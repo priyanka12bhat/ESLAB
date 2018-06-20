@@ -110,6 +110,7 @@ void logData()
 	for (int i = 0; i<17; i++){
 		*(data+i) = 0;
 	}
+
 } 
 
 void readFlashMem()
@@ -384,6 +385,7 @@ void Panic_Mode_Execute_With_Logging()
 				readCount = 0;
 				flashCount = 0;
 				sendPacketCounter = 0;
+				flash_chip_erase();	
 				EnterSafeMode();
 				PrevMode = CurrentMode;
 				CurrentMode = GetMode(M_SAFE);	
