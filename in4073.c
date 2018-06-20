@@ -205,6 +205,7 @@ int main(void)
 	currentStateR=checkStartByte;
 
 	int readCounter = 10;
+	int16_t bat_voltEMA = 1100;
 
 	while(demo_done) {
 
@@ -240,8 +241,8 @@ int main(void)
 			}
 			readCounter=0;
 		}
-
-		if(bat_volt <= 1050 && bat_volt>0 )
+		bat_voltEMA = (bat_volt - bat_voltEMA) * 1 / 100 + bat_voltEMA;
+		if(bat_voltEMA <= 1055 && bat_voltEMA>0 )
 		{	
 			//PrevMode = CurrentMode;
 			//CurrentMode=GetMode(M_PANIC);
