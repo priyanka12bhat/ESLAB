@@ -50,6 +50,7 @@ namespace Quadrupel.Communication
             get
             {
                 return IsConnected?serialPort.BytesToRead:0;
+
             }
         }
 

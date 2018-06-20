@@ -79,6 +79,8 @@ namespace Quadrupel
             readOuts1.Clear();
             dronesModes1.ClearFormating();
             controlInputs1.ClearUI();
+            btnStartOperation.Enabled = true;
+            cbCOMPortsSelector.Enabled = true;
         }     
 
         private void btnStartOperation_Click(object sender, EventArgs e)
@@ -136,7 +138,7 @@ namespace Quadrupel
                     cbCOMPortsSelector.Enabled = true;
                     btnStartOperation.Enabled = true;
                     serialPortManager = null;
-                    ClearUI();
+
                 }
                 else
                 {
@@ -147,6 +149,7 @@ namespace Quadrupel
             {
                 lblSerialportMessages.Text = "No valid connection";
             }
+            ClearUI();
         }
 
 
@@ -156,13 +159,20 @@ namespace Quadrupel
         /// <param name="pkt">Packet to be send</param>
         void Send_Packet(Packet pkt)
         {
-            if (serialPortManager.IsConnected)
+            try
             {
+                if (serialPortManager.IsConnected)
+                {
 
-                byte[] packetByteStream = Packet.Get_Byte_Stream(ref pkt);
+                    byte[] packetByteStream = Packet.Get_Byte_Stream(ref pkt);
 
 
-                serialPortManager.WriteToSerialPort(packetByteStream);
+                    serialPortManager.WriteToSerialPort(packetByteStream);
+                }
+            }
+            catch (Exception e)
+            {
+                this.Invoke((MethodInvoker)(() => ClearUI()));
             }
 
 
@@ -176,7 +186,7 @@ namespace Quadrupel
         protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
         {
             Packet pkt = KBHandler.kb_CMDKey_handler(keyData);
-            if (pkt != null && serialPortManager.IsConnected)
+            if (pkt != null && (serialPortManager?.IsConnected??false))
             {
                 Send_Packet(pkt);
                 pkt = null;
@@ -306,19 +316,26 @@ namespace Quadrupel
         /// </summary>
         void BackendThreadExecute()
         {
-            
 
-            while (readSerialPortData)
+            try
             {
-                if (packetReciever.checkCount())
+                while (readSerialPortData)
                 {
-                    packetReciever.stateHandler();
+                    if (packetReciever.checkCount())
+                    {
+                        packetReciever.stateHandler();
+                    }
+
+
+
+
+
                 }
-
-                
-
-
-
+            }
+            catch (Exception e)
+            {
+                MessageBox.Show(e.Message);
+                this.Invoke((MethodInvoker)(() => ClearUI()));
             }
 
 

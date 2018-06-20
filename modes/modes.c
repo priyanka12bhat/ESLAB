@@ -13,7 +13,7 @@
 #define SCALING_ROTATION_YAW 0
 
 // defining A2D for height control mode
-#define A2D 5000 
+#define A2D 20000
 #define C1 10
 #define C2 1000*C1
 
@@ -298,12 +298,18 @@ void Raw_Mode_Initialize()
 	theta_offset = 0;
 	phi_offset = 0;
 }
+
+uint32_t PressureEMA = 0;
+uint32_t PressureIntialEMA = 0;
 void Height_Control_Mode_Initialize()
 {
 	SetMessage(MSG_ENTERING_HEIGHTCONTROL_MODE);
 	pressure_initial = pressure;
 	bsaz = 0; 
 	Z_initial= Z;
+
+	PressureIntialEMA = pressure_initial;
+	PressureEMA = pressure_initial;
 }
 void Wireless_Control_Mode_Initialize(){
 	clearControlVariables();
@@ -417,6 +423,7 @@ void Callibration_Mode_Execute(){
 	int32_t sp_offset_sum=0;
 	int32_t sq_offset_sum=0;
 	int32_t sr_offset_sum=0;
+	int32_t saz_offset_sum = 0;
 	char count=0;
 	while(count< MAX_SAMPLES) 
 	{
@@ -429,7 +436,7 @@ void Callibration_Mode_Execute(){
 			sp_offset_sum += sp;
 			sq_offset_sum += sq;
 			sr_offset_sum += sr;
-
+			saz_offset_sum += saz;
 			count++;
 
 		}
@@ -441,7 +448,7 @@ void Callibration_Mode_Execute(){
 	sp_offset=sp_offset_sum>>7;	
 	sq_offset=sq_offset_sum>>7;
 	sr_offset=sr_offset_sum>>7;
-	
+	saz_offset = saz_offset_sum >> 7;
 
 	SetMessage(MSG_EXITING_CALIBRATION_MODE);
 	PrevMode = CurrentMode;
@@ -460,10 +467,11 @@ void Yaw_Control_Mode_Execute()
 		N = (P[0]* (yawSetPoint - sr + sr_offset))>>SCALING_ROTATION;
 			//printf("Z:%ld|L:%ld|M:%ld|N:%ld|",Z,L,M,N);
 
- 	if (Execute_Control_Action){
-		SetMotorValues();
-		update_motors();
+		if (Execute_Control_Action) {
+			SetMotorValues();
+			update_motors();
 		}
+		Execute_Control_Action = true;
 		
 
 			//printf("Motor[0]:%d,Motor[1]:%d,Motor[2]:%d,Motor[3]:%d\n",ae[0],ae[1],ae[2],ae[3]);
@@ -483,6 +491,7 @@ void Full_Control_Mode_Execute()
 				SetMotorValues();
 				update_motors();
 			}
+			Execute_Control_Action = true;
 				//printf("Motor[0]:%d,Motor[1]:%d,Motor[2]:%d,Motor[3]:%d\n",ae[0],ae[1],ae[2],ae[3]);
 		}
 }
@@ -512,6 +521,8 @@ void Raw_Mode_Execute()
 			SetMotorValues();
 			update_motors();
 		}
+		Execute_Control_Action = true;
+		//printf("Motor[0]:%d,Motor[1]:%d,Motor[2]:%d,Motor[3]:%d\n",ae[0],ae[1],ae[2],ae[3]);
 	}
 }
 
@@ -540,6 +551,7 @@ void Raw_Mode_Execute_With_Logging()
 			SetMotorValues();
 			update_motors();
 		}
+		Execute_Control_Action = true;
 		//printf("Motor[0]:%d,Motor[1]:%d,Motor[2]:%d,Motor[3]:%d\n",ae[0],ae[1],ae[2],ae[3]);
 	}
 }
@@ -549,22 +561,25 @@ void Height_Control_Mode_Execute()
 	(*PrevMode.Mode_Execute)();
 
 	static uint32_t lastControlTime = 0;
-
-	Execute_Control_Action = true; 
+	
+	
 		if(checkGap(lastControlTime,A2D)){
-		//az= saz-sax_offset-bsaz; 
-		//vel = vel+(az*A2D);
-		//h = h + (vel * A2D);
-		h = -(int64_t)pressure_initial+pressure;
-		//h= h- (e/C1);
-		//bsaz= bsaz+ ((e/(A2D*A2D))/C2);
 		
-		Z = Z_initial - ((P[3] * h)>>18);
-		lastControlTime = currentTime;
-	}
+			pressure = ((pressure > (PressureIntialEMA + 50))||(pressure<(PressureIntialEMA-1000))) ? PressureEMA : pressure;
+			PressureEMA = ((int64_t)pressure - (int64_t)PressureEMA) * 25 / 100 + (int64_t)PressureEMA;
+			PressureIntialEMA = ((int64_t)pressure - (int64_t)PressureIntialEMA) * 10 / 100 + (int64_t)PressureIntialEMA;
 
-	SetMotorValues();
-	update_motors();
+			h=((int64_t)PressureIntialEMA - (int64_t)PressureEMA);
+			Z = Z_initial - (P[3] * h);
+			SendAdditionalMessage("%ld",h);
+			lastControlTime = currentTime;
+			Execute_Control_Action = true;
+		}
+		if (Execute_Control_Action) {
+			SetMotorValues();
+			update_motors();
+		}
+		Execute_Control_Action = true; 
 	
 }
 void Wireless_Control_Mode_Execute(){
@@ -848,11 +863,11 @@ void Height_Control_Mode_Input_Handler(unsigned char *Input)
 	
 		switch(Input[0]){
 			case C_PHUP:
-				P[3]+=1;
+				P[3]+=50;
 				break;
 				
 			case C_PHDOWN:
-				P[3]=P[3]>1?(P[3]-1):P[3];
+				P[3]=P[3]>50?(P[3]-50):P[3];
 				break;
 
 	}
