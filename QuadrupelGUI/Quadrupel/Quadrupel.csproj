@@ -1,0 +1,156 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{7CF66B78-7EC7-487C-95A8-970ABC61454A}</ProjectGuid>
+    <OutputType>WinExe</OutputType>
+    <RootNamespace>Quadrupel</RootNamespace>
+    <AssemblyName>Quadrupel</AssemblyName>
+    <TargetFrameworkVersion>v4.6.1</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+    <TargetPlatformVersion>8.0</TargetPlatformVersion>
+    <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <Prefer32Bit>true</Prefer32Bit>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="PresentationFramework" />
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Design" />
+    <Reference Include="System.Runtime.InteropServices.WindowsRuntime" />
+    <Reference Include="System.Runtime.WindowsRuntime, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\..\..\..\..\Program Files (x86)\Reference Assemblies\Microsoft\Framework\.NETCore\v4.5\System.Runtime.WindowsRuntime.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="System.Data.DataSetExtensions" />
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Deployment" />
+    <Reference Include="System.Drawing" />
+    <Reference Include="System.Net.Http" />
+    <Reference Include="System.Windows.Forms" />
+    <Reference Include="System.Xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="Communication\IPacketReceiver.cs" />
+    <Compile Include="Communication\SerialPortManager.cs" />
+    <Compile Include="Drone\Messages.cs" />
+    <Compile Include="Input\JSData.cs" />
+    <Compile Include="Input\JSWrapper.cs" />
+    <Compile Include="Input\KBHandler.cs" />
+    <Compile Include="UIControls\ControlInputs.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="UIControls\ControlInputs.Designer.cs">
+      <DependentUpon>ControlInputs.cs</DependentUpon>
+    </Compile>
+    <Compile Include="UIControls\DroneModes.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="UIControls\DroneModes.Designer.cs">
+      <DependentUpon>DroneModes.cs</DependentUpon>
+    </Compile>
+    <Compile Include="UIControls\MotorSpeed\MotorSpeed.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="UIControls\MotorSpeed\MotorSpeed.Designer.cs">
+      <DependentUpon>MotorSpeed.cs</DependentUpon>
+    </Compile>
+    <Compile Include="UIControls\MotorSpeed\MotorSpeeds.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="UIControls\MotorSpeed\MotorSpeeds.Designer.cs">
+      <DependentUpon>MotorSpeeds.cs</DependentUpon>
+    </Compile>
+    <Compile Include="UIControls\ReadOuts.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="UIControls\ReadOuts.Designer.cs">
+      <DependentUpon>ReadOuts.cs</DependentUpon>
+    </Compile>
+    <Compile Include="QuadrupelMain.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="QuadrupelMain.Designer.cs">
+      <DependentUpon>QuadrupelMain.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Drone\Modes.cs" />
+    <Compile Include="Communication\CommunicationPacket\Packet.cs" />
+    <Compile Include="Communication\PacketReceiver.cs" />
+    <Compile Include="Program.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Drone\TelemetryData.cs" />
+    <EmbeddedResource Include="UIControls\ControlInputs.resx">
+      <DependentUpon>ControlInputs.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="UIControls\DroneModes.resx">
+      <DependentUpon>DroneModes.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="UIControls\MotorSpeed\MotorSpeed.resx">
+      <DependentUpon>MotorSpeed.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="UIControls\MotorSpeed\MotorSpeeds.resx">
+      <DependentUpon>MotorSpeeds.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="UIControls\ReadOuts.resx">
+      <DependentUpon>ReadOuts.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="QuadrupelMain.resx">
+      <DependentUpon>QuadrupelMain.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Properties\Resources.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+      <SubType>Designer</SubType>
+    </EmbeddedResource>
+    <Compile Include="Properties\Resources.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DependentUpon>Resources.resx</DependentUpon>
+    </Compile>
+    <None Include="Properties\Settings.settings">
+      <Generator>SettingsSingleFileGenerator</Generator>
+      <LastGenOutput>Settings.Designer.cs</LastGenOutput>
+    </None>
+    <Compile Include="Properties\Settings.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DependentUpon>Settings.settings</DependentUpon>
+      <DesignTimeSharedInput>True</DesignTimeSharedInput>
+    </Compile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="App.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <WCFMetadata Include="Connected Services\" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="F:\VuMeter_src\VU_MeterLibrary\VU_MeterLibrary.csproj">
+      <Project>{5D223B76-4462-4055-91B7-10EBFD8558E6}</Project>
+      <Name>VU_MeterLibrary</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+</Project>
