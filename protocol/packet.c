@@ -5,6 +5,7 @@
 
 Packet pktObj;
 Packet TpktObj;
+Packet fpktObj;
 
 unsigned char serialPacket[LP_SIZE+10];
 
@@ -69,6 +70,38 @@ unsigned char *Get_Byte_Stream(Packet *pkt)
 	return serialPacket;
 }
 
+Packet *Create_Flash_Data_Packet(uint8_t *flashBuffer)
+{
+	fpktObj.startByte = START_BYTE;
+	fpktObj.type = T_FLASHMEM;
+
+	fpktObj.value[0]=*(flashBuffer + 0);
+	fpktObj.value[1]=*(flashBuffer + 1);
+	fpktObj.value[2]=*(flashBuffer + 2);
+	fpktObj.value[3]=*(flashBuffer + 3);
+	fpktObj.value[4]=*(flashBuffer + 4);
+	fpktObj.value[5]=*(flashBuffer + 5);
+	fpktObj.value[6]=*(flashBuffer + 6);
+	fpktObj.value[7]=*(flashBuffer + 7);
+	fpktObj.value[8]=*(flashBuffer + 8);
+	fpktObj.value[9]=*(flashBuffer + 9);
+	fpktObj.value[10]=*(flashBuffer + 10);
+	fpktObj.value[11]=*(flashBuffer + 11);
+	fpktObj.value[12]=*(flashBuffer + 12);
+	fpktObj.value[13]=*(flashBuffer + 13);
+	fpktObj.value[14]=*(flashBuffer + 14);
+	fpktObj.value[15]=*(flashBuffer + 15);
+	for (int i = 16; i<22; i++){
+		fpktObj.value[i] = 0;
+	}
+	fpktObj.value[22]=*(flashBuffer + 16);
+
+	fpktObj.valueLength = 23;
+	fpktObj.dataLength=Get_DataLength(fpktObj.valueLength );
+	fpktObj.packetLength=1+1+fpktObj.dataLength+(CRC_BYTE_SIZE);
+	Set_CRCValue(&fpktObj);
+	return &fpktObj;
+}
 
 Packet *Create_Telemetery_Packet(uint16_t bat_volt, int16_t *MotorValues, int16_t phi, int16_t theta, int16_t psi, int16_t sp, int16_t sq, int16_t sr, unsigned char _msgCode, int16_t PArray[], uint32_t pressure, unsigned char droneMode)
 {

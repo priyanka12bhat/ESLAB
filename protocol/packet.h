@@ -13,6 +13,7 @@
 #define T_EXIT 5
 #define T_adMSG 6
 #define T_HEARTBEAT 7 
+#define T_FLASHMEM 8
 
 //Mode Types
 #define M_SAFE 1
@@ -43,6 +44,7 @@
 #define C_JOYSTICK 24
 #define C_PHUP 25
 #define C_PHDOWN 26
+#define C_LOGGING 27
 
 #define JSSCALEMAX 100
 
@@ -82,6 +84,6 @@ Packet *Create_adMSG_Packet(char *additionalMessage);
 
 Packet *Create_HeartBeatPacket();
 
-
+Packet *Create_Flash_Data_Packet(uint8_t *flashBuffer);
 
 #endif
