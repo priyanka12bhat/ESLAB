@@ -3,8 +3,8 @@
 #include "filters.h"
 
 // initial values for butterworth filter
-q14 x[3] = {0};
-q14 y[3] = {0};
+q14 x[5][3] = { 0 };
+q14 y[5][3] = { 0 };
 
 // initial values and declarations for the kalman filter
 q14 bias_sp, bias_sq= 0;
@@ -13,19 +13,45 @@ q14 kalman_sp, kalman_sq = 0;
 q14 kalman_sax, kalman_say = 0;
 q14 error_phi, error_theta = 0;
 
-int16_t butterworth(int16_t sample)
+
+void butterworth()
 {
-	for (int n = 2; n > 0; n--)
+	
+	for (int i = 0; i < 5; i++)
 	{
-		x[n] = x[n - 1];
-		y[n] = y[n - 1];
+		for (int n = 2; n > 0; n--)
+		{
+			x[i][n] = x[i][n - 1];
+			y[i][n] = y[i][n - 1];
+		}
 	}
 
-	x[0] = normal2fixM(sample);
-	y[0] = fixmul((q14)BUTTER_A0, x[0]) + fixmul((q14)BUTTER_A1, x[1]) + fixmul((q14)BUTTER_A2, x[2]) - fixmul((q14)BUTTER_B1, y[1]) - fixmul((q14)BUTTER_B2, y[2]);
-	//printf("Butterworth say: %d\n", fix2normal(y[0]));
-	//convert Q14 numbers to int16_t
-	return fix2normalM(y[0]);
+	x[0][0] = normal2fixM(sr);
+	y[0][0] = fixmul((q14)BUTTER_A0, x[0][0]) + fixmul((q14)BUTTER_A1, x[0][1]) + fixmul((q14)BUTTER_A2, x[0][2]) - fixmul((q14)BUTTER_B1, y[0][1]) - fixmul((q14)BUTTER_B2, y[0][2]);
+	y[0][0] = fixmul((q14)BUTTER_B0, y[0][0]);
+
+	x[1][0] = normal2fixM(sax);
+	y[1][0] = fixmul((q14)BUTTER_A0, x[1][0]) + fixmul((q14)BUTTER_A1, x[1][1]) + fixmul((q14)BUTTER_A2, x[1][2]) - fixmul((q14)BUTTER_B1, y[1][1]) - fixmul((q14)BUTTER_B2, y[1][2]);
+	y[1][0] = fixmul((q14)BUTTER_B0, y[1][0]);
+
+	x[2][0] = normal2fixM(say);
+	y[2][0] = fixmul((q14)BUTTER_A0, x[2][0]) + fixmul((q14)BUTTER_A1, x[2][1]) + fixmul((q14)BUTTER_A2, x[2][2]) - fixmul((q14)BUTTER_B1, y[2][1]) - fixmul((q14)BUTTER_B2, y[2][2]);
+	y[2][0] = fixmul((q14)BUTTER_B0, y[2][0]);
+
+	x[3][0] = normal2fixM(sp);
+	y[3][0] = fixmul((q14)BUTTER_A0, x[3][0]) + fixmul((q14)BUTTER_A1, x[3][1]) + fixmul((q14)BUTTER_A2, x[3][2]) - fixmul((q14)BUTTER_B1, y[3][1]) - fixmul((q14)BUTTER_B2, y[3][2]);
+	y[3][0] = fixmul((q14)BUTTER_B0, y[3][0]);
+
+	x[4][0] = normal2fixM(sq);
+	y[4][0] = fixmul((q14)BUTTER_A0, x[4][0]) + fixmul((q14)BUTTER_A1, x[4][1]) + fixmul((q14)BUTTER_A2, x[4][2]) - fixmul((q14)BUTTER_B1, y[4][1]) - fixmul((q14)BUTTER_B2, y[4][2]);
+	y[4][0] = fixmul((q14)BUTTER_B0, y[4][0]);
+
+	sr = fix2normalM(y[0][0]);
+	sax = fix2normalM(y[1][0]);
+	say = fix2normalM(y[2][0]);
+	sp = fix2normalM(y[3][0]);
+	sq = fix2normalM(y[4][0]);
+	
 }
 
 
