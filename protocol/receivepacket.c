@@ -142,7 +142,7 @@ void stateHandler(unsigned char currentByte){
 			break;
 		case checkMessageType:
 
-			if((currentByte==T_MODE) || (currentByte==T_CONTROL) || (currentByte==T_DATA)||(currentByte==T_EXIT)||(currentByte==T_adMSG)||(currentByte==T_HEARTBEAT)||(currentByte==T_FLASHMEM))
+			if((currentByte==T_MODE) || (currentByte==T_CONTROL) || (currentByte==T_DATA) || (currentByte == T_CONFIG) ||(currentByte==T_EXIT)||(currentByte==T_adMSG)||(currentByte==T_HEARTBEAT)||(currentByte==T_FLASHMEM))
 			{
 				msgType = currentByte;
 				nextState = setupMsg;

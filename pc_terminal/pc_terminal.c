@@ -12,8 +12,6 @@ Steps:
 #include <inttypes.h>
 #include <limits.h>
 
-int toggleLoggingCounter = 0;
-
 //#include "joystick.h"
 
 uint32_t packetCount=0;
@@ -319,7 +317,7 @@ void kb_input_handler(unsigned char c)
 		storeUIMessage("lift down\n\0");
 
 		break;
-	case 'q'://Yaw down
+	case 'w'://Yaw down
 		
 		*value_tag = C_YAWDOWN;
 		type_tag = T_CONTROL;
@@ -327,7 +325,7 @@ void kb_input_handler(unsigned char c)
 		storeUIMessage("Yaw down\n\0");
 
 		break;
-	case 'w'://Yaw up
+	case 'q'://Yaw up
 		
 		*value_tag = C_YAWUP;
 		type_tag = T_CONTROL;
@@ -387,18 +385,10 @@ void kb_input_handler(unsigned char c)
 		break;
 
 	case 'm': //logging enable
-		toggleLoggingCounter++;
-		*value_tag = C_LOGGING;
-		type_tag = T_CONTROL;
-		pkt = Create_Packet(type_tag, 1, value_tag);
-		if (toggleLoggingCounter == 2){
-			storeUIMessage("Logging OFF");
-			toggleLoggingCounter = 0;
-		}
-		else {
-			storeUIMessage("Logging ON");
-		}
 
+		*value_tag = C_LOGGING;
+		type_tag = T_CONFIG;
+		CreatePacketWithSafetyCheck("Toggling Logging\n\0",type_tag,1,value_tag);
 		break;
 		/*case 't':// P2 down
 				*value_tag = C_P2DOWN;
@@ -439,28 +429,28 @@ void kb_input_handler(unsigned char c)
 		if ((c = term_getchar_nb()) != -1)
 		{
 			switch (c = term_getchar_nb()) {
-			case 'D'://Left Arrow - RollUp
+			case 'C'://Right Arrow - RollDown
 				
 				*value_tag = C_ROLLUP;
 				type_tag = T_CONTROL;
 				pkt = Create_Packet(type_tag, 1, value_tag);
 				storeUIMessage("RollUp\n\0");
 				break;
-			case 'C'://Right Arrow - RollDown
+			case 'D'://Left Arrow - RollUp
 				
 				*value_tag = C_ROLLDOWN;
 				type_tag = T_CONTROL;
 				pkt = Create_Packet(type_tag, 1, value_tag);
 				storeUIMessage("RollDown\n\0");
 				break;
-			case 'A'://Up Arrow - PitchDown
+			case 'B'://Arrow Down - PitchUP
 				
 				*value_tag = C_PITCHDOWN;
 				type_tag = T_CONTROL;
 				pkt = Create_Packet(type_tag, 1, value_tag);
 				storeUIMessage("PitchDown\n\0");
 				break;
-			case 'B'://Arrow Down - PitchUP
+			case 'A'://Up Arrow - PitchDown
 				
 				*value_tag = C_PITCHUP;
 				type_tag = T_CONTROL;
@@ -887,7 +877,7 @@ int main(int argc, char **argv)
 		*/
 		//printf("T1:%d\n",mon_time_ms());
 		//js_comm = read_js(&fd, axis, button);
-		/*js_comm = read_js_simulator();
+		js_comm = read_js_simulator();
 		
 		if (js_comm != NULL) {
 			if(CheckReadGap(lastJSSendTime,1)){
@@ -911,7 +901,7 @@ int main(int argc, char **argv)
 				//printf("%d\n",lastJSSendTime);
 			}
 			//free(js_comm);
-		}*/
+		}
 		//printf("T2:%d\n",mon_time_ms());
 		if ((c = term_getchar_nb()) != -1)
 		{
@@ -953,17 +943,7 @@ int main(int argc, char **argv)
 		//if ((c = rs232_getchar_nb()) != -1)
 			//term_putchar(c);
 
-		/*if((CheckReadGap(lastJSSendTime,3) && CheckReadGap(KBLastReadTimeStamp,1))?CheckReadGap(HBLastSendTimeStamp,2):0)
-		{
-			pkt=Create_HeartBeatPacket();
-			Send_Packet(pkt);
-			pkt=NULL;
-			HBLastSendTimeStamp=mon_time_ms();
-
-
-		}*/
-
-		if((CheckReadGap(KBLastReadTimeStamp,1))?CheckReadGap(HBLastSendTimeStamp,2):0)
+		if((CheckReadGap(lastJSSendTime,3) && CheckReadGap(KBLastReadTimeStamp,1))?CheckReadGap(HBLastSendTimeStamp,2):0)
 		{
 			pkt=Create_HeartBeatPacket();
 			Send_Packet(pkt);
@@ -1101,9 +1081,9 @@ void process_packet(Packet *pkt_R)
 	    printf("P1:\t%d\t",uint16Values[1]);
 	    printf("P2:\t%d\n",uint16Values[2]);
 
-	    uint32_t pressure = (((uint32_t)pkt_R->value[29])<<16)|(((uint32_t)pkt_R->value[30])<<8)|(pkt_R->value[31]);
+	    uint32_t pressure = (((uint32_t)pkt_R->value[31])<<16)|(((uint32_t)pkt_R->value[32])<<8)|(pkt_R->value[33]);
 	    printf("Pressure: \t%d\n",pressure);
-	    printf("Current Drone Mode: \t%d\n",pkt_R->value[32]);
+	    printf("Current Drone Mode: \t%d\n",pkt_R->value[34]);
 	  
 	   
 	   	/*for(int i=0;i<4;i++){
