@@ -1,6 +1,6 @@
 #include "modes.h"
 #include "../messages/messages.h"
-#include "../filters_nofixpoint.h"
+#include "../filters.h"
 
 #include "in4073.h"
 #include <stdarg.h>
@@ -290,7 +290,13 @@ void Raw_Mode_Initialize()
 	rollSetPoint_J = 0;
 	clearControlVariables();
 	SetMessage(MSG_ENTERING_RAWCONTROL_MODE);
-	imu_init(false, 300);
+	while (!check_sensor_int_flag());
+	imu_init(false, 1000);
+	sr_offset = 0;
+	sp_offset = 0;
+	sq_offset = 0;
+	theta_offset = 0;
+	phi_offset = 0;
 }
 void Height_Control_Mode_Initialize()
 {
@@ -481,24 +487,31 @@ void Full_Control_Mode_Execute()
 		}
 }
 
-void Raw_Mode_Execute(){
+void Raw_Mode_Execute()
+{
+	static uint32_t lastReadTime = 0;
 
 	if (check_sensor_int_flag())
 	{
 		get_raw_sensor_data();
-		
+	}
+	if (checkGap(lastReadTime, 2500)) {
 		butterworth();
 		kalman();
-
+		//EMA for offsets
+		sr_offset = (sr - sr_offset) * 2 / 100 + sr_offset;
+		sq_offset = (sq - sq_offset) * 2 / 100 + sq_offset;
+		sp_offset = (sp - sp_offset) * 2 / 100 + sp_offset;
+		theta_offset = (theta - theta_offset) * 2 / 100 + theta_offset;
+		phi_offset = (phi - phi_offset) * 2 / 100 + phi_offset;
 		N = (P[0] * (yawSetPoint - sr + sr_offset)) >> SCALING_ROTATION; //Yaw
 		M = (P[1] * (pitchSetPoint - theta + theta_offset) - P[2] * (-sq + sq_offset)) >> SCALING_ROTATION; //Pitch
 		L = (P[1] * (rollSetPoint - phi + phi_offset) - P[2] * (sp - sp_offset)) >> SCALING_ROTATION; //Roll
 																									  //printf("Z:%ld|L:%ld|M:%ld|N:%ld|",Z,L,M,N);
-		if  (Execute_Control_Action){	 
+		if (Execute_Control_Action) {
 			SetMotorValues();
 			update_motors();
 		}
-		//printf("Motor[0]:%d,Motor[1]:%d,Motor[2]:%d,Motor[3]:%d\n",ae[0],ae[1],ae[2],ae[3]);
 	}
 }
 
