@@ -397,6 +397,7 @@ void Panic_Mode_Execute_With_Logging()
 				readCount = 0;
 				flashCount = 0;
 				sendPacketCounter = 0;
+				flash_chip_erase();
 				EnterSafeMode();
 				PrevMode = CurrentMode;
 				CurrentMode = GetMode(M_SAFE);	
@@ -533,27 +534,28 @@ void Raw_Mode_Execute_With_Logging()
 	if (check_sensor_int_flag())
 	{
 		get_raw_sensor_data();
+	}
+	if (checkGap(lastReadTime, 2500)) {
+		lastReadTime = currentTime;
+		logData();
+		//SendAdditionalMessage("LoggingData");
 
-		if (checkGap(lastReadTime,5000)){
-			lastReadTime = currentTime;
-			logData();
-			//SendAdditionalMessage("LoggingData");
-		}
-		
-		butterworth();
-		kalman();
+
+		//butterworth();
+		//kalman();
 
 		N = (P[0] * (yawSetPoint - sr + sr_offset)) >> SCALING_ROTATION; //Yaw
 		M = (P[1] * (pitchSetPoint - theta + theta_offset) - P[2] * (-sq + sq_offset)) >> SCALING_ROTATION; //Pitch
 		L = (P[1] * (rollSetPoint - phi + phi_offset) - P[2] * (sp - sp_offset)) >> SCALING_ROTATION; //Roll
 																									  //printf("Z:%ld|L:%ld|M:%ld|N:%ld|",Z,L,M,N);
-		if  (Execute_Control_Action){	 
+		if (Execute_Control_Action) {
 			SetMotorValues();
 			update_motors();
 		}
 		Execute_Control_Action = true;
 		//printf("Motor[0]:%d,Motor[1]:%d,Motor[2]:%d,Motor[3]:%d\n",ae[0],ae[1],ae[2],ae[3]);
 	}
+
 }
 void Height_Control_Mode_Execute()
 {
