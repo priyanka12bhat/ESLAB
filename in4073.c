@@ -182,6 +182,7 @@ void process_packet(Packet *pkt_R)
  * main -- everything you need is here :)
  *------------------------------------------------------------------
  */
+int16_t bat_voltEMA = 1100;
 int main(void)
 {
 
@@ -205,7 +206,7 @@ int main(void)
 	currentStateR=checkStartByte;
 
 	int readCounter = 10;
-	int16_t bat_voltEMA = 1100;
+
 
 	while(demo_done) {
 
@@ -306,5 +307,11 @@ void SendBluetoothPacket(Packet *packetToSend)
 			}
 	}
 
+}
+
+void SendTelemeteryPacket() 
+{
+	SendPacket(Create_Telemetery_Packet(bat_voltEMA, ae, phi, theta, psi, sp, sq, sr, msgCode, GetPArray(), pressure, CurrentMode.state));
+	lastTelePacketSendTime = currentTime;
 }
 

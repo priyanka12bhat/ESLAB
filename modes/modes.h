@@ -58,6 +58,7 @@ int16_t* GetPArray();
 void SendAdditionalMessage( char* msgfmt, ...);
 char additionalMessage[15];
 void SetAdditionalMessage( char* msgfmt, ...);
+void SendTelemeteryPacket();
 
 bool checkGap(uint32_t lastTime, uint32_t readGap);
 

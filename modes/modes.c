@@ -240,6 +240,7 @@ void Manual_Mode_Initialize()
 void Callibration_Mode_Initialize(){
 	
 	SetMessage(MSG_ENTERING_CALIBRATION_MODE);
+	SendTelemeteryPacket();
 	while(!check_sensor_int_flag());
 	imu_init(true, 100);
 
