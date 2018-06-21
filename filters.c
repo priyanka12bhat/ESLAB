@@ -13,9 +13,10 @@ q14 kalman_sp, kalman_sq = 0;
 q14 kalman_sax, kalman_say = 0;
 q14 error_phi, error_theta = 0;
 
-
+//Mingxi LI
 void butterworth()
 {
+	
 	for (int i = 0; i < 5; i++)
 	{
 		for (int n = 2; n > 0; n--)
@@ -53,7 +54,7 @@ void butterworth()
 	
 }
 
-
+//Mingxi LI
 void kalman()
 {
 	// first convert the sensor values to Q14 so we can multiply them with a fraction

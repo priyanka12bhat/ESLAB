@@ -1,5 +1,6 @@
 #include "fixpoint.h"
 
+//Mingxi LI
 //fixmul -- multiply fixed 18+14 bits to float
 q14	fixmul(q14 x1, q14 x2)
 {
