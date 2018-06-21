@@ -16,7 +16,6 @@ q14 error_phi, error_theta = 0;
 
 void butterworth()
 {
-	
 	for (int i = 0; i < 5; i++)
 	{
 		for (int n = 2; n > 0; n--)
