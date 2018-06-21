@@ -9,6 +9,7 @@ namespace Quadrupel
         /// <summary>
         /// Telemetery Data 
         /// </summary>
+        //Arun Geo Thomas
         public TelemetryData tData
         {
             get
@@ -21,7 +22,7 @@ namespace Quadrupel
                 this.Invoke((MethodInvoker)(() => UpdateUI(value)));
             }
         }
-
+        //Arun Geo Thomas
         public string AdditionalMessage {
 
             set {

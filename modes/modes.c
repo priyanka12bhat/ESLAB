@@ -131,6 +131,7 @@ void readFlashMem() //Maria G
 	sendPacketCounter++;
 }
 void SetMessage(unsigned char _msgCode);
+//Arun Geo Thomas
 void Modes_Initialize()
 {
 	Modes[M_SAFE-1].state=Safe;
@@ -177,8 +178,8 @@ void Modes_Initialize()
 	CurrentMode = GetMode(M_SAFE);
 
 }
-
-void Modes_ToggleLogging() //Arun Geo & Maria G
+//Arun Geo Thomas & Maria G
+void Modes_ToggleLogging() //
 {
 	static bool loggingEnabled = 0;
 	if(!loggingEnabled){
@@ -205,13 +206,14 @@ MODE SPECIFIC INTILIALIZATION FUNCTION GOES HERE
 void EnterSafeMode();
 void update_motors();
 
-
+//Arun Geo Thomas
 void Safe_Mode_Initialize()
 {
 
 	EnterSafeMode();
 	update_motors();
 }
+//Priyanka Bhat
 void Panic_Mode_Initialize(){
 	SetMessage(MSG_ENTERING_PANIC_MODE);	
 	int16_t ae_avg = (ae[0]+ae[1]+ae[2]+ae[3])>>2;
@@ -223,7 +225,7 @@ void Panic_Mode_Initialize(){
 
 
 inline void clearControlVariables();
-
+//Arun Geo Thomas
 void Manual_Mode_Initialize()
 {
 	SetMessage(MSG_ENTERING_MANUAL_MODE);
@@ -236,7 +238,7 @@ void Manual_Mode_Initialize()
 
 
 #define MAX_SAMPLES 128
-
+//Priyanka Bhat
 void Callibration_Mode_Initialize(){
 	
 	SetMessage(MSG_ENTERING_CALIBRATION_MODE);
@@ -251,7 +253,7 @@ void Callibration_Mode_Initialize(){
 
 
 
-
+//Arun Geo Thomas
 void Yaw_Control_Mode_Initialize()
 {
 	yawSetPoint =0;
@@ -303,6 +305,7 @@ void Raw_Mode_Initialize()
 
 uint32_t PressureEMA = 0;
 uint32_t PressureIntialEMA = 0;
+//Priyanka Bhat
 void Height_Control_Mode_Initialize()
 {
 	SetMessage(MSG_ENTERING_HEIGHTCONTROL_MODE);
@@ -326,7 +329,7 @@ MODE SPECIFIC EXECUTION FUNCTION GOES HERE
 
 
 void Safe_Mode_Execute(){}
-
+//Arun Geo Thomas
 void Panic_Mode_Execute(){
 	static 	uint32_t us_TimeStamp = 0;
 	
@@ -409,7 +412,7 @@ void Panic_Mode_Execute_With_Logging() //Maria G
 }
 
 void SetMotorValues();
-
+//Priyanka Bhat
 void Manual_Mode_Execute()
 {
 	SetMotorValues();
@@ -417,6 +420,7 @@ void Manual_Mode_Execute()
 	update_motors();
 
 }
+//Arun Geo Thomas
 void Callibration_Mode_Execute(){
 	int32_t phi_offset_sum=0;
 	int32_t theta_offset_sum=0;
@@ -458,7 +462,7 @@ void Callibration_Mode_Execute(){
 }
 
 
-
+//Arun Geo Thomas
 void Yaw_Control_Mode_Execute()
 {
 	if (check_sensor_int_flag()) 
@@ -558,6 +562,7 @@ void Raw_Mode_Execute_With_Logging() //Maria G
 	}
 
 }
+//Priyanka Bhat
 void Height_Control_Mode_Execute()
 {
 	Execute_Control_Action = false; 
@@ -614,7 +619,7 @@ MODE SPECIFIC INPUT HANDLER FUNCTION GOES HERE
 ************************************************************************/
 
 
-
+//Priyanka Bhat
 void Manual_Mode_Input_Handler(unsigned char *Input)
 {
 	switch(Input[0]){
@@ -695,7 +700,7 @@ void Manual_Mode_Input_Handler(unsigned char *Input)
 
 }
 
-
+//Arun Geo Thomas
 void Yaw_Controlled_Mode_Input_Handler(unsigned char *Input)
 {
 
@@ -754,8 +759,7 @@ void Yaw_Controlled_Mode_Input_Handler(unsigned char *Input)
 
 }
 
-
-
+//Maria G
 void Full_Control_Mode_Input_Handler(unsigned char *Input)
 {				
 					
@@ -848,7 +852,7 @@ void Full_Control_Mode_Input_Handler(unsigned char *Input)
 					Z=KB_Z+JS_Z;
 
 }
-
+//Priyanka Bhat
 void Height_Control_Mode_Input_Handler(unsigned char *Input)
 {
 	int32_t old_JS_Z = JS_Z;
@@ -880,7 +884,7 @@ void Height_Control_Mode_Input_Handler(unsigned char *Input)
 }
 
 
-
+//Arun Geo Thomas
 void SetMotorValues()
 {
 	if(JS_Z==0)
@@ -942,7 +946,7 @@ void SetMotorValues()
 
 }
 
-
+//Priyanka Bhat
 void EnterSafeMode()
 {
 	SetMessage(MSG_ENTERING_SAFE_MODE);
@@ -953,7 +957,7 @@ void EnterSafeMode()
 
 }
 
-
+//Arun Geo Thomas
 void clearControlVariables()
 {
 	KB_Z=0;
@@ -973,7 +977,6 @@ void clearControlVariables()
 	ae[2]=0;
 	ae[3]=0;
 }
-
 int16_t* GetPArray()
 {
 	return P;

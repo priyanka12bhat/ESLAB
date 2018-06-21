@@ -15,6 +15,7 @@ namespace Quadrupel
         private PacketReceiver() { }
         private IPacketReceiver callBackObject;
 
+        //Arun Geo Thomas
         public PacketReceiver(IPacketReceiver callBackObject)
         {
             this.callBackObject = callBackObject;
@@ -46,6 +47,7 @@ namespace Quadrupel
         /// <summary>
         /// State Handler for the state machine
         /// </summary>
+        //Arun Geo Thomas
         public void stateHandler()
         {
             ReadData();
@@ -166,6 +168,7 @@ namespace Quadrupel
         }
 
         //store read values
+        //Arun Geo Thomas
         private void storeValues()
         {
 
@@ -184,6 +187,7 @@ namespace Quadrupel
         }
 
         //Search for start byte again
+        //Arun Geo Thomas
         private void SearchforStartByte(byte CRCPos)
         {
             byte[] serialPacket = Packet.Get_Byte_Stream(ref pkt_R);
@@ -207,6 +211,7 @@ namespace Quadrupel
         /// REad data from where ever it is available
         /// </summary>
         /// <returns>Data byte</returns>
+        //Arun Geo Thomas
         private byte ReadData()
         {
             if (InputBuffer.Count > 0)
@@ -231,6 +236,7 @@ namespace Quadrupel
         /// Check if theres a data availableto be read
         /// </summary>
         /// <returns></returns>
+        //Arun Geo Thomas
         public Boolean checkCount()
         {
             return InputBuffer.Count > 0 ? true : callBackObject.CheckInputQueueCount();
@@ -241,6 +247,7 @@ namespace Quadrupel
         /// </summary>
         /// <param name="datas">datas to be fed back</param>
         /// <param name="length">length of array</param>
+        //Arun Geo Thomas
         private void addData(byte[] datas, byte length)
         {
             for (int i = length - 1; i >= 0; i--)

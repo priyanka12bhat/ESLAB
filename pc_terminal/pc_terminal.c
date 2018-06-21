@@ -203,7 +203,7 @@ int 	rs232_putchar(char c)
 	assert(result == 1);
 	return result;
 }
-
+//Priyanka Bhat
 void ExitSafe(void)
 {
 	//implement 
@@ -214,6 +214,7 @@ void ExitSafe(void)
 }
 
 void CreatePacketWithSafetyCheck(const char* switchMessage,unsigned char type_tag,unsigned char length, unsigned char *value_tag);
+//Priyanka Bhat
 void kb_input_handler(unsigned char c)
 {
 	unsigned char value_tag[1];
@@ -483,7 +484,7 @@ void kb_input_handler(unsigned char c)
 		break;
 	}
 }
-
+//Arun Geo Thomas
 void CreatePacketWithSafetyCheck(const char* switchMessage,unsigned char type_tag,unsigned char length, unsigned char *value_tag)
 {
 
@@ -500,7 +501,7 @@ void CreatePacketWithSafetyCheck(const char* switchMessage,unsigned char type_ta
 		}
 
 }
-
+//Arun Geo Thomas
 void Send_Packet(Packet *pkt)
 {
 	unsigned char *packetByteStream = Get_Byte_Stream(pkt);
@@ -649,6 +650,7 @@ void read_values(int* fd, int axis[], int button[])
 	}
 }
 
+//Arun Geo Thomas
 js_command *read_js_simulator()
 {
 	js_command *js_c = NULL;
@@ -676,73 +678,7 @@ js_command *read_js(int* fd, int axis[], int button[])
 
 
 		read_values(fd,axis,button);
-		//printf("%d\n",js.time);
-		/*
-		if((js.time - JSLastReadTimeStamp) <JS_READ_GAP)
-		{
-			return NULL;
-		}
-		JSLastReadTimeStamp=js.time;
-		*/
-		
-
-
-		// Switch the mode
-		/*if (button[0])
-			js_c->Type = T_MODE;
-			js_c->Mode = M_SAFE;
-		if (button[1])
-			js_c->Type = T_MODE;
-			js_c->Mode = M_PANIC;
-		if (button[2])
-			js_c->Type = T_MODE;
-			js_c->Mode = M_MANUAL;
-		if (button[3])
-			js_c->Type = T_MODE;
-			js_c->Mode = M_CALIBRATION;
-		if (button[4])
-			js_c->Type = T_MODE;
-			js_c->Mode = M_YAWCONTROL;
-		if (button[5])
-			js_c->Type = T_MODE;
-			js_c->Mode = M_FULLCONTROL;
-		if (button[6])
-			js_c->Type = T_MODE;
-			js_c->Mode = M_RAWMODE;
-		if (button[7])
-			js_c->Type = T_MODE;
-			js_c->Mode = M_HEIGHTCONTROL;
-		if (button[8])
-			js_c->Type = T_MODE;
-			js_c->Mode = M_WIRELESS;*/						
-
-		// roll
-		/*if (axis[0])
-		{
-			js_c->Type = T_CONTROL;
-			js_c->Roll = axis[0];
-		}
-
-		// pitch
-		if (axis[1])
-		{
-			js_c->Type = T_CONTROL;
-			js_c->Pitch = axis[1];
-		}
-
-		// yaw
-		if (axis[2])
-		{
-			js_c->Type = T_CONTROL;
-			js_c->Yaw = axis[2];
-		}
-
-		// lift
-		if (axis[3])
-		{
-			js_c->Type = T_CONTROL;
-			js_c->Lift = axis[3];
-		}*/
+	
 
 	
 		js_c= &js_command_obj;
@@ -775,7 +711,7 @@ js_command *read_js(int* fd, int axis[], int button[])
 
 	return js_c;
 }
-
+//Arun Geo Thomas
 void js_safety_check(int* fd, int axis[], int button[])
 {
 	for(int i = 0;i<20;i++)
@@ -953,7 +889,7 @@ int main(int argc, char **argv)
 	storeUIMessage("Exiting Host Program\n\0");
 	return 0;
 }
-
+//Priyanka Bhat
 int CheckReadGap(unsigned int lastSendTime,char times)
 {
 	unsigned int currentTime = mon_time_ms();
@@ -961,13 +897,13 @@ int CheckReadGap(unsigned int lastSendTime,char times)
 	return ((currentTime==lastSendTime)?0:((currentTime>lastSendTime)?((currentTime - lastSendTime) >= JS_READ_GAP*times):((UINT_MAX-lastSendTime+currentTime)>=JS_READ_GAP*times)));
 
 }
-
+//Arun Geo Thomas
 char getElementFromInputQueue()
 {
 	//term_putchar(c);
 	return 0;
 }
-
+//Priyanka Bhat
 uint16_t getInputQueueCount()
 {
 	int c;
@@ -981,13 +917,13 @@ uint16_t getInputQueueCount()
 	return 0;
 }
 
-
+//Arun Geo Thomas
 void storeUIMessage(const char msg[])
 {
 	strcpy(msgToPrint,msg);
 
 }
-
+//Arun Geo Thomas
 void printUIMessage()
 {
 	setCursor(15, 0);
@@ -996,8 +932,8 @@ void printUIMessage()
 	printf("\nAdditional Debug Messages:%s\n",additionalMessage);
 }
 
-
-void process_packet(Packet *pkt_R) //Maria G and Arun Geo
+//Maria G and Arun Geo Thomas
+void process_packet(Packet *pkt_R) 
 {	
 	if (pkt_R->type == T_FLASHMEM){ 
 	clearUI();

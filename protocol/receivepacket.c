@@ -17,7 +17,7 @@ typedef struct {
 
 Bqueue InputBuffer;
 char maxMsgSize = MAX_MSG_SIZE;
-
+//Priyanka Bhat
 void Reception_Init(char _maxMsgSize)
 {
 	maxMsgSize=_maxMsgSize;
@@ -25,7 +25,7 @@ void Reception_Init(char _maxMsgSize)
 }
 
 
-
+//Arun Geo Thomas
 void addNode(unsigned char newData) 
 {
 	if(InputBuffer.count>=BUFFER_QUEUE_SIZE)
@@ -34,7 +34,7 @@ void addNode(unsigned char newData)
 	InputBuffer.count++;
 }
 
-
+//Priyanka Bhat
 unsigned char readData()
 {
 	unsigned char currentByte = 0;
@@ -52,7 +52,7 @@ unsigned char readData()
 
 
 }
-
+//Arun Geo Thomas
 uint16_t checkCount()
 {
 	return InputBuffer.count>0?1:getInputQueueCount();
@@ -70,7 +70,7 @@ void addData(unsigned char *datas, unsigned char length) //Maria G
 
 
 	
-
+//Priyanka Bhat
 void SearchforStartByte(unsigned char CRCPos, Packet *pkt_R)
 {
 	unsigned char *serialPacket = Get_Byte_Stream(pkt_R);
@@ -88,7 +88,7 @@ void SearchforStartByte(unsigned char CRCPos, Packet *pkt_R)
 	nextState=checkStartByte;
 }
 
-
+//Arun Geo Thomas
 void storeValues(unsigned char ptr[],unsigned char msgSize, unsigned char currentByte)
 {			
 			static unsigned char counter = 0;
@@ -104,8 +104,8 @@ void storeValues(unsigned char ptr[],unsigned char msgSize, unsigned char curren
 			}
 
 }
-
-void stateHandler(unsigned char currentByte){ //Maria G and Arun Geo
+//Maria G and Arun Geo Thomas and Priyanka Bhat 
+void stateHandler(unsigned char currentByte){ 
 	static unsigned char ptr[LP_SIZE+20];
 	static unsigned char msgSize;
 	static Packet *pkt_R = NULL;

@@ -69,7 +69,7 @@ namespace Quadrupel
         public byte valueLength;
         public byte[] CRC = new byte[2];
 
-        
+
 
         /// <summary>
         /// Method to Get object in the Packet Structure
@@ -78,6 +78,7 @@ namespace Quadrupel
         /// <param name="length">length of elements in the value array</param>
         /// <param name="value">value array</param>
         /// <returns>Supplied data as an object of packet</returns>
+        //Arun Geo Thomas
         internal static Packet Create_Packet(byte type, byte length, byte[] value)
         {
             Packet pktObj = new Packet();
@@ -103,6 +104,7 @@ namespace Quadrupel
         /// </summary>
         /// <param name="length"></param>
         /// <returns>data length of the packet</returns>
+        //Arun Geo Thomas
         internal static byte Get_DataLength(byte length) //length is the length of value array
         {
             return (byte)(length+1);
@@ -112,6 +114,7 @@ namespace Quadrupel
         /// Set CRC Bits of a supplied packet
         /// </summary>
         /// <param name="pkt">Packet for which CRC Values Should be set</param>
+        //Arun Geo Thomas
         private static void Set_CRCValue(ref Packet pkt)
         {
 
@@ -133,6 +136,7 @@ namespace Quadrupel
         /// <param name="p_data">data array</param>
         /// <param name="size">length of the array</param>
         /// <returns>CRC Value</returns>
+        //Arun Geo Thomas
         private static UInt16 crc16_compute(byte[] p_data, byte size)
         {
             UInt32 i;
@@ -155,6 +159,7 @@ namespace Quadrupel
         /// Method to destory Packets if its needed
         /// </summary>
         /// <param name="pkt"></param>
+        //Arun Geo Thomas
         static internal void Destroy_Packet(ref Packet pkt)
         {
         }
@@ -164,6 +169,7 @@ namespace Quadrupel
         /// </summary>
         /// <param name="pkt">Packet</param>
         /// <returns>serialized packet</returns>
+        //Arun Geo Thomas
         static internal byte[] Get_Byte_Stream(ref Packet pkt)
         {
             byte[] serialPacket = new byte[Packet.LP_SIZE + 10];
@@ -180,7 +186,7 @@ namespace Quadrupel
             return serialPacket;
         }
 
-
+        //Arun Geo Thomas
         public static Packet Create_HeartBeatPacket()
         {
             Packet pktObj = new Packet();

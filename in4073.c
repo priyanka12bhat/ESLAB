@@ -32,13 +32,14 @@ void SetMotorValues_Manual();
 void SendPacket(Packet *packetToSend);
 char msgCode = 0;
 
-
+//Arun Geo Thomas
 void SetMessage(unsigned char _msgCode)
 {
 	msgCode=_msgCode;
 }
 
 //ONLY FOR DEBUGGING!. Remove instances after use.
+//Arun Geo Thomas
 void SendAdditionalMessage( char* msgfmt, ...)
 {   
 	char additionalMessage2[15];
@@ -52,7 +53,7 @@ void SendAdditionalMessage( char* msgfmt, ...)
 
 
 }
-
+//Arun Geo Thomas
 void SetAdditionalMessage( char* msgfmt, ...)
 {   
     va_list vl;
@@ -70,7 +71,7 @@ void SetAdditionalMessage( char* msgfmt, ...)
 
 //Sending
 Packet *pkt_S=NULL;
-
+//Priyanka Bhat
 void SendPacket(Packet *packetToSend)
 {
 
@@ -88,11 +89,12 @@ void SendPacket(Packet *packetToSend)
 
 //Functions for Package Reception
 void process_packet(Packet *pkt_R);
+//Arun Geo Thomas
 char getElementFromInputQueue()
 {
 	return dequeue(&rx_queue);
 }
-
+//Priyanka Bhat
 uint16_t getInputQueueCount()
 {
 	return rx_queue.count;
@@ -112,6 +114,7 @@ uint32_t lastBaroReadTime =0;
  * process_packet -- process command keys
  *------------------------------------------------------------------
  */
+ //Arun Geo Thomas
 void process_packet(Packet *pkt_R)
 {
 
@@ -286,7 +289,7 @@ int main(void)
 	NVIC_SystemReset();
 
 }
-
+//Arun Geo Thomas
 bool checkGap(uint32_t lastTime, uint32_t readGap)
 {
 	currentTime = get_time_us();
@@ -294,7 +297,7 @@ bool checkGap(uint32_t lastTime, uint32_t readGap)
 
 
 }
-
+//Maria G
 void SendBluetoothPacket(Packet *packetToSend)
 {
 
@@ -308,7 +311,7 @@ void SendBluetoothPacket(Packet *packetToSend)
 	}
 
 }
-
+//Arun Geo Thomas
 void SendTelemeteryPacket() 
 {
 	SendPacket(Create_Telemetery_Packet(bat_voltEMA, ae, phi, theta, psi, sp, sq, sr, msgCode, GetPArray(), pressure, CurrentMode.state));

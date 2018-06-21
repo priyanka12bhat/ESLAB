@@ -8,10 +8,11 @@ namespace Quadrupel.Controls
 
 
         private int[] _Values = new int[9];
-        
+
         /// <summary>
         /// Propert to set the Values
         /// </summary>
+        //Arun Geo Thomas
         public int[] Values
         {
             get
@@ -27,7 +28,7 @@ namespace Quadrupel.Controls
 
         }
         private System.UInt32 _Pressure;
-
+        //Arun Geo Thomas
         public UInt32 SetPressure {
             get
             { return _Pressure; }
@@ -40,7 +41,7 @@ namespace Quadrupel.Controls
         }
 
         private System.UInt32 _BatVolt;
-
+        //Arun Geo Thomas
         public UInt32 BatteryVoltage
         {
             get
@@ -55,7 +56,7 @@ namespace Quadrupel.Controls
 
 
         private System.UInt32 _P_H;
-
+        //Arun Geo Thomas
         public UInt32 P_H
         {
             get
@@ -72,7 +73,7 @@ namespace Quadrupel.Controls
 
         private string _AdditionalMessage = "";
 
-
+        //Arun Geo Thomas
         public string AdditionalMessage {
             get
             {
@@ -87,6 +88,7 @@ namespace Quadrupel.Controls
         /// <summary>
         /// Clear the Control
         /// </summary>
+        //Arun Geo Thomas
         public void Clear()
         {
             lblDisplay.Text = "";

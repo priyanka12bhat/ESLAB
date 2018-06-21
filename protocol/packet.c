@@ -8,7 +8,7 @@ Packet TpktObj;
 Packet fpktObj;
 
 unsigned char serialPacket[LP_SIZE+10];
-
+//Priyanka Bhat
 Packet *Create_Packet(unsigned char type,unsigned char length, unsigned char *value)
 {
 
@@ -29,7 +29,7 @@ Packet *Create_Packet(unsigned char type,unsigned char length, unsigned char *va
 
 
 
-
+//Arun Geo Thomas
 unsigned char Get_DataLength(unsigned char length) //length is the length of value array
 {
 	return length+1;
@@ -55,6 +55,7 @@ void Destroy_Packet(Packet *pkt)
 {
 }
 
+//Priyanka Bhat
 unsigned char *Get_Byte_Stream(Packet *pkt)
 {
 	serialPacket[0]=pkt->startByte;
@@ -102,7 +103,7 @@ Packet *Create_Flash_Data_Packet(uint8_t *flashBuffer) //Maria G
 	Set_CRCValue(&fpktObj);
 	return &fpktObj;
 }
-
+//Arun Geo Thomas
 Packet *Create_Telemetery_Packet(uint16_t bat_volt, int16_t *MotorValues, int16_t phi, int16_t theta, int16_t psi, int16_t sp, int16_t sq, int16_t sr, unsigned char _msgCode, int16_t PArray[], uint32_t pressure, unsigned char droneMode)
 {
 	TpktObj.startByte = START_BYTE;
@@ -148,7 +149,7 @@ Packet *Create_Telemetery_Packet(uint16_t bat_volt, int16_t *MotorValues, int16_
 	Set_CRCValue(&TpktObj);
 	return &TpktObj;
 }
-
+//Arun Geo Thomas
 Packet *Create_adMSG_Packet(char *additionalMessage){
 	TpktObj.startByte = START_BYTE;
 	TpktObj.type = T_adMSG;
@@ -162,7 +163,7 @@ Packet *Create_adMSG_Packet(char *additionalMessage){
 	return &TpktObj;
 
 }
-
+//Arun Geo Thomas
 Packet *Create_HeartBeatPacket()
 {
 	pktObj.startByte = START_BYTE;

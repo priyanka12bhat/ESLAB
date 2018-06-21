@@ -19,7 +19,7 @@ namespace Quadrupel.Input
 
         [DllImport("JoyStick.dll")]
         public static extern void array_release(IntPtr ptr);
-
+        //Arun Geo Thomas
         public static JSData ReadJS()
         {
             JSData data = null;
@@ -46,7 +46,7 @@ namespace Quadrupel.Input
             return data;
 
         }
-
+        //Arun Geo Thomas
         public static Packet GetJSPacket()
         {
             Packet pkt = null;

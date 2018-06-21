@@ -14,11 +14,12 @@ namespace Quadrupel.Communication
         public static Int32 dataBits = 8;
         public static StopBits stopBits = StopBits.One;
         private SerialPort serialPort;
-        
+
         /// <summary>
         /// Constructor
         /// </summary>
         /// <param name="portName">serial port name</param>
+        //Arun Geo Thomas
         public SerialPortManager(String portName)
         {
             serialPort = new SerialPort(portName, baudRate, parity, dataBits, stopBits);
@@ -26,7 +27,7 @@ namespace Quadrupel.Communication
             serialPort.DtrEnable = true;
             serialPort.Encoding = System.Text.Encoding.GetEncoding(28591);
         }
-
+        //Arun Geo Thomas
         public Boolean Connect()
         {
             if (serialPort != null && !serialPort.IsOpen)
@@ -45,6 +46,7 @@ namespace Quadrupel.Communication
         /// <summary>
         /// Bytes to be read from serial port
         /// </summary>
+        //Arun Geo Thomas
         public int BytesToRead
         {
             get
@@ -57,6 +59,7 @@ namespace Quadrupel.Communication
         /// <summary>
         /// Is there a valid connection
         /// </summary>
+        //Arun Geo Thomas
         public bool IsConnected
         { get
             {
@@ -67,6 +70,7 @@ namespace Quadrupel.Communication
         /// write bytes to serial port
         /// </summary>
         /// <param name="bytesToSend">bytes to sebd</param>
+        //Arun Geo Thomas
         public void WriteToSerialPort(byte[] bytesToSend)
         {
             if (IsConnected)
@@ -80,12 +84,13 @@ namespace Quadrupel.Communication
         /// REad next character
         /// </summary>
         /// <returns></returns>
+        //Arun Geo Thomas
         public byte ReadCharFromSerialPort()
         {
             return (byte)serialPort.ReadChar();
         }
 
-
+        //Arun Geo Thomas
         public bool CloseConnection()
         {
             if (IsConnected)

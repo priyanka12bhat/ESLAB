@@ -18,6 +18,7 @@ namespace Quadrupel
         private string logFileName = Environment.CurrentDirectory + @"\log.txt";
 
         //private Device joystickDevice;
+        //Arun Geo Thomas
         public QuadrupelControlForm()
         {
 
@@ -27,7 +28,7 @@ namespace Quadrupel
             
 
         }
-
+        //Arun Geo Thomas
         private void QuadrupelControlForm_Load(object sender, EventArgs e)
         {
             ClearUI();
@@ -48,6 +49,7 @@ namespace Quadrupel
         /// Method to Update UI
         /// </summary>
         /// <param name="data">Telemetry Data to be updated in UI</param>
+        //Arun Geo Thomas
         private void UpdateUI(TelemetryData data)
         {
             //lblOutput.Text = data.BatteryVoltage.ToString();
@@ -63,7 +65,7 @@ namespace Quadrupel
             lblDroneMessageText.Text = Messages.MsgTable[data.droneMessageCode];
 
         }
-
+        //Arun Geo Thomas
         private void UpdateUI(string additionalMessage)
         {
             readOuts1.AdditionalMessage = additionalMessage;
@@ -72,6 +74,7 @@ namespace Quadrupel
         /// <summary>
         /// Clear UI
         /// </summary>
+        //Arun Geo Thomas
         private void ClearUI()
         {
             //lblOutput.Text = data.BatteryVoltage.ToString();
@@ -81,8 +84,8 @@ namespace Quadrupel
             controlInputs1.ClearUI();
             btnStartOperation.Enabled = true;
             cbCOMPortsSelector.Enabled = true;
-        }     
-
+        }
+        //Arun Geo Thomas
         private void btnStartOperation_Click(object sender, EventArgs e)
         {
             if (File.Exists(logFileName)) {
@@ -117,7 +120,7 @@ namespace Quadrupel
 
 
         }
-        
+        //Arun Geo Thomas
         private void btnStopOpertion_Click(object sender, EventArgs e)
         {
 
@@ -157,6 +160,7 @@ namespace Quadrupel
         /// Function to send Packet through serial port to drone
         /// </summary>
         /// <param name="pkt">Packet to be send</param>
+        //Arun Geo Thomas
         void Send_Packet(Packet pkt)
         {
             try
@@ -183,6 +187,7 @@ namespace Quadrupel
         /// <param name="msg"></param>
         /// <param name="keyData"></param>
         /// <returns></returns>
+        //Arun Geo Thomas
         protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
         {
             Packet pkt = KBHandler.kb_CMDKey_handler(keyData);
@@ -209,6 +214,7 @@ namespace Quadrupel
         /// Check there are Bytes to be read in Serial port 
         /// </summary>
         /// <returns>yes if there is Bytes to be read in serial port</returns>
+        //Arun Geo Thomas
         public bool CheckInputQueueCount()
         {
             return (serialPortManager.BytesToRead > 0);
@@ -218,6 +224,7 @@ namespace Quadrupel
         /// Gets the next byte from the serial port
         /// </summary>
         /// <returns>data byte from serail port</returns>
+        //Arun Geo Thomas
         public byte GetElementFromInputQueue()
         {
             return serialPortManager.ReadCharFromSerialPort();
@@ -227,6 +234,7 @@ namespace Quadrupel
         /// Function to process the received packet
         /// </summary>
         /// <param name="packet">Receieved Packet</param>
+        //Arun Geo Thomas
         public void ProcessPacket(Packet packet)
         {
 
@@ -293,7 +301,7 @@ namespace Quadrupel
 
 
         }
-
+        //Arun Geo Thomas
         private void QuadrupelControlForm_FormClosing(object sender, FormClosingEventArgs e)
         {
             if (serialPortManager != null && serialPortManager.IsConnected)
@@ -314,6 +322,7 @@ namespace Quadrupel
         /// <summary>
         /// Execution Function of Serial Port Read Thread
         /// </summary>
+        //Arun Geo Thomas
         void BackendThreadExecute()
         {
 
@@ -341,7 +350,7 @@ namespace Quadrupel
 
 
         }
-
+        //Arun Geo Thomas
         private void cbCOMPortsSelector_DropDown(object sender, EventArgs e)
         {
             cbCOMPortsSelector.Items.Clear();
@@ -354,6 +363,7 @@ namespace Quadrupel
 
         private DateTime lastSendTime = DateTime.Now;
         private DateTime lastHBSendTime = DateTime.Now;
+        //Arun Geo Thomas
         private void JSTimer_Tick(object sender, EventArgs e)
         {
 
@@ -377,7 +387,7 @@ namespace Quadrupel
             this.controlInputs1.UpdateValues = true;
 
         }
-
+        //Arun Geo Thomas
         private void button1_Click(object sender, EventArgs e)
         {
             Application.Exit();
@@ -387,7 +397,7 @@ namespace Quadrupel
         /// Method to Update stored message for user
         /// </summary>
         /// <param name="msg">message that to be shown to user</param>
-
+        //Arun Geo Thomas
         public void showPCMessage(String msg)
         {
             this.lblPCMessageText.Text = msg;

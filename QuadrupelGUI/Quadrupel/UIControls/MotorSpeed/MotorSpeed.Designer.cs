@@ -6,6 +6,7 @@
         /// <summary>
         /// Property to set Motor Number
         /// </summary>
+        //Arun Geo Thomas
         public int MotorCount
         {
             get
@@ -23,6 +24,7 @@
         /// <summary>
         /// Property to set values in the control
         /// </summary>
+        //Arun Geo Thomas
         public int Value { get
             { return progressBar.Value;
             }

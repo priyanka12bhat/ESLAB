@@ -2,7 +2,7 @@
 {
     partial class ControlInputs
     {
-
+        //Arun Geo Thomas
         public bool UpdateValues {
             
             set {
@@ -17,6 +17,7 @@
         /// <summary>
         /// 
         /// </summary>
+        //Arun Geo Thomas
         public void ClearUI()
         {
             this.PITCHMeter.Level = 0;

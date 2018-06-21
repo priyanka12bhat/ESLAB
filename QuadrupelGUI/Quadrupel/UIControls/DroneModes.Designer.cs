@@ -6,6 +6,7 @@
         /// <summary>
         /// Property to set ActiveMode of the Control
         /// </summary>
+        //Arun Geo Thomas
         public Modes.DroneStates ActiveMode
         { get
             {
@@ -23,6 +24,7 @@
         /// <summary>
         /// Clear Active Coloration
         /// </summary>
+        //Arun Geo Thomas
         public void ClearFormating()
         {
             this.lblModes[(int)_ActiveMode].BackColor = inActiveBackColor;
