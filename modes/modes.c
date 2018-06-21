@@ -78,7 +78,7 @@ int sendPacketCounter = 0;
 //Wireless
 int wirelessCounter = 0;
 
-void logData()
+void logData() //Maria G
 {	
 	uint8_t dataValues[17];
 	data = dataValues;
@@ -112,7 +112,7 @@ void logData()
 	}
 } 
 
-void readFlashMem()
+void readFlashMem() //Maria G
 {	uint8_t flashValues[23];
 	flashBuffer = flashValues;
 	if (sendPacketCounter == 50 && readCount < flashCount){
@@ -178,7 +178,7 @@ void Modes_Initialize()
 
 }
 
-void Modes_ToggleLogging()
+void Modes_ToggleLogging() //Arun Geo & Maria G
 {
 	static bool loggingEnabled = 0;
 	if(!loggingEnabled){
@@ -262,7 +262,7 @@ void Yaw_Control_Mode_Initialize()
 	//while(!check_sensor_int_flag());
 	//imu_init(true, 100);
 }
-void Full_Control_Mode_Initialize(){
+void Full_Control_Mode_Initialize(){ //Maria G
 	yawSetPoint = 0;
 	yawSetPoint_K = 0;
 	yawSetPoint_J = 0;
@@ -280,7 +280,7 @@ void Full_Control_Mode_Initialize(){
 
 //Mingxi LI
 void Raw_Mode_Initialize()
-{
+{ //Maria G
 	yawSetPoint = 0;
 	yawSetPoint_K = 0;
 	yawSetPoint_J = 0;
@@ -313,11 +313,9 @@ void Height_Control_Mode_Initialize()
 	PressureIntialEMA = pressure_initial;
 	PressureEMA = pressure_initial;
 }
-void Wireless_Control_Mode_Initialize(){
+void Wireless_Control_Mode_Initialize(){ //Maria G
 	clearControlVariables();
 	SetMessage(MSG_ENTERING_WIRELESS);
-	//SWI1_IRQHandler();
-
 }
 
 
@@ -366,7 +364,7 @@ void Panic_Mode_Execute(){
 			}
 }
 
-void Panic_Mode_Execute_With_Logging()
+void Panic_Mode_Execute_With_Logging() //Maria G
 {	static 	uint32_t us_TimeStamp = 0;
 	
 			uint32_t us_currentTime = get_time_us();
@@ -480,7 +478,7 @@ void Yaw_Control_Mode_Execute()
 			//printf("Motor[0]:%d,Motor[1]:%d,Motor[2]:%d,Motor[3]:%d\n",ae[0],ae[1],ae[2],ae[3]);
 	}
 }
-void Full_Control_Mode_Execute()
+void Full_Control_Mode_Execute() //Maria G
 {
 	if (check_sensor_int_flag()) 
 		{
@@ -530,7 +528,7 @@ void Raw_Mode_Execute()
 	}
 }
 
-void Raw_Mode_Execute_With_Logging()
+void Raw_Mode_Execute_With_Logging() //Maria G
 {
 	static uint32_t lastReadTime = 0;
 

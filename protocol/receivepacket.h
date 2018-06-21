@@ -12,11 +12,6 @@
 enum stateListR	{checkStartByte, getMsgSize, checkMessageType,setupMsg, getMsg, checkCRC0, checkCRC1}	currentStateR, nextState;
 
 
-
-
-
-
-
 char getElementFromInputQueue();
 uint16_t getInputQueueCount();
 

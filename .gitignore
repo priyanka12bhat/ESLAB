@@ -1,0 +1,6 @@
+
+pc_terminal/file\.txt
+
+*.pyc
+
+dfu_serial/

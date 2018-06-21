@@ -70,7 +70,7 @@ unsigned char *Get_Byte_Stream(Packet *pkt)
 	return serialPacket;
 }
 
-Packet *Create_Flash_Data_Packet(uint8_t *flashBuffer)
+Packet *Create_Flash_Data_Packet(uint8_t *flashBuffer) //Maria G
 {
 	fpktObj.startByte = START_BYTE;
 	fpktObj.type = T_FLASHMEM;

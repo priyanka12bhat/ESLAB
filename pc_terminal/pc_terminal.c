@@ -893,10 +893,7 @@ int main(int argc, char **argv)
 					//printf("pkt not null\n");
 					//Send Packet bytes through RS232
 					Send_Packet(pkt);
-					//printf("pkt send\n");
-					//Destroy_Packet(pkt);
-					//printf("pkt destroyed\n");
-					//free(value_tag);
+
 					pkt = NULL;
 				}
 				lastJSSendTime = mon_time_ms();
@@ -915,15 +912,7 @@ int main(int argc, char **argv)
 				if(CheckReadGap(KBLastReadTimeStamp,1)){
 					//Send Packet bytes through RS232
 					Send_Packet(pkt);
-					/*printf("Testing- Type:%d\n", pkt->type);
-					printf("Testing- lastJSSendTimebyte:%d\n", pkt->lastJSSendTimeByte);
-					printf("Testing- datalength:%d\n", pkt->dataLength);
-					printf("Testing- value length:%d\n", pkt->valueLength);
-					printf("Testing- value:%d\n", *(pkt->value));
-					printf("Testing- CRC0:%d\n", *(pkt->CRC));
-					printf("Testing- CRC1:%d\n", pkt->CRC[1]);*/
-					//Destroy_Packet(pkt);
-					//free(value_tag);
+
 					
 					KBLastReadTimeStamp = mon_time_ms();
 
@@ -932,7 +921,7 @@ int main(int argc, char **argv)
 				pkt = NULL;
 			}
 		}
-		//printf("T3:%d\n",mon_time_ms());
+
 
 		if (checkCount()){  //continuously check for new elements in the UART queue
 
@@ -940,10 +929,7 @@ int main(int argc, char **argv)
 
 			stateHandler(currentByte);
 		}
-		//printf("T4:%d\n",mon_time_ms());
 
-		//if ((c = rs232_getchar_nb()) != -1)
-			//term_putchar(c);
 
 		if((CheckReadGap(lastJSSendTime,3) && CheckReadGap(KBLastReadTimeStamp,1))?CheckReadGap(HBLastSendTimeStamp,2):0)
 		{
@@ -958,21 +944,6 @@ int main(int argc, char **argv)
 		printUIMessage();
 
 	}
-
-
-	/*for (;;)
-	{
-
-		if ((c = rs232_getchar_nb()) != -1)
-			term_putchar(c);
-		if(c==27)
-		{
-			break;
-		}
-
-	}*/
-
-	//storeUIMessage("\nFCB Exited\n\0");
 
 
 
@@ -1003,7 +974,6 @@ uint16_t getInputQueueCount()
 	if(((c = rs232_getchar_nb()) != -1))
 	{
 
-
 		addNode(c);
 		return 1;
 
@@ -1027,9 +997,9 @@ void printUIMessage()
 }
 
 
-void process_packet(Packet *pkt_R)
+void process_packet(Packet *pkt_R) //Maria G and Arun Geo
 {	
-	if (pkt_R->type == T_FLASHMEM){
+	if (pkt_R->type == T_FLASHMEM){ 
 	clearUI();
 	printf("Saving flash memory to file, goodbye");
 	if (f == NULL) {
@@ -1086,24 +1056,6 @@ void process_packet(Packet *pkt_R)
 	    uint32_t pressure = (((uint32_t)pkt_R->value[31])<<16)|(((uint32_t)pkt_R->value[32])<<8)|(pkt_R->value[33]);
 	    printf("Pressure: \t%d\n",pressure);
 	    printf("Current Drone Mode: \t%d\n",pkt_R->value[34]);
-	  
-	   
-	   	/*for(int i=0;i<4;i++){
-			printf("Motor[%d]:\t%d\t",i,((uint16_t)pkt_R->value[2*i])<<8|pkt_R->value[2*i+1]);
-		}
-	    puts("\n");
-	    printf("phi:\t%d\t",(int16_t)(((uint16_t)pkt_R->value[10])<<8|pkt_R->value[11]));
-	    printf("theta:\t%d\t",(int16_t)(((uint16_t)pkt_R->value[12])<<8|pkt_R->value[13]));
-	    printf("psi:\t%d\n",(int16_t)(((uint16_t)pkt_R->value[14])<<8|pkt_R->value[15]));
-
-	    printf("sp:\t%d\t",(int16_t)(((uint16_t)pkt_R->value[16])<<8|pkt_R->value[17]));
-	    printf("sq:\t%d\t",(int16_t)(((uint16_t)pkt_R->value[18])<<8|pkt_R->value[19]));
-	    printf("sr:\t%d\n",(int16_t)(((uint16_t)pkt_R->value[20])<<8|pkt_R->value[21]));
-	    printf("P:\t%d\t",(((uint16_t)pkt_R->value[23])<<8|pkt_R->value[24]));
-	    printf("P1:\t%d\t",(((uint16_t)pkt_R->value[25])<<8|pkt_R->value[26]));
-	    printf("P2:\t%d\t",(((uint16_t)pkt_R->value[27])<<8|pkt_R->value[28]));*/
-		//mvprintw (0, 0, "%d", pkt_R->value[0]);     
-		//refresh ();
 
 		msgCode = pkt_R->value[22]; 
 

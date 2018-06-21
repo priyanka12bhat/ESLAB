@@ -26,7 +26,7 @@ void Reception_Init(char _maxMsgSize)
 
 
 
-void addNode(unsigned char newData)
+void addNode(unsigned char newData) 
 {
 	if(InputBuffer.count>=BUFFER_QUEUE_SIZE)
 		return;
@@ -58,7 +58,7 @@ uint16_t checkCount()
 	return InputBuffer.count>0?1:getInputQueueCount();
 }
 
-void addData(unsigned char *datas, unsigned char length)
+void addData(unsigned char *datas, unsigned char length) //Maria G
 {
 	for(int i =length-1;i>=0;i--)
 	{
@@ -105,7 +105,7 @@ void storeValues(unsigned char ptr[],unsigned char msgSize, unsigned char curren
 
 }
 
-void stateHandler(unsigned char currentByte){
+void stateHandler(unsigned char currentByte){ //Maria G and Arun Geo
 	static unsigned char ptr[LP_SIZE+20];
 	static unsigned char msgSize;
 	static Packet *pkt_R = NULL;
@@ -185,14 +185,6 @@ void stateHandler(unsigned char currentByte){
 
 
 			pkt_R = Create_Packet(msgType,msgSize-1, ptr);
-
-				//printf("TestingF- Type:%d\n", pkt_R->type);
-				//printf("TestingF- startbyte:%d\n", pkt_R->startByte);
-				//printf("TestingF- datalength:%d\n", pkt_R->dataLength);
-				//printf("TestingF- value length:%d\n", pkt_R->valueLength);
-				//printf("TestingF- value:%d\n", *(pkt_R->value));
-				//printf("TestingF- CRC0:%d\n", *(pkt_R->CRC));
-				//printf("TestingF- CRC1:%d\n", pkt_R->CRC[1]);
 
 
 			if(pkt_R->CRC[0]==(unsigned char)currentByte){
