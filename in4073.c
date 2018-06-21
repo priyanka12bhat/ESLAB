@@ -245,9 +245,9 @@ int main(void)
 		bat_voltEMA = (bat_volt - bat_voltEMA) * 1 / 100 + bat_voltEMA;
 		if(bat_voltEMA <= 1055 && bat_voltEMA>0 )
 		{	
-			//PrevMode = CurrentMode;
-			//CurrentMode=GetMode(M_PANIC);
-			//(*CurrentMode.Mode_Initialize)();	
+			PrevMode = CurrentMode;
+			CurrentMode=GetMode(M_PANIC);
+			(*CurrentMode.Mode_Initialize)();	
 		}
 		
 		readCounter++;
@@ -257,7 +257,7 @@ int main(void)
 		if(checkGap(lastTelePacketSendTime, TELE_SEND_GAP_US))
 		{
 
-			SendPacket(Create_Telemetery_Packet(bat_volt, ae, phi, theta, psi, sp, sq, sr,msgCode,GetPArray(),pressure,CurrentMode.state));
+			SendPacket(Create_Telemetery_Packet(bat_voltEMA, ae, phi, theta, psi, sp, sq, sr,msgCode,GetPArray(),pressure,CurrentMode.state));
 			//SendAdditionalMessage(additionalMessage);
 			lastTelePacketSendTime=currentTime;
 		}

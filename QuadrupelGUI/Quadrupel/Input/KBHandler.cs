@@ -136,7 +136,7 @@ namespace Quadrupel
 
                     value_tag[0] = Packet.M_HEIGHTCONTROL;
                     type_tag = Packet.T_MODE;
-                    pkt = CreatePacketWithSafetyCheck("Toggling Height Controlled mode\n\0", type_tag, 1, value_tag);
+                    pkt = Packet.Create_Packet(type_tag, 1, value_tag);
                     break;
 
                 case Keys.D8:
@@ -563,7 +563,8 @@ namespace Quadrupel
         public static Packet CreatePacketWithSafetyCheck(string switchMessage, byte type_tag, byte length, byte[] value_tag)
         {
             Packet pkt = null;
-            if (((JSData.ROLL== 0) && (JSData.PITCH == 0) && (JSData.YAW == 0) && (JSData.LIFT >= 32766)) || true)
+            //(JSData.ROLL== 0) && (JSData.PITCH == 0) && (JSData.YAW == 0) &&
+            if (( (JSData.LIFT >= 32766)) || false)
             {
                 pkt = Packet.Create_Packet(type_tag, 1, value_tag);
 

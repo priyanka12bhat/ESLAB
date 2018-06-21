@@ -574,7 +574,7 @@ void Height_Control_Mode_Execute()
 
 			h=((int64_t)PressureIntialEMA - (int64_t)PressureEMA);
 			Z = Z_initial - (P[3] * h);
-			SendAdditionalMessage("%ld",h);
+			//SendAdditionalMessage("%ld",h);
 			lastControlTime = currentTime;
 			Execute_Control_Action = true;
 		}
@@ -852,12 +852,15 @@ void Full_Control_Mode_Input_Handler(unsigned char *Input)
 void Height_Control_Mode_Input_Handler(unsigned char *Input)
 {
 	int32_t old_JS_Z = JS_Z;
+	int32_t low_Old_JS_Z = old_JS_Z - old_JS_Z * 2 / 100;
+	int32_t high_Old_JS_Z = old_JS_Z + old_JS_Z * 2 / 100;
+
 	if(PrevMode.Input_Handler!=NULL)
 		(*PrevMode.Input_Handler)(Input);
 
 
 
-	if(old_JS_Z!=JS_Z)
+	if((JS_Z<low_Old_JS_Z) || (high_Old_JS_Z<JS_Z))
 	{	
 
 		CurrentMode = GetPrevMode();

@@ -4,7 +4,7 @@ namespace Quadrupel.Controls
 {
     partial class ReadOuts
     {
-        private const string Format = "Phi:{0}\nTheta:{1}\nPhi:{2}\nsp:{3}\nsq:{4}\nsr:{5}\nP:{6}\nP1:{7}\nP2:{8}\n";
+        private const string Format = "Phi:{0}\nTheta:{1}\nPsi:{2}\nsp:{3}\nsq:{4}\nsr:{5}\nP:{6}\nP1:{7}\nP2:{8}\n";
 
 
         private int[] _Values = new int[9];
