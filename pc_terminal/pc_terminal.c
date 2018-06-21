@@ -552,6 +552,7 @@ void Send_Packet(Packet *pkt)
 
 /* Joystick Initialization
 */
+//Mingxi LI
 void joystick_init(int *fd)
 {
 
@@ -619,7 +620,7 @@ void    mon_delay_ms(unsigned int ms)
 */
 
 
-
+//Mingxi LI
 void read_values(int* fd, int axis[], int button[])
 {
 	struct js_event js;
@@ -665,6 +666,7 @@ js_command *read_js_simulator()
 
 js_command js_command_obj;
 
+//Mingxi LI
 js_command *read_js(int* fd, int axis[], int button[])
 {
 	js_command *js_c = NULL;
@@ -788,7 +790,7 @@ void js_safety_check(int* fd, int axis[], int button[])
 	exit(0);
 }
 
-
+//Mingxi LI
 void Create_jsPacket(js_command* js_comm)
 {
 
