@@ -278,6 +278,7 @@ void Full_Control_Mode_Initialize(){
 	//imu_init(true, 100);
 }
 
+//Mingxi LI
 void Raw_Mode_Initialize()
 {
 	yawSetPoint = 0;
@@ -498,6 +499,7 @@ void Full_Control_Mode_Execute()
 		}
 }
 
+//Mingxi LI
 void Raw_Mode_Execute()
 {
 	static uint32_t lastReadTime = 0;
